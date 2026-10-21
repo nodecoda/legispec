@@ -38,6 +38,7 @@ RULES = paths.RULES
 OUT = paths.OUT
 LEDGER = paths.LEDGER
 CONSTRUCTS = paths.CONSTRUCT_COVERAGE
+GENERATED_EVIDENCE = paths.CLAIMS_DIR / "generated-evidence.json"
 CLOSURE_MD = paths.DOCS / "CLOSURE.md"
 TESTS = paths.TESTS
 
@@ -45,6 +46,8 @@ PIN_KEYS = (
     "claims",
     "hand-claims",
     "generated-claims",
+    "generated-covered",
+    "hand-only",
     "rules-files",
     "hand-queries",
     "constructs",
@@ -106,6 +109,65 @@ def aggregate(claims: list[dict]) -> dict[str, dict]:
     return targets
 
 
+def generated_evidence(entries: list[dict]) -> tuple[dict, list[str]]:
+    """Audit the explicit generated-vs-hand-only coverage split.
+
+    The universal headline theorem has a hand-evaluator leg for every claim and
+    a generated-C++ leg only for claims whose oracle was built from codegen.
+    This function makes the split explicit: a new rule must either have a
+    generated claim or a reasoned ``hand_only`` declaration.  Otherwise the
+    closure gate fails instead of silently overstating generated coverage.
+    """
+
+    problems: list[str] = []
+    on_disk = {path.name for path in RULES.glob("*.ldsl") if path.is_file()}
+    generated = {
+        claim["rules"]
+        for claim in entries
+        if claim.get("id", "").endswith("-generated")
+    }
+    try:
+        manifest = json.loads(GENERATED_EVIDENCE.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError) as exc:
+        problems.append(f"generated evidence manifest unreadable: {exc}")
+        manifest = {}
+    if manifest.get("schema") != "legalizer-dsl-generated-evidence-v1":
+        problems.append(
+            f"generated evidence schema is {manifest.get('schema')!r}"
+        )
+    declared = manifest.get("hand_only")
+    if not isinstance(declared, dict):
+        problems.append("generated evidence manifest has no hand_only object")
+        declared = {}
+    for rule, reason in sorted(declared.items()):
+        if rule not in on_disk:
+            problems.append(
+                f"hand-only declaration references missing rule: {rule}"
+            )
+        if not isinstance(reason, str) or not reason.strip():
+            problems.append(f"hand-only declaration has no reason: {rule}")
+    overlap = generated & set(declared)
+    if overlap:
+        problems.append(
+            "rules are both generated and hand-only: " + ", ".join(sorted(overlap))
+        )
+    missing = on_disk - generated - set(declared)
+    if missing:
+        problems.append(
+            "rules have neither generated evidence nor a hand-only declaration: "
+            + ", ".join(sorted(missing))
+        )
+    summary = {
+        "schema": "legalizer-dsl-generated-evidence-summary-v1",
+        "rules": len(on_disk),
+        "generated": sorted(generated),
+        "generated_covered": len(generated),
+        "hand_only": sorted(declared),
+        "hand_only_count": len(declared),
+    }
+    return summary, problems
+
+
 def audit(write: bool, skip_evidence: bool = False, skip_tests: bool = False) -> int:
     ledger = json.loads(LEDGER.read_text(encoding="utf-8-sig"))
     if skip_evidence:
@@ -161,11 +223,14 @@ def audit(write: bool, skip_evidence: bool = False, skip_tests: bool = False) ->
             problems.append(f"{cid}: report was produced from a different rules hash")
 
     referenced = {claim["rules"] for claim in entries}
-    on_disk = {path.name for path in RULES.glob("*.ldsl")}
+    on_disk = {path.name for path in RULES.glob("*.ldsl") if path.is_file()}
     for missing in sorted(on_disk - referenced):
         problems.append(f"rules file has no claim: {missing}")
     for missing in sorted(referenced - on_disk):
         problems.append(f"claim references a missing rules file: {missing}")
+
+    evidence, evidence_problems = generated_evidence(entries)
+    problems.extend(evidence_problems)
 
     coverage = json.loads(CONSTRUCTS.read_text(encoding="utf-8-sig"))
     buckets = coverage["counts"]
@@ -182,6 +247,8 @@ def audit(write: bool, skip_evidence: bool = False, skip_tests: bool = False) ->
         "claims": len(entries),
         "hand-claims": sum(1 for c in entries if not c["id"].endswith("-generated")),
         "generated-claims": sum(1 for c in entries if c["id"].endswith("-generated")),
+        "generated-covered": evidence["generated_covered"],
+        "hand-only": evidence["hand_only_count"],
         "rules-files": len(on_disk),
         "hand-queries": sum(
             c["queries"] for c in entries if not c["id"].endswith("-generated")
@@ -207,6 +274,7 @@ def audit(write: bool, skip_evidence: bool = False, skip_tests: bool = False) ->
         "computed": computed,
         "pinned": pinned,
         "targets": aggregate(entries),
+        "generated_evidence": evidence,
         "constructs": buckets,
         "problems": problems,
     }

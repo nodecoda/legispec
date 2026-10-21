@@ -817,6 +817,10 @@ class Parser:
                     CopyType(idx, other),
                     origin=f"maxScalarEltSameAsIf({idx}, {other})",
                 )
+            # This macro expands unconditionally; record that explicitly so
+            # the structure manifest cannot mistake it for an unguarded core
+            # rule (guard=None means "no macro expansion metadata").
+            self.last_macro_guard = True
             ruleset.add(rule)
             return
 

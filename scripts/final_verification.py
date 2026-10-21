@@ -393,6 +393,7 @@ def gate_coverage():
             "examples",
             "--out",
             "out/coverage-report.json",
+            "--no-docs",
         ],
     )
     problems: list[str] = []
@@ -472,7 +473,7 @@ def gate_codegen_contract():
     return gate, problems
 
 
-def gate_integration():
+def gate_integration(expected: dict):
     status_gate, text = run_gate(
         "integration-status",
         [
@@ -513,12 +514,13 @@ def gate_integration():
             "query_count": report.get("inputs", {}).get("query_count"),
             "rules": report.get("inputs", {}).get("rules"),
             "rules_sha256": report.get("inputs", {}).get("rules_sha256"),
+            "provenance": report.get("provenance", {}),
             "comparisons": {},
             "exit_code": 0,
         }
         if report.get("status") != "PASS":
             problems.append(f"{relative}: status is {report.get('status')!r}")
-        for message in validate_report(report):
+        for message in validate_report(report, expected):
             problems.append(f"{relative}: {message}")
         comparisons = report.get("comparisons")
         if not isinstance(comparisons, dict) or not comparisons:
@@ -592,12 +594,36 @@ def main(argv: Optional[list[str]] = None) -> int:
         "--skipped", type=int, default=None, help="expected unittest skip count"
     )
     parser.add_argument("--base-commit", default=BASE_COMMIT)
+    parser.add_argument(
+        "--allow-dirty",
+        action="store_true",
+        help="record, but do not fail on, a pre-existing project-dirty worktree",
+    )
+    parser.add_argument(
+        "--run-claims",
+        action="store_true",
+        help="re-run every claim report before auditing it",
+    )
+    parser.add_argument(
+        "--run-integration",
+        action="store_true",
+        help="rebuild and rerun both integration consumers before validating reports",
+    )
     parser.add_argument("--out", default="out/final-verification.json")
     args = parser.parse_args(argv)
 
     problems: list[str] = []
-    repository, repo_problems = collect_repository(args.base_commit)
+    repository_start, repo_problems = collect_repository(args.base_commit)
     problems.extend(repo_problems)
+    if repository_start["project_dirty"] and not args.allow_dirty:
+        problems.append(
+            "project worktree is dirty; commit the changes or pass --allow-dirty "
+            "for a diagnostic run"
+        )
+    if args.tests is None:
+        problems.append("--tests is required: the test-count pin must be explicit")
+    if args.skipped is None:
+        problems.append("--skipped is required: the skip-count pin must be explicit")
 
     try:
         claims = load_json(CLAIMS_PATH)
@@ -612,6 +638,17 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     gates: list[dict] = []
 
+    if args.run_claims:
+        reproduce_gate, _ = run_gate(
+            "claims-reproduce", ["-X", "utf8", "scripts/reproduce_claims.py", "--all"]
+        )
+        reproduce_gate["status"] = (
+            "PASS" if reproduce_gate["exit_code"] == 0 else "FAIL"
+        )
+        gates.append(reproduce_gate)
+        if reproduce_gate["exit_code"] != 0:
+            problems.append("claim report re-execution failed")
+
     unit_gate, unit_problems = gate_unit_tests(args.tests, args.skipped)
     unit_gate["status"] = "PASS" if not unit_problems else "FAIL"
     gates.append(unit_gate)
@@ -621,8 +658,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     gates.append(claims_gate)
     problems.extend(claims_problems)
 
-    expected_tests = args.tests if args.tests is not None else unit_gate.get("tests")
-    closure_gate, closure_problems, _ = gate_closure(claims, expected_tests)
+    closure_gate, closure_problems, _ = gate_closure(claims, args.tests)
     gates.append(closure_gate)
     problems.extend(closure_problems)
 
@@ -634,13 +670,65 @@ def main(argv: Optional[list[str]] = None) -> int:
     gates.append(codegen_gate)
     problems.extend(codegen_problems)
 
-    status_gate, report_gates, reports, integration_problems = gate_integration()
+    if args.run_integration:
+        llvm_commit = claims.get("llvm_commit") or ""
+        for target, limit, output in (
+            ("toycpu", 0, "out/integration-report.json"),
+            ("aarch64-vector", 2000, "out/integration-aarch64-report.json"),
+        ):
+            integration_gate, _ = run_gate(
+                f"integration-rerun-{target}",
+                [
+                    "-X",
+                    "utf8",
+                    "scripts/integration_smoke.py",
+                    "--target",
+                    target,
+                    "--limit",
+                    str(limit),
+                    "--out",
+                    output,
+                    "--llvm-commit",
+                    llvm_commit,
+                ],
+            )
+            integration_gate["status"] = (
+                "PASS" if integration_gate["exit_code"] == 0 else "FAIL"
+            )
+            gates.append(integration_gate)
+            if integration_gate["exit_code"] != 0:
+                problems.append(f"integration re-execution failed for {target}")
+
+    try:
+        head_commit = git("rev-parse", "HEAD")
+    except RuntimeError as exc:
+        head_commit = ""
+        problems.append(str(exc))
+    expected = {
+        "evaluator_sha256": hand_evaluator_sha256(),
+        "codegen_sha256": codegen_sha256(),
+        "llvm_commit": claims.get("llvm_commit"),
+        "head_commit": head_commit,
+    }
+    status_gate, report_gates, reports, integration_problems = gate_integration(
+        expected
+    )
     gates.extend(report_gates)
     gates.append(status_gate)
     problems.extend(integration_problems)
 
     environment, environment_problems = collect_environment(claims, reports)
     problems.extend(environment_problems)
+
+    repository_end, end_problems = collect_repository(args.base_commit)
+    problems.extend(end_problems)
+    if repository_end["project_dirty"] and not args.allow_dirty:
+        problems.append("project worktree is dirty after the gates")
+    if repository_start["worktree_sha256"] != repository_end["worktree_sha256"]:
+        problems.append(
+            "worktree changed while the gates ran; evidence was not produced "
+            "from one immutable tree"
+        )
 
     for gate in gates:
         if gate.get("status") != "PASS":
@@ -656,16 +744,43 @@ def main(argv: Optional[list[str]] = None) -> int:
         if path.is_file():
             artifacts[path.relative_to(ROOT).as_posix()] = sha256_file(path)
 
+    if args.run_claims and args.run_integration:
+        mode = "independent-execution"
+    elif args.run_claims or args.run_integration:
+        mode = "partial-execution"
+    else:
+        mode = "artifact-consistency"
+    execution = {
+        "claims": "rerun" if args.run_claims else "hash-and-corpus-audit",
+        "integration": "rerun" if args.run_integration else "existing-reports",
+        "oracles": "rerun" if args.run_claims else "not-re-executed",
+    }
+    limitations = []
+    if not args.run_claims:
+        limitations.append(
+            "Claim reports were hashed and corpus-checked, but oracles were not "
+            "re-executed; use --run-claims for independent claim execution."
+        )
+    if not args.run_integration:
+        limitations.append(
+            "Integration reports were validated, but consumers were not rebuilt; "
+            "use --run-integration for a fresh build."
+        )
+
     result = "PASS" if not problems else "FAIL"
     artifact = {
         "schema": SCHEMA,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "result": result,
-        "repository": repository,
+        "verification_mode": mode,
+        "repository": repository_end,
+        "repository_at_start": repository_start,
         "environment": environment,
+        "execution": execution,
         "gates": gates,
         "boundaries": boundaries(claims),
         "artifacts": artifacts,
+        "limitations": limitations,
         "problems": problems,
     }
 
@@ -681,11 +796,11 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     passed = sum(1 for gate in gates if gate.get("status") == "PASS")
     print(
-        f"final-verification: {result} gates={passed}/{len(gates)} "
-        f"dirty={str(repository['dirty']).lower()} "
+        f"final-verification: {result} mode={mode} gates={passed}/{len(gates)} "
+        f"dirty={str(repository_end['dirty']).lower()} "
         f"tests={unit_gate.get('tests')} skipped={unit_gate.get('skipped')}"
     )
-    print(f"worktree: {repository['worktree_sha256']}")
+    print(f"worktree: {repository_end['worktree_sha256']}")
     print(f"report: {out_path.relative_to(ROOT).as_posix()}")
     for problem in problems:
         print(f"  ! {problem}")

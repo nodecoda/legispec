@@ -1,0 +1,37 @@
+{
+  "allowed": [
+    {
+      "platforms": [
+        "linux",
+        "darwin"
+      ],
+      "reason": "ToyCPU oracle is not built on hosted Linux runners",
+      "test": "test_mutation_controls.ToyCPUObservationMutations.test_changed_action_is_detected_by_oracle"
+    },
+    {
+      "platforms": [
+        "linux",
+        "darwin"
+      ],
+      "reason": "ToyCPU oracle is not built on hosted Linux runners",
+      "test": "test_mutation_controls.ToyCPUObservationMutations.test_removed_clamp_max_is_detected_by_oracle"
+    },
+    {
+      "platforms": [
+        "linux",
+        "darwin"
+      ],
+      "reason": "ToyCPU oracle is not built on hosted Linux runners",
+      "test": "test_mutation_controls.ToyCPUObservationMutations.test_rule_order_swap_is_detected_by_oracle"
+    },
+    {
+      "platforms": [
+        "linux",
+        "darwin"
+      ],
+      "reason": "RV64 oracle is not built on hosted Linux runners",
+      "test": "test_mutation_controls.ConfigGuardMutationTests.test_flipped_config_guard_is_detected"
+    }
+  ],
+  "schema": "legalizer-dsl-expected-skips-v1"
+}

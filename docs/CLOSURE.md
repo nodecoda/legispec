@@ -58,7 +58,7 @@ R = closure(Q0) 在 D 内的一步 legalize 后继
 | `closure.py` | 收口审计：pinned 数字 vs 产物 | 文档数字或资产清单漂移时 |
 | `cli.py` / `legalizer-dsl` | `check` / `codegen` / `conform` / `witness` | 日常入口 |
 | `rules/*.ldsl` | 22 份规则转写 | 证明对象 |
-| `tests/` | 357 个单元测试 | 改任何实现前先跑 |
+| `tests/` | 375 个单元测试 | 改任何实现前先跑 |
 | `witness/` | 每片的固定证据 | 回归 |
 | `*capabilities.json` | custom/libcall/lower 的 provider 契约 | strict check |
 
@@ -68,10 +68,12 @@ R = closure(Q0) 在 D 内的一步 legalize 后继
 claims=43
 hand-claims=27
 generated-claims=16
+generated-covered=16
+hand-only=6
 rules-files=22
 hand-queries=321627
 constructs=63
-tests=357
+tests=375
 <!-- /closure:pinned -->
 
 这些数字由 `closure.py check` 从 `claims.json`、`rules/`、`construct-coverage.json`、
@@ -81,6 +83,12 @@ tests=357
 放在 `out/`（不入库），取回与重建方式见 [`EVIDENCE.md`](EVIDENCE.md)。
 
 ## 4. 覆盖清单
+
+GeneratedCpp 证据只覆盖下列 16 条 generated claim 对应的规则；另外 6 条规则是
+显式 hand-only：`aarch64-pointer.ldsl`、`riscv-conditional-gconstant.ldsl`、
+`riscv-scalar-conditional.ldsl`、`riscv32-mzb-scalar.ldsl`、
+`riscv32-pointer.ldsl`、`riscv64-pointer.ldsl`。原因与允许范围记录在
+`claims/generated-evidence.json`。
 
 | Target | 切片 | 代表查询数 | 规则命中 |
 |---|---|---|---|
@@ -134,9 +142,13 @@ rules/*.ldsl
    域外不是“反例”，是“未声明”。因此边界必须来自 opcode 契约，不能来自实现习惯。
    `G_CONCAT_VECTORS` 从 k=2 扩到 k≥2 就是一次覆盖债清偿：依据是
    `MachineVerifier.cpp:1611-1631`，并用真实 MIR 测到 k=4/k=8。
-2. **hand == generated 双 oracle。**
-   手写规则和生成规则分别编译成 oracle，二者都必须与 LLVM 零分歧。
-   这同时证明“转写正确”和“codegen 正确”。
+2. **hand == generated 双 oracle（仅对 generated claim）。**
+   对 16 条 generated claim，手写规则和生成规则分别编译成 oracle，二者都必须与
+   LLVM 零分歧；这同时证明“转写正确”和“codegen 正确”。
+   其余 6 条规则在 `claims/generated-evidence.json` 中显式登记为 hand-only，
+   只证明 hand-evaluator 等价，**不**证明 GeneratedCpp 等价。
+   `closure check` 会强制每条规则要么有 generated claim，要么有带原因的 hand-only 登记，
+   防止以后新增规则时静默扩大 GeneratedCpp 命题。
 3. **哈希账本 + 只减不增的棘轮。**
    规则内容、报告、oracle 二进制任一变化都会让 claim STALE。
    想恢复“已证明”，只能重跑，不能改账本。
@@ -241,7 +253,7 @@ python -X utf8 -m legalizer_dsl --rules rules/aarch64-concat-vectors.ldsl codege
 
 ```text
 claims=43 proven=43 failed=0
-357 tests OK（1 个环境相关 skip）
+375 tests OK（1 个环境相关 skip）
 strict rules sweep 22/22
 codegen contract PASS（22 份规则、24 个 config 变体）
 integration smoke PASS（ToyCPU 全 D、AArch64 vector；SKIP 不算通过）

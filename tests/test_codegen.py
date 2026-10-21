@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import pathlib
 import sys
 import tempfile
@@ -580,6 +581,53 @@ class OutputStemSafetyTests(unittest.TestCase):
             self.assertIn(
                 f'#include "{stem}.h"', source.read_text(encoding="utf-8")
             )
+
+
+class SourceLabelTests(unittest.TestCase):
+    def test_repo_rules_keep_a_repository_relative_label_from_any_cwd(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp) / "out"
+            previous = pathlib.Path.cwd()
+            try:
+                os.chdir(tmp)
+                rc = codegen.main(
+                    ["--rules", str(RULES), "--out-dir", str(out)]
+                )
+            finally:
+                os.chdir(previous)
+            self.assertEqual(rc, 0)
+            manifest = json.loads(
+                (out / codegen.GENERATED_MANIFEST).read_text(encoding="utf-8")
+            )
+            self.assertEqual(manifest["source"], REL)
+            self.assertFalse(pathlib.Path(manifest["source"]).is_absolute())
+            header = (out / codegen.GENERATED_HEADER).read_text(encoding="utf-8")
+            self.assertIn(f"// Source: {REL}", header)
+            self.assertNotIn(str(HERE), header)
+
+    def test_external_rules_get_a_stable_label_instead_of_an_absolute_path(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            rules = root / "probe.ldsl"
+            rules.write_text("ruleset G_X { legal_for {s32}; }\n", encoding="utf-8")
+            out = root / "out"
+            self.assertEqual(
+                codegen.main(
+                    [
+                        "--rules",
+                        str(rules),
+                        "--out-dir",
+                        str(out),
+                        "--namespace",
+                        "Probe",
+                    ]
+                ),
+                0,
+            )
+            manifest = json.loads(
+                (out / codegen.GENERATED_MANIFEST).read_text(encoding="utf-8")
+            )
+            self.assertEqual(manifest["source"], "external/probe.ldsl")
 
 
 if __name__ == "__main__":

@@ -7,6 +7,10 @@ the declared domain D.  Boundary queries are outside D and are not
 evidence.  `domain_not_observed` lists declared values the corpus never
 exercised; `outside_domain` lists corpus values the rules do not cover.
 
+The ratchet baseline records absolute metrics, not only the ratio:
+`ratio`, `in_domain`, `queries`, `rules_matched`, and `rules_total`
+must not decrease, and the target set must match exactly.
+
 | target | queries | in D | boundary | ratio | rules matched |
 |---|---:|---:|---:|---:|---:|
 | `aarch64-vector` | 65 | 62 | 3 | 0.9538 | 10/11 |

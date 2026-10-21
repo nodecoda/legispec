@@ -10,9 +10,12 @@
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
+import json
 import pathlib
 import sys
+import tempfile
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -83,70 +86,178 @@ class IntegrationFixtureTests(unittest.TestCase):
 
     def test_report_schema_is_distinct_from_conformance(self):
         smoke = _load_smoke()
-        self.assertEqual(smoke.SCHEMA, "legalizer-dsl-integration-v1")
+        self.assertEqual(smoke.SCHEMA, "legalizer-dsl-integration-v2")
+        self.assertEqual(set(smoke.TARGETS), {"toycpu", "aarch64-vector"})
+
+    def test_status_gate_accepts_a_fully_pinned_pass(self):
+        checker = _load_status()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            data = _fake_report(root)
+            report = root / "pass.json"
+            report.write_text(json.dumps(data), encoding="utf-8")
+            with _patched_root(checker, root):
+                self.assertEqual(checker.main([str(report), "--require-pass"]), 0)
+
+    def test_status_gate_rejects_unpinned_or_overstated_reports(self):
+        checker = _load_status()
+        cases = {
+            "v1-schema": lambda data: data.update(
+                schema="legalizer-dsl-integration-v1"
+            ),
+            "small-sample": lambda data: data["inputs"].update(query_count=1),
+            "no-provenance": lambda data: data.pop("provenance"),
+            "no-generated-oracle": lambda data: data["comparisons"].pop(
+                "generated_oracle"
+            ),
+            "dirty-worktree": lambda data: data["provenance"].update(
+                worktree_dirty=True
+            ),
+            "short-head": lambda data: data["provenance"].update(
+                head_commit="abc"
+            ),
+            "null-consumer": lambda data: data["provenance"].update(
+                consumer_sha256=None
+            ),
+            "consumer-diverged": lambda data: data["comparisons"].update(
+                consumer={
+                    "ok": True,
+                    "queries": 100,
+                    "divergence_count": 1,
+                    "oracle_errors": 0,
+                }
+            ),
+        }
+        for name, mutate in cases.items():
+            with self.subTest(case=name):
+                with tempfile.TemporaryDirectory() as tmp:
+                    root = pathlib.Path(tmp)
+                    data = _fake_report(root)
+                    mutate(data)
+                    report = root / "report.json"
+                    report.write_text(json.dumps(data), encoding="utf-8")
+                    with _patched_root(checker, root):
+                        self.assertEqual(
+                            checker.main([str(report), "--require-pass"]), 1
+                        )
 
     def test_status_gate_rejects_skip_when_pass_is_required(self):
-        import hashlib
-        import json
-        import tempfile
-
         checker = _load_status()
-        rules_rel = "rules/toycpu.ldsl"
-        rules_sha = hashlib.sha256(
-            (ROOT / rules_rel).read_bytes()
-        ).hexdigest()
-
-        def report(status: str, **overrides):
-            data = {
-                "schema": "legalizer-dsl-integration-v1",
-                "status": status,
-                "ok": True,
-                "target": "toycpu",
-                "inputs": {
-                    "rules": rules_rel,
-                    "rules_sha256": rules_sha,
-                    "query_count": 1,
-                },
-                "comparisons": {
-                    "consumer": {
-                        "ok": True,
-                        "divergence_count": 0,
-                        "oracle_errors": 0,
-                    }
-                },
-            }
-            data.update(overrides)
-            return data
-
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             skip = root / "skip.json"
-            passed = root / "pass.json"
-            forged = root / "forged.json"
             skip.write_text(
-                json.dumps(report("SKIP", ok=False, skip_reason="test environment")),
-                encoding="utf-8",
-            )
-            passed.write_text(json.dumps(report("PASS")), encoding="utf-8")
-            forged.write_text(
                 json.dumps(
-                    report(
-                        "PASS",
-                        comparisons={
-                            "consumer": {
-                                "ok": True,
-                                "divergence_count": 1,
-                                "oracle_errors": 0,
-                            }
-                        },
-                    )
+                    {
+                        "schema": checker.SCHEMA,
+                        "status": "SKIP",
+                        "ok": False,
+                        "skip_reason": "test environment",
+                    }
                 ),
                 encoding="utf-8",
             )
-            self.assertEqual(checker.main([str(skip)]), 0)
-            self.assertEqual(checker.main([str(skip), "--require-pass"]), 1)
-            self.assertEqual(checker.main([str(passed), "--require-pass"]), 0)
-            self.assertEqual(checker.main([str(forged), "--require-pass"]), 1)
+            with _patched_root(checker, root):
+                self.assertEqual(checker.main([str(skip)]), 0)
+                self.assertEqual(checker.main([str(skip), "--require-pass"]), 1)
+
+
+def _sha(path: pathlib.Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _fake_report(root: pathlib.Path) -> dict:
+    """Build a PASS report whose artifact hashes are all real."""
+
+    artifacts = root / "artifacts"
+    artifacts.mkdir()
+    rules = root / "rules" / "toycpu.ldsl"
+    rules.parent.mkdir()
+    rules.write_text("ruleset G_X { legal_for {s32}; }\n", encoding="utf-8")
+    query_file = artifacts / "queries.jsonl"
+    query_file.write_text('{"opcode": "G_X"}\n', encoding="utf-8")
+    consumer = artifacts / "consumer.bin"
+    consumer.write_bytes(b"consumer")
+    hand_oracle = artifacts / "hand-oracle.bin"
+    hand_oracle.write_bytes(b"hand")
+    generated_oracle = artifacts / "generated-oracle.bin"
+    generated_oracle.write_bytes(b"generated")
+    header = artifacts / "rules.h"
+    header.write_text("// header\n", encoding="utf-8")
+    source = artifacts / "rules.cpp"
+    source.write_text("// source\n", encoding="utf-8")
+
+    query_sha = _sha(query_file)
+    rules_sha = _sha(rules)
+    return {
+        "schema": "legalizer-dsl-integration-v2",
+        "target": "toycpu",
+        "status": "PASS",
+        "ok": True,
+        "provenance": {
+            "generator_version": "test",
+            "dsl_spec_version": "1",
+            "evaluator_sha256": "a" * 64,
+            "codegen_sha256": "b" * 64,
+            "llvm_commit": "c" * 40,
+            "head_commit": "d" * 40,
+            "worktree_dirty": False,
+            "rules_sha256": rules_sha,
+            "query_sha256": query_sha,
+            "generated": {
+                "header": header.relative_to(root).as_posix(),
+                "header_sha256": _sha(header),
+                "source": source.relative_to(root).as_posix(),
+                "source_sha256": _sha(source),
+            },
+            "consumer_sha256": _sha(consumer),
+            "oracle_sha256": {
+                "hand_written_oracle": _sha(hand_oracle),
+                "generated_oracle": _sha(generated_oracle),
+            },
+        },
+        "inputs": {
+            "rules": rules.relative_to(root).as_posix(),
+            "rules_sha256": rules_sha,
+            "query_count": 100,
+            "query_sha256": query_sha,
+        },
+        "artifacts": {
+            "query_file": query_file.relative_to(root).as_posix(),
+            "consumer": consumer.relative_to(root).as_posix(),
+            "oracles": {
+                "hand_written_oracle": hand_oracle.relative_to(root).as_posix(),
+                "generated_oracle": generated_oracle.relative_to(root).as_posix(),
+            },
+        },
+        "comparisons": {
+            name: {
+                "ok": True,
+                "queries": 100,
+                "divergence_count": 0,
+                "oracle_errors": 0,
+            }
+            for name in ("consumer", "hand_written_oracle", "generated_oracle")
+        },
+    }
+
+
+class _patched_root:
+    """Point the status gate at a temporary fixture tree."""
+
+    def __init__(self, module, root: pathlib.Path):
+        self.module = module
+        self.root = root
+        self.saved = (module.ROOT, module.current_expected)
+
+    def __enter__(self):
+        self.module.ROOT = self.root
+        self.module.current_expected = lambda: {}
+        return self.module
+
+    def __exit__(self, *exc):
+        self.module.ROOT, self.module.current_expected = self.saved
+        return False
 
 
 if __name__ == "__main__":

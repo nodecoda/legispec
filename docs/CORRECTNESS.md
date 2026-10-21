@@ -34,13 +34,23 @@ Claim = (P, G, Ref, k, D, R, U, Obs, ≈, E)
 | `≈` | 逐分量相等；LLT 使用 LLVM 的 `LLT::operator==` |
 | `E` | rules/report/oracle/corpus/evaluator/witness 的哈希与复现信息 |
 
-核心命题：
+核心命题（按 claim 分别成立）：
 
 ```text
+对每个 claim k：
 ∀ q ∈ (D ∪ R) \ U :
     Obs(I_P(q)) ≈ Obs(Ref_k(q))
-  ∧ Obs(G_k(q)) ≈ Obs(Ref_k(q))
+
+对每个 generated claim k（存在由 G_k 构建的 oracle）：
+∀ q ∈ (D ∪ R) \ U :
+    Obs(G_k(q)) ≈ Obs(Ref_k(q))
 ```
+
+GeneratedCpp 命题**不是**对全部规则无条件成立。当前 43 条 claim 中有 16 条
+generated claim；另外 6 条规则在 `claims/generated-evidence.json` 中显式登记为
+hand-only，只支持第一条（hand-evaluator）等价，不支持第二条（GeneratedCpp）等价。
+`closure check` 强制每条 `rules/*.ldsl` 要么有 generated claim，要么有带原因的
+hand-only 登记；新增规则不能静默绕过这个分类。
 
 旁条件：
 
@@ -53,6 +63,7 @@ Struct(G, P)          -- 生成代码与规则列表结构对应
 Compile(G, Ref@c, k)  -- 真实编译、链接成功
 Fresh(E)              -- 证据仍对应当前 P/G/Ref/k
 Adequate(D)           -- 域覆盖真实查询形状
+GeneratedCoverage     -- 每条规则有 generated 证据或显式 hand-only 登记
 NoSilentSkip          -- 缺证据时失败或显式 UNKNOWN
 ```
 

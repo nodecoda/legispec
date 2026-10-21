@@ -154,6 +154,24 @@ def _require_valid_output_stem(stem: str) -> None:
         )
 
 
+def _rules_label(rules_path: Path) -> str:
+    """Return a stable, non-absolute label for the rules source.
+
+    Generated artifacts must be byte-identical regardless of the directory the
+    generator was invoked from.  Repository rules are recorded relative to the
+    data root; anything else is labelled ``external/<name>`` rather than
+    leaking an absolute machine path into the manifest and generated headers.
+    """
+
+    resolved = rules_path.resolve()
+    for root in (paths.DATA_ROOT, paths.REPO_ROOT):
+        try:
+            return resolved.relative_to(Path(root).resolve()).as_posix()
+        except ValueError:
+            continue
+    return f"external/{resolved.name}"
+
+
 def _derive_output_stem(rules_path: Path) -> str:
     """Derive a filename-safe C++ identifier from the rules file stem."""
     stem = re.sub(r"[^A-Za-z0-9_]", "_", rules_path.stem)
@@ -1434,11 +1452,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     data = rules_path.read_bytes()
     rules_sha = hashlib.sha256(data).hexdigest()
-    resolved_rules = rules_path.resolve()
-    try:
-        rel = resolved_rules.relative_to(Path.cwd().resolve()).as_posix()
-    except ValueError:
-        rel = resolved_rules.as_posix()
+    rel = _rules_label(rules_path)
     output_stem = (
         args.output_stem
         if args.output_stem is not None

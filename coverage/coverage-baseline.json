@@ -1,7 +1,19 @@
 {
   "schema": "legalizer-dsl-coverage-v1",
   "targets": {
-    "aarch64-vector": 0.9538461538461539,
-    "toycpu": 0.9787234042553191
+    "aarch64-vector": {
+      "in_domain": 62,
+      "queries": 65,
+      "ratio": 0.9538461538461539,
+      "rules_matched": 10,
+      "rules_total": 11
+    },
+    "toycpu": {
+      "in_domain": 138,
+      "queries": 141,
+      "ratio": 0.9787234042553191,
+      "rules_matched": 87,
+      "rules_total": 89
+    }
   }
 }

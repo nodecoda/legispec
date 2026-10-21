@@ -25,7 +25,15 @@ from legalizer_dsl import closure
 
 class SkipEvidenceTamperTests(unittest.TestCase):
     def test_a_negative_cached_verdict_still_fails_in_structural_mode(self):
-        saved = (closure.LEDGER, closure.RULES, closure.OUT, closure.CONSTRUCTS, closure.CLOSURE_MD, closure.TESTS)
+        saved = (
+            closure.LEDGER,
+            closure.RULES,
+            closure.OUT,
+            closure.CONSTRUCTS,
+            closure.CLOSURE_MD,
+            closure.TESTS,
+            closure.GENERATED_EVIDENCE,
+        )
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             rules = root / "rules"
@@ -39,8 +47,19 @@ class SkipEvidenceTamperTests(unittest.TestCase):
             pinned.write_text(
                 "<!-- closure:pinned -->\n"
                 "claims=1\nhand-claims=1\ngenerated-claims=0\n"
+                "generated-covered=0\nhand-only=1\n"
                 "rules-files=1\nhand-queries=0\nconstructs=0\ntests=0\n"
                 "<!-- /closure:pinned -->\n",
+                encoding="utf-8",
+            )
+            evidence = root / "generated-evidence.json"
+            evidence.write_text(
+                json.dumps(
+                    {
+                        "schema": "legalizer-dsl-generated-evidence-v1",
+                        "hand_only": {"x.ldsl": "hand oracle only in this fixture"},
+                    }
+                ),
                 encoding="utf-8",
             )
             tests = root / "tests"
@@ -98,6 +117,7 @@ class SkipEvidenceTamperTests(unittest.TestCase):
             closure.CONSTRUCTS = coverage
             closure.CLOSURE_MD = pinned
             closure.TESTS = tests
+            closure.GENERATED_EVIDENCE = evidence
             try:
                 with contextlib.redirect_stdout(io.StringIO()) as captured:
                     rc = closure.audit(False, True)
@@ -109,10 +129,70 @@ class SkipEvidenceTamperTests(unittest.TestCase):
                     closure.CONSTRUCTS,
                     closure.CLOSURE_MD,
                     closure.TESTS,
+                    closure.GENERATED_EVIDENCE,
                 ) = saved
         self.assertEqual(rc, 1)
         self.assertIn("not marked ok", captured.getvalue())
         self.assertIn("divergence", captured.getvalue())
+
+
+class GeneratedEvidenceTests(unittest.TestCase):
+    def _run(self, rules: dict[str, str], claims: list[dict], hand_only: dict):
+        saved = (closure.RULES, closure.GENERATED_EVIDENCE)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            rule_dir = root / "rules"
+            rule_dir.mkdir()
+            for name in rules:
+                (rule_dir / name).write_text("ruleset G_X { legal; }\n", encoding="utf-8")
+            manifest = root / "generated-evidence.json"
+            manifest.write_text(
+                json.dumps(
+                    {
+                        "schema": "legalizer-dsl-generated-evidence-v1",
+                        "hand_only": hand_only,
+                    }
+                ),
+                encoding="utf-8",
+            )
+            closure.RULES = rule_dir
+            closure.GENERATED_EVIDENCE = manifest
+            try:
+                return closure.generated_evidence(claims)
+            finally:
+                closure.RULES, closure.GENERATED_EVIDENCE = saved
+
+    def test_every_rule_needs_generated_claim_or_hand_only_reason(self):
+        summary, problems = self._run(
+            {"covered.ldsl": "", "declared.ldsl": "", "missing.ldsl": ""},
+            [{"id": "covered-generated", "rules": "covered.ldsl"}],
+            {"declared.ldsl": "no generated oracle for this slice"},
+        )
+        self.assertEqual(summary["generated_covered"], 1)
+        self.assertEqual(summary["hand_only"], ["declared.ldsl"])
+        self.assertTrue(
+            any("missing.ldsl" in problem for problem in problems), problems
+        )
+
+    def test_generated_and_hand_only_are_mutually_exclusive(self):
+        _, problems = self._run(
+            {"both.ldsl": ""},
+            [{"id": "both-generated", "rules": "both.ldsl"}],
+            {"both.ldsl": "contradictory"},
+        )
+        self.assertTrue(
+            any("both generated and hand-only" in problem for problem in problems),
+            problems,
+        )
+
+    def test_hand_only_declaration_must_reference_a_real_rule_with_a_reason(self):
+        _, problems = self._run(
+            {"real.ldsl": ""},
+            [],
+            {"ghost.ldsl": "  "},
+        )
+        self.assertTrue(any("missing rule" in problem for problem in problems), problems)
+        self.assertTrue(any("no reason" in problem for problem in problems), problems)
 
 
 if __name__ == "__main__":

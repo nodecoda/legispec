@@ -72,10 +72,10 @@ src/legalizer_dsl/        实现：parser / checker / interp / codegen / conform
 rules/                    22 份 .ldsl 规则转写（ToyCPU、X86-64、AArch64、RISC-V）
 witness/                  9 份 witness：固定顺序依赖与边界
 capabilities/             22 份 provider 契约（custom / libcall / lower 谁能接）
-claims/                   claims.json（43 条断言与哈希钉）、claim-ledger.md、构造覆盖
+claims/                   claims.json（43 条断言与哈希钉）、generated-evidence.json（generated/hand-only 分类）、claim-ledger.md、构造覆盖
 docs/                     命题、语法、模式、配置、决策记录；兼容性见 COMPATIBILITY.md
 examples/                 真实 MIR / LLVM IR 语料
-tests/                    357 个单元测试
+tests/                    375 个单元测试
 scripts/                  证据收集与批处理
 out/                      本地证据缓存（不入库，见第 6 节）
 ```
@@ -86,13 +86,18 @@ out/                      本地证据缓存（不入库，见第 6 节）
 claims=43            # 每条都钉住 rules 内容哈希 + report 哈希 + oracle 哈希
 hand-claims=27
 generated-claims=16
+generated-covered=16
+hand-only=6
 rules-files=22
 hand-queries=321627
 constructs=63/63     # LLVM builder 方法 → DSL 原语，全部归类
-tests=357
+tests=375
 ```
 
 这些数字由 `python -m legalizer_dsl.closure check` 从产物重新计算并比对；
+`generated-covered=16` 表示 GeneratedCpp 等价只对 16 条 generated claim 成立；
+其余 6 条规则在 `claims/generated-evidence.json` 中显式登记为 hand-only，
+只证明 hand-evaluator 等价。closure 会拒绝既无 generated 证据、又无 hand-only 登记的新规则。
 文档数字漂移会让门禁直接失败，避免“文档比代码乐观”。
 
 证据状态必须分清：

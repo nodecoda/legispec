@@ -36,17 +36,23 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
+from legalizer_dsl import __version__ as GENERATOR_VERSION  # noqa: E402
 from legalizer_dsl import codegen  # noqa: E402
+from legalizer_dsl.codegen import DSL_SPEC_VERSION  # noqa: E402
 from legalizer_dsl.conformance import (  # noqa: E402
     ComparisonReport,
     _write_input,
     compare,
     iter_d_queries,
 )
+from legalizer_dsl.fingerprint import (  # noqa: E402
+    codegen_sha256,
+    hand_evaluator_sha256,
+)
 from legalizer_dsl.model import Query  # noqa: E402
 from legalizer_dsl.parser import parse_file  # noqa: E402
 
-SCHEMA = "legalizer-dsl-integration-v1"
+SCHEMA = "legalizer-dsl-integration-v2"
 
 TARGETS = {
     "toycpu": {
@@ -261,12 +267,24 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--out", default="out/integration-report.json")
     parser.add_argument("--limit", type=int, default=20000,
                         help="sampled query count; 0 means the full D")
-    parser.add_argument("--llvm-commit", default="unknown")
+    parser.add_argument(
+        "--llvm-commit",
+        default=None,
+        help="LLVM commit/version pin; defaults to claims/claims.json",
+    )
     parser.add_argument("--no-build", action="store_true",
                         help="reuse an existing consumer build")
     parser.add_argument("--skip-reference", action="store_true",
                         help="do not run the hand-written/generated oracle binaries")
     args = parser.parse_args(argv)
+    llvm_commit = args.llvm_commit or _ledger_llvm_commit()
+    if not llvm_commit or llvm_commit == "unknown":
+        print(
+            "error: --llvm-commit is required (or pin llvm_commit in "
+            "claims/claims.json)",
+            file=sys.stderr,
+        )
+        return 2
 
     target = TARGETS[args.target]
     rules = Path(args.rules) if args.rules else ROOT / target["rules"]
@@ -285,15 +303,16 @@ def main(argv: Optional[list[str]] = None) -> int:
     stem = codegen._derive_output_stem(rules)
     namespace = target["namespace"] or codegen._namespace_from_rules_stem(rules.stem)
 
+    rules_sha = _sha256(rules.read_bytes())
     codegen.generate(
         info,
         out_dir=generated_dir,
         rules_rel=_relative_to_root(rules),
-        rules_sha=_sha256(rules.read_bytes()),
+        rules_sha=rules_sha,
         namespace=namespace,
         namespace_source="derived" if target["namespace"] is None else "explicit",
         output_stem=stem,
-        llvm_commit=args.llvm_commit,
+        llvm_commit=llvm_commit,
     )
     codegen.emit_wiring(
         info,
@@ -301,12 +320,20 @@ def main(argv: Optional[list[str]] = None) -> int:
         wiring_dir=wiring_dir,
         namespace=namespace,
         output_stem=stem,
-        llvm_commit=args.llvm_commit,
+        llvm_commit=llvm_commit,
     )
 
     queries = _select_queries(info, args.limit)
     query_path = out_dir / args.target / "queries.jsonl"
     query_count, query_sha = _write_input(query_path, queries)
+
+    generated_header = generated_dir / f"{stem}.h"
+    generated_source = generated_dir / f"{stem}.cpp"
+    generated: dict = {}
+    for key, path in (("header", generated_header), ("source", generated_source)):
+        if path.is_file():
+            generated[key] = _relative_to_root(path)
+            generated[f"{key}_sha256"] = _sha256_file(path)
 
     report: dict = {
         "schema": SCHEMA,
@@ -317,9 +344,23 @@ def main(argv: Optional[list[str]] = None) -> int:
             "python": sys.version.split()[0],
             "platform": sys.platform,
         },
+        "provenance": {
+            "generator_version": GENERATOR_VERSION,
+            "dsl_spec_version": DSL_SPEC_VERSION,
+            "evaluator_sha256": hand_evaluator_sha256(),
+            "codegen_sha256": codegen_sha256(),
+            "llvm_commit": llvm_commit,
+            "head_commit": _git("rev-parse", "HEAD") or "unknown",
+            "worktree_dirty": _project_dirty(),
+            "rules_sha256": rules_sha,
+            "query_sha256": query_sha,
+            "generated": generated,
+            "consumer_sha256": None,
+            "oracle_sha256": {},
+        },
         "inputs": {
             "rules": _relative_to_root(rules),
-            "rules_sha256": _sha256(rules.read_bytes()),
+            "rules_sha256": rules_sha,
             "query_source": "D",
             "query_count": query_count,
             "query_limit": args.limit,
@@ -329,6 +370,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             "generated_dir": _relative_to_root(generated_dir),
             "wiring_dir": _relative_to_root(wiring_dir),
             "build_dir": _relative_to_root(build_dir),
+            "query_file": _relative_to_root(query_path),
             "output_stem": stem,
             "namespace": namespace,
         },
@@ -364,36 +406,57 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 0
 
     report["artifacts"]["consumer"] = _relative_to_root(consumer)
+    report["provenance"]["consumer_sha256"] = _sha256_file(consumer)
 
     consumer_report = ComparisonReport()
     compare(info, consumer, query_path, queries, consumer_report)
     report["comparisons"]["consumer"] = _comparison_summary(consumer_report)
 
-    ok = consumer_report.ok
-    if not args.skip_reference:
+    references_complete = not args.skip_reference
+    all_ok = consumer_report.ok
+    missing_references: list[str] = []
+    if args.skip_reference:
+        report["skip_reason"] = "--skip-reference requested"
+    else:
         for label, key in (
             ("hand_written_oracle", "oracle"),
             ("generated_oracle", "generated_oracle"),
         ):
             path = ROOT / target[key]
             if not path.is_file():
+                references_complete = False
+                missing_references.append(label)
                 report["comparisons"][label] = {
                     "status": "SKIP",
                     "reason": f"binary not found: {_relative_to_root(path)}",
                 }
                 continue
+            report["provenance"]["oracle_sha256"][label] = _sha256_file(path)
+            report["artifacts"].setdefault("oracles", {})[label] = _relative_to_root(path)
             oracle_report = ComparisonReport()
             compare(info, path, query_path, queries, oracle_report)
             report["comparisons"][label] = _comparison_summary(oracle_report)
-            ok = ok and oracle_report.ok
+            all_ok = all_ok and oracle_report.ok
 
-    report["ok"] = ok
-    report["status"] = "PASS" if ok else "FAIL"
+    if missing_references:
+        report["skip_reason"] = (
+            "missing reference comparison(s): " + ", ".join(missing_references)
+        )
+    if not consumer_report.ok:
+        status = "FAIL"
+    elif not references_complete:
+        status = "SKIP"
+    elif all_ok:
+        status = "PASS"
+    else:
+        status = "FAIL"
+    report["ok"] = status == "PASS"
+    report["status"] = status
     _write_report(report_path, report)
 
     summary = report["comparisons"]["consumer"]
     print(
-        f"integration: target={args.target} status={report['status']} "
+        f"integration: target={args.target} status={status} "
         f"queries={summary['queries']} divergences={summary['divergence_count']} "
         f"rules={summary['rules_matched']}"
     )
@@ -406,7 +469,7 @@ def main(argv: Optional[list[str]] = None) -> int:
                 f"errors={value['oracle_errors']}"
             )
     print(f"report: {_relative_to_root(report_path)}")
-    return 0 if ok else 1
+    return 0 if status in {"PASS", "SKIP"} else 1
 
 
 def _build_consumer(
@@ -502,6 +565,51 @@ def _sha256(data: bytes) -> str:
     import hashlib
 
     return hashlib.sha256(data).hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    return _sha256(path.read_bytes())
+
+
+def _git(*args: str) -> Optional[str]:
+    try:
+        result = subprocess.run(
+            ["git", *args],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+    except OSError:
+        return None
+    if result.returncode != 0:
+        return None
+    return result.stdout.strip()
+
+
+def _project_dirty() -> bool:
+    status = _git("status", "--porcelain")
+    if not status:
+        return False
+    for line in status.splitlines():
+        path = line[3:].strip().strip('"').replace("\\", "/")
+        if path in {"AGENTS.md", ".codex"} or path.startswith(".codex/"):
+            continue
+        return True
+    return False
+
+
+def _ledger_llvm_commit() -> Optional[str]:
+    try:
+        ledger = json.loads(
+            (ROOT / "claims" / "claims.json").read_text(encoding="utf-8-sig")
+        )
+    except (OSError, json.JSONDecodeError):
+        return None
+    value = ledger.get("llvm_commit")
+    return value if isinstance(value, str) and value else None
 
 
 def _relative_to_root(path: Path) -> str:

@@ -123,18 +123,35 @@ Useful options:
 --limit 0          query the full declared domain D (default sample: 20000)
 --no-build         reuse an existing out/integration/<target>/build
 --skip-reference   only compare the consumer with the Python interpreter
+--llvm-commit SHA  pin recorded in the report; defaults to claims/claims.json
+                   (there is no "unknown" fallback: the smoke exits 2)
 --llvm-dir DIR     override LLVMConfig.cmake discovery
 --cxx PATH         override the C++ compiler
 --out PATH         report path (default out/integration-report.json)
 ```
 
-The report records the rules hash, query hash, environment, generated
-artifacts, and each comparison. It distinguishes:
+Reports use schema `legalizer-dsl-integration-v2`. Besides the rules and query
+hashes, `provenance` pins the generator and LDSL-spec versions, the evaluator
+and codegen fingerprints, the LLVM commit, the git `head_commit`, whether the
+worktree was dirty, the generated header/source hashes, and the consumer and
+oracle binary hashes. `artifacts` names the query file and every binary so the
+status gate can re-hash them. A report that was produced from a different
+tree, a different generator, or a dirty worktree is rejected.
 
-- `PASS`: build succeeded and every available comparison had zero divergence;
-- `FAIL`: build failed, or any comparison diverged;
-- `SKIP`: the environment could not provide a compiler/LLVM; the reason is
-  explicit and the smoke is not counted as a pass.
+Status semantics are deliberately narrow:
+
+- `PASS`: the consumer ran and **both** reference comparisons
+  (`hand_written_oracle`, `generated_oracle`) ran with zero divergence;
+- `FAIL`: the consumer build/run failed, or any comparison diverged;
+- `SKIP`: the environment could not provide a compiler/LLVM, a reference
+  binary is missing, or `--skip-reference` was passed. `SKIP` is never a pass.
+
+`scripts/check_integration_status.py` enforces the same contract: it requires
+schema v2, at least 100 queries, all three comparisons, artifact hashes that
+match the files on disk, `worktree_dirty=false`, `head_commit == HEAD`, and
+the current evaluator/codegen/LLVM pins. CI runs it with `--require-pass`, so a
+`SKIP` becomes a job failure. Generate reports only after committing the tree;
+a dirty worktree is reported as `worktree_dirty=true` and will be rejected.
 
 The script searches the current environment, then the local LLVM builds used
 by this repository. CI runners should set `LLVM_DIR`, `CXX`, and, on Windows,

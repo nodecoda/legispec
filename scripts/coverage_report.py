@@ -411,6 +411,10 @@ def _write_docs(path: Path, report: dict) -> None:
         "evidence.  `domain_not_observed` lists declared values the corpus never",
         "exercised; `outside_domain` lists corpus values the rules do not cover.",
         "",
+        "The ratchet baseline records absolute metrics, not only the ratio:",
+        "`ratio`, `in_domain`, `queries`, `rules_matched`, and `rules_total`",
+        "must not decrease, and the target set must match exactly.",
+        "",
         "| target | queries | in D | boundary | ratio | rules matched |",
         "|---|---:|---:|---:|---:|---:|",
     ]
@@ -470,6 +474,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--docs", default="docs/COVERAGE.md")
     parser.add_argument("--baseline", default="coverage/coverage-baseline.json")
     parser.add_argument("--update-baseline", action="store_true")
+    parser.add_argument("--no-docs", action="store_true",
+                        help="do not rewrite docs/COVERAGE.md")
     parser.add_argument("--waiver", help="reason for an allowed coverage decrease")
     args = parser.parse_args(argv)
 
@@ -503,12 +509,23 @@ def main(argv: Optional[list[str]] = None) -> int:
             },
         )
 
+    def metric_snapshot(data: dict) -> dict:
+        corpus = data["corpus"]
+        coverage = data["coverage"]
+        return {
+            "ratio": coverage["ratio"],
+            "in_domain": corpus["in_domain"],
+            "queries": corpus["queries"],
+            "rules_matched": coverage["rules_matched"],
+            "rules_total": coverage["rules_total"],
+        }
+
     baseline_path = ROOT / args.baseline
     if args.update_baseline:
         baseline = {
             "schema": SCHEMA,
             "targets": {
-                target: data["coverage"]["ratio"]
+                target: metric_snapshot(data)
                 for target, data in report["targets"].items()
             },
         }
@@ -521,16 +538,30 @@ def main(argv: Optional[list[str]] = None) -> int:
         report["ratchet"]["status"] = "UPDATED"
     elif baseline_path.is_file():
         baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        baseline_targets = baseline.get("targets", {})
         problems = []
+        if set(baseline_targets) != set(report["targets"]):
+            problems.append(
+                "target sets differ: baseline="
+                f"{sorted(baseline_targets)} report={sorted(report['targets'])}"
+            )
         for target, data in report["targets"].items():
-            old = baseline.get("targets", {}).get(target)
-            current = data["coverage"]["ratio"]
-            if old is None or current is None:
+            previous = baseline_targets.get(target)
+            if previous is None:
+                problems.append(f"{target}: no baseline entry")
                 continue
-            if current + 1e-12 < old:
-                problems.append(
-                    f"{target}: coverage {current:.6f} < baseline {old:.6f}"
-                )
+            if isinstance(previous, (int, float)):
+                previous = {"ratio": previous}
+            current = metric_snapshot(data)
+            for key in ("ratio", "in_domain", "queries", "rules_matched", "rules_total"):
+                old_value = previous.get(key)
+                current_value = current.get(key)
+                if old_value is None or current_value is None:
+                    continue
+                if current_value + 1e-12 < old_value:
+                    problems.append(
+                        f"{target}: {key} {current_value} < baseline {old_value}"
+                    )
         report["ratchet"]["problems"] = problems
         if problems and not args.waiver:
             report["ratchet"]["status"] = "FAIL"
@@ -549,7 +580,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         newline="\n",
     )
     docs_path = ROOT / args.docs
-    _write_docs(docs_path, report)
+    if not args.no_docs:
+        _write_docs(docs_path, report)
 
     for target, data in sorted(report["targets"].items()):
         corpus = data["corpus"]

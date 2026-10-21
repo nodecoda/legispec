@@ -342,5 +342,24 @@ class MacroStructureTests(unittest.TestCase):
         self.assertEqual(structure["counts"]["opcodes"], 3)
 
 
+class MacroGuardMetadataTests(unittest.TestCase):
+    def test_unconditional_scalar_elt_macros_record_guard_true(self):
+        source = """
+ruleset G_X {
+  min_scalar_elt_same_as_if 1, 0 when vector(t0);
+  max_scalar_elt_same_as_if 1, 0 when vector(t0);
+}
+"""
+        info = parse(source)
+        guards = [expansion.guard for expansion in info.rulesets[0].expansions]
+        self.assertEqual(guards, [True, True])
+        structure = _expected_structure(info)
+        recorded = [
+            expansion["guard"]
+            for expansion in structure["rulesets"][0]["expansions"]
+        ]
+        self.assertEqual(recorded, [True, True])
+
+
 if __name__ == "__main__":
     unittest.main()

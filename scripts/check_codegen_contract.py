@@ -222,6 +222,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     if missing:
         print(f"error: unknown rule file(s): {', '.join(sorted(missing))}", file=sys.stderr)
         return 2
+    if not selected:
+        print(
+            f"error: no rules/*.ldsl files found under {RULES}; refusing to "
+            "report an empty contract as PASS",
+            file=sys.stderr,
+        )
+        return 1
 
     if OUT.exists() and not args.keep:
         shutil.rmtree(OUT)
