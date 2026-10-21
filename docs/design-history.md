@@ -17,11 +17,11 @@ Grammar: `grammar.ebnf`.
 
 Full grammar and design notes:
 
-- `../../legalizer-dsl-design.md`
+- `design.md`
 - [`walkthrough.md`](walkthrough.md)
-- `../../notes/target-subset-coverage.md` (what the real-target subsets do and do not cover)
-- `../../notes/claim-ledger.md` (what has actually been proven, per configuration)
-- `../../notes/construct-coverage.md` (which LLVM builder methods the DSL represents)
+- `target-subset-coverage.md` (what the real-target subsets do and do not cover)
+- `../claims/claim-ledger.md` (what has actually been proven, per configuration)
+- `construct-coverage.md` (which LLVM builder methods the DSL represents)
 
 ## The claim, and how to audit it
 
@@ -41,7 +41,7 @@ That claim is only worth what its audit is worth, so it lives in one place:
 
 ~~~powershell
 python -X utf8 -m legalizer_dsl.claims verify
-python -X utf8 closure.py check     # CLOSURE.md pinned numbers vs artifacts
+python -m legalizer_dsl.closure check     # CLOSURE.md pinned numbers vs artifacts
 ~~~
 
 The ledger (`claims.json`, rendered as `notes/claim-ledger.md`) checks, for
@@ -195,7 +195,7 @@ The two unmatched rules are the `bits < 1` lower-bound guards emitted by
 `clampScalar`; they are unreachable because `s1` is the minimum LLT scalar and
 are registered in the witness corpus as `unreachable`.
 
-See `../../CONFORMANCE.md` for the frozen definition, exclusions, and divergence
+See `CONFORMANCE.md` for the frozen definition, exclusions, and divergence
 policy.
 
 ## Second target: X86-64 (scalar subset)
@@ -204,7 +204,7 @@ policy.
 `X86LegalizerInfo.cpp`.  It is a migration test, not a full X86 model:
 vector clauses, memory descriptors, custom legalization, FP and atomics are
 out of scope.  The experiment is documented in
-`../../notes/x86-gisel-experiment.md`.
+`experiments/x86-gisel-experiment.md`.
 
 ~~~powershell
 python -m legalizer_dsl `
@@ -244,7 +244,7 @@ model: vector/scalable-vector clauses, memory descriptors, FP and SVE/FP16
 feature variants are out of scope.  CSSC is a separate frozen configuration
 (`rules/aarch64-cssc-scalar.ldsl`); pointer rulesets and atomics are separate
 subsets (`aarch64-pointer.ldsl`, `aarch64-atomic.ldsl`).  The scalar experiment
-is documented in `../../notes/aarch64-gisel-experiment.md`.
+is documented in `experiments/aarch64-gisel-experiment.md`.
 
 The oracle links against the full LLVM build at `F:\llvm\build` and is built
 with the AArch64 option:
@@ -291,7 +291,7 @@ experiment.  It differs from `aarch64-scalar.ldsl` in exactly four rulesets:
 `G_SMIN/G_SMAX/G_UMIN/G_UMAX`, `G_ABS`, `G_CTPOP` and `G_CTTZ`.  `HasCSSC` is a
 construction-time bool in `AArch64LegalizerInfo`, so one frozen file per
 configuration is exact.  The experiment is documented in
-`../../notes/aarch64-cssc-experiment.md`.
+`experiments/aarch64-cssc-experiment.md`.
 
 ~~~powershell
 python -X utf8 -m legalizer_dsl `
@@ -364,7 +364,7 @@ configuration variants.
 `G_FRAME_INDEX`, `G_GLOBAL_VALUE`, `G_PTRAUTH_GLOBAL_VALUE`,
 `G_BLOCK_ADDR`, `G_JUMP_TABLE`, `G_BRJT`).  It uses the real 64-bit AArch64
 pointer shape `p0:64`; 32-bit `p0` is not an AArch64 pointer.  The experiment
-is documented in `../../notes/aarch64-pointer-experiment.md`.
+is documented in `experiments/aarch64-pointer-experiment.md`.
 
 ~~~powershell
 python -m legalizer_dsl `
@@ -435,7 +435,7 @@ As a contrast, generic vs `+outline-atomics` differs on 29 queries (7
 opcodes), which is the actual policy effect of the libcall branches.
 
 The full experiment and known warnings are documented in
-`../../notes/aarch64-atomic-experiment.md`.  Run the family gate with:
+`experiments/aarch64-atomic-experiment.md`.  Run the family gate with:
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
@@ -537,7 +537,7 @@ aarch64-vector-generated
 
 The full experiment, including the first generated-code failure (a capture-less
 lambda referencing a local `LLT`), is documented in
-`../../notes/aarch64-vector-experiment.md`.
+`experiments/aarch64-vector-experiment.md`.
 
 ### AArch64 G_ADD-family vector slice
 
@@ -608,7 +608,7 @@ aarch64-vector-arith-generated
 ```
 
 The experiment is documented in
-`../../notes/aarch64-vector-arith-experiment.md`.
+`experiments/aarch64-vector-arith-experiment.md`.
 
 ### AArch64 G_MUL vector slice
 
@@ -824,7 +824,7 @@ and `v6s16` survives to `moreElementsToNextPow2`.
 
 `libcallFor({s32, s128})` is proven only as a policy choice.  What call is
 emitted, and with which ABI, belongs to `LegalizerHelper`, not to this
-DSL.  See `../../notes/aarch64-fcmp-experiment.md`.
+DSL.  See `experiments/aarch64-fcmp-experiment.md`.
 
 The gate is:
 
@@ -895,7 +895,7 @@ creates `G_CONCAT_VECTORS`.
 `fixed_vector(tN)` compiles to an inline `Q.Types[N].isFixedVector()` lambda:
 `LegalityPredicates` has `isVector` but no `isFixedVector` helper.  The first
 version emitted a call to the non-existent helper and the oracle build caught
-it.  See `../../notes/aarch64-concat-vectors-experiment.md`.
+it.  See `experiments/aarch64-concat-vectors-experiment.md`.
 
 The gate is:
 
@@ -920,7 +920,7 @@ Zbkc, P or V.  As a result `G_MUL` and division are libcalls, bit-manipulation
 opcodes lower, and the CLMUL family is Unsupported.  Vector/scalable-vector
 rules, pointer rulesets, memory descriptors, FP, atomics and calls are out of
 scope.  The experiment is documented in
-`../../notes/riscv64-gisel-experiment.md`.
+`experiments/riscv64-gisel-experiment.md`.
 
 The oracle links against the full LLVM build (which must contain RISCV) and is
 built with the RISC-V option:
@@ -993,7 +993,7 @@ RISCVGen` selects the namespace, and the oracle is compiled with
 `G_CONSTANT_POOL`, plus the pointer branches of `G_CONSTANT`, `G_PHI`,
 `G_ICMP` and `G_SELECT`).  It uses the real RV64 pointer shape `p0:64`.
 The experiment is documented in
-`../../notes/riscv64-pointer-experiment.md`.
+`experiments/riscv64-pointer-experiment.md`.
 
 ~~~powershell
 python -m legalizer_dsl `
@@ -1130,7 +1130,7 @@ Three flips are easy to get wrong and are called out in the rules file:
   native multiply path needs no libcall overflow check.
 
 The experiment is documented in
-`../../notes/riscv64-mzb-experiment.md`.
+`experiments/riscv64-mzb-experiment.md`.
 
 
 ### RISC-V RV32 (XLen axis)
@@ -1192,7 +1192,7 @@ The claim is `riscv32-generated`; `check-riscv-conditional.ps1` runs it as
 step 10.  Together with steps 8 and 9, generated code is now checked on the
 base RV64 policy, the feature axis and the XLen axis.
 
-The experiment is documented in `../../notes/riscv32-gisel-experiment.md`.
+The experiment is documented in `experiments/riscv32-gisel-experiment.md`.
 
 
 ### RISC-V scalar, one source for both XLen values
@@ -1249,7 +1249,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
   F:\llvm-study\toycpu\scripts\check-riscv-conditional.ps1
 ~~~
 
-The design note is `../../notes/legalizer-dsl-config-guard.md`.
+The design note is `config-guard.md`.
 
 
 ### RISC-V RV32 +M+Zmmul+Zbb (product point)
@@ -1295,7 +1295,7 @@ closure_query_count=60 closure_outside_d=0
 input sha256=e03e73ddedef463e3dccd92908d6a85191f4d254aa66fc2781ccab17895de839
 ~~~
 
-Documented in `../../notes/riscv32-mzb-experiment.md`.
+Documented in `experiments/riscv32-mzb-experiment.md`.
 
 
 ### RISC-V RV32 pointer subset
@@ -1327,7 +1327,7 @@ input sha256=5cf8d0902ae44893...
 
 The same file run against the RV32+mzb oracle also gives 770 / 0 / 31/31:
 pointer rules are feature-independent.  Documented in
-`../../notes/riscv32-pointer-experiment.md`.
+`experiments/riscv32-pointer-experiment.md`.
 
 ## Codegen note: unqualified rule predicates
 
@@ -1434,4 +1434,4 @@ python -m unittest discover -s F:\llvm-study\toycpu\tools\legalizer_dsl\tests -v
 | `tests/test_shadowed.py` | 7 shadowed-witness and reachability tests |
 | `codegen.py` | AST -> C++ builder calls, header/source/manifest |
 | `capabilities.json` | Custom / Libcall / Lower capability manifest |
-| `../../tools/oracle/main.cpp` | JSONL -> `LegalityQuery` -> `getAction` adapter |
+| `<target tree>/tools/oracle/main.cpp` | JSONL -> `LegalityQuery` -> `getAction` adapter |

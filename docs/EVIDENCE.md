@@ -67,13 +67,25 @@ python -m legalizer_dsl.claims verify                    # 断言仍然成立
    ninja -C F:/llvm/build llc
    ```
 
-2. 生成 oracle 源码：oracle 是“把 rules 交给真实的 `LegalizerInfo`”最小驱动，
-   由规则文件经 `codegen` 回生成，再与 LLVM 的 `GlobalISel` 库链接：
+2. 构建 oracle：oracle 是“把 rules 交给真实的 `LegalizerInfo`”的最小观察适配器，
+   不含任何合法性策略。它的契约是逐行 JSONL：
+
+   ```text
+   输入  {"id":0,"opcode":"G_ADD","types":["s32"],"mems":[],"imms":[]}
+   输出  {"id":0,"action":"Legal","type_idx":0,"new_type":null}
+   ```
+
+   适配器必须链接**某个 target 的 LegalizerInfo**（例如 `LLVMToyCPUCodeGen`），
+   所以它注定跟随 target 后端，不在本仓库内：
 
    ```powershell
    legalizer-dsl --rules rules/aarch64-vector.ldsl codegen --out-dir out/codegen
-   # out/codegen/*.cpp + 目标端 LegalizerInfo 的 target hooks -> oracle exe
+   # out/codegen/*.cpp + <target>/tools/oracle/main.cpp + 该 target 的 CodeGen 库
+   #   -> out/oracle-aarch64/legalizer-oracle-aarch64.exe
    ```
+
+   本仓库负责规则、证明与账本；target 后端与 oracle 构建属于外部依赖，
+   这也是证据按 `(target, 配置)` 分片命名的原因。
 
 3. 用新 oracle 重跑：
 

@@ -193,7 +193,7 @@ python -X utf8 constructs.py check
 python -X utf8 claims.py verify
 
 # 收口审计
-python -X utf8 closure.py check
+python -m legalizer_dsl.closure check
 
 # 真实 MIR 形状审计
 python -X utf8 measure_concat_shapes.py
