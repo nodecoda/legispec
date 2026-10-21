@@ -262,15 +262,29 @@ def collect_environment(claims: dict, reports: list[dict]) -> tuple[dict, list[s
         problems.append("integration reports do not record an LLVM build")
     return environment, problems
 
+def parse_unittest_skips(text: str) -> int:
+    """Read the skip count from unittest's own summary line.
+
+    The gate output can contain other ``skipped=`` text (for example this
+    script's own summary printed by a nested test), so a plain search would
+    pick up an earlier, unrelated count.
+    """
+
+    summary = re.search(r"^(?:OK|FAILED) \((.*)\)$", text, re.M)
+    if summary is None:
+        return 0
+    skipped = re.search(r"\bskipped=(\d+)", summary.group(1))
+    return int(skipped.group(1)) if skipped else 0
+
+
 def gate_unit_tests(expected_tests: Optional[int], expected_skipped: Optional[int]):
     gate, text = run_gate(
         "unit-tests", ["-X", "utf8", "-m", "unittest", "discover", "-s", "tests"]
     )
     problems: list[str] = []
     ran = parse_ints(r"Ran (\d+) tests?", text)
-    skipped = parse_ints(r"skipped=(\d+)", text)
     tests = ran[0] if ran else None
-    skip_count = skipped[0] if skipped else 0
+    skip_count = parse_unittest_skips(text)
     gate["tests"] = tests
     gate["skipped"] = skip_count
     if gate["exit_code"] != 0:

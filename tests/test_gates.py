@@ -157,6 +157,25 @@ class FinalVerificationTests(unittest.TestCase):
     def _artifact(self) -> dict:
         return json.loads(self.out_path.read_text(encoding="utf-8"))
 
+    def test_unittest_skip_count_ignores_nested_gate_summaries(self):
+        text = (
+            "final-verification: PASS mode=artifact-consistency gates=6/6 "
+            "dirty=false tests=1 skipped=0\n"
+            "Ran 375 tests in 61.405s\n"
+            "OK (skipped=1)\n"
+        )
+        with mock.patch.object(
+            self.module, "run_gate", return_value=(self._gate("unit-tests"), text)
+        ):
+            gate, problems = self.module.gate_unit_tests(375, 1)
+        self.assertEqual(problems, [])
+        self.assertEqual(gate["tests"], 375)
+        self.assertEqual(gate["skipped"], 1)
+
+    def test_unittest_without_skips_parses_zero(self):
+        text = "Ran 375 tests in 61.405s\nOK\n"
+        self.assertEqual(self.module.parse_unittest_skips(text), 0)
+
     def test_tests_and_skipped_flags_are_mandatory(self):
         self._patch()
         self.assertEqual(self.module.main(["--skipped", "0", "--out", self.out_rel]), 1)
