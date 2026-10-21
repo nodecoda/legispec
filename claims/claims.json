@@ -2,10 +2,13 @@
   "boundary": "one step: LegalizerInfo::getAction(LegalityQuery); not the iterative Legalizer pass, not LegalizerHelper MIR rewrites, not instruction selection or codegen; domain = declared D union R, with R taken inside D (successors outside D are boundaries, not claims)",
   "claims": [
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "8a8c9c9f26b6b4de954201bed878bb8b89b562549f070e1b4719cd7ca02b6cb2",
       "declared_shadowed": 0,
       "declared_unreachable": 2,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [],
       "id": "toycpu",
       "llvm_build": "F:/llvm/build-toycpu",
@@ -17,6 +20,8 @@
       "problems": [],
       "queries": 243714,
       "report": "conformance-report.json",
+      "report_file_sha256": "27f19ce3aa6f985d4c4b24b337b370896207d802d7a841904107a43e737c5e8b",
+      "report_sha256": "de5498d57c6892733a678fb97b3f37eb8509c5f88b4be0025215609ba6f5a2a2",
       "rules": "toycpu.ldsl",
       "rules_matched": 87,
       "rules_sha256": "404d82a0f4bf161aa1e819dfb51228e62188dd7de6146ca5f3fccd0615c77756",
@@ -33,13 +38,18 @@
           "rule": "widen t0 to s1 when (scalar(t0)) and (bits(t0) < 1)",
           "ruleset": "G_CONSTANT"
         }
-      ]
+      ],
+      "witness": "toycpu.witness",
+      "witness_sha256": "9154c9780e03176ba19f583aec8843eaaebd61101739cd5b22c4c605fdeabf48"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "8a8c9c9f26b6b4de954201bed878bb8b89b562549f070e1b4719cd7ca02b6cb2",
       "declared_shadowed": 0,
       "declared_unreachable": 2,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [],
       "id": "toycpu-generated",
       "llvm_build": "F:/llvm/build-toycpu",
@@ -51,6 +61,8 @@
       "problems": [],
       "queries": 243714,
       "report": "conformance-gen-report.json",
+      "report_file_sha256": "68057d59eeb7d753c286e593054c575a25895f1b5f975a2e6530b122867a773f",
+      "report_sha256": "2b9ca62017b8db600818d2f01c1c12c2cf713aafb7e0e2710984ad28292fa0dc",
       "rules": "toycpu.ldsl",
       "rules_matched": 87,
       "rules_sha256": "404d82a0f4bf161aa1e819dfb51228e62188dd7de6146ca5f3fccd0615c77756",
@@ -67,13 +79,18 @@
           "rule": "widen t0 to s1 when (scalar(t0)) and (bits(t0) < 1)",
           "ruleset": "G_CONSTANT"
         }
-      ]
+      ],
+      "witness": "toycpu.witness",
+      "witness_sha256": "9154c9780e03176ba19f583aec8843eaaebd61101739cd5b22c4c605fdeabf48"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "c292fff2f28f6d122e0a249495986c5438b2067c8bdf19e6095f9d723ec6bf38",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "vector",
         "FP",
@@ -91,18 +108,24 @@
       "problems": [],
       "queries": 7591,
       "report": "x86-scalar-conformance-report.json",
+      "report_file_sha256": "6d47c0830a4d2196577b86567aa992e8b2168556c36d4d249b808c54b358fe82",
+      "report_sha256": "1ab63f6494f1bc72b9b49db6e0e7516770e4fcc09f695588e18712db7c7ec4a9",
       "rules": "x86-scalar.ldsl",
       "rules_matched": 69,
       "rules_sha256": "b19200c9023faeb3bac8c895ac681c37b5b507c1b4d02f788c1782051a701148",
       "rules_total": 69,
       "scope": "X86-64 integer + pointer shapes",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "c292fff2f28f6d122e0a249495986c5438b2067c8bdf19e6095f9d723ec6bf38",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "vector",
         "FP",
@@ -120,18 +143,24 @@
       "problems": [],
       "queries": 7591,
       "report": "x86-gen-conformance-report.json",
+      "report_file_sha256": "84a1e5ee30c80c0d96b1289d88eac2de2cc87e1fe024ce259440dd01453b807a",
+      "report_sha256": "d51b0ca0d7bd968f075524244a8650855e6668d857fb5bb8067ad3fb9e4edaed",
       "rules": "x86-scalar.ldsl",
       "rules_matched": 69,
       "rules_sha256": "b19200c9023faeb3bac8c895ac681c37b5b507c1b4d02f788c1782051a701148",
       "rules_total": 69,
       "scope": "C++ generated from x86-scalar.ldsl by codegen.py",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "76734cf0ca196ef2236d8c333e13fc10afacfc74d1b81b2a16cac0971854a951",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "vector / SVE / FP16",
         "memory descriptors",
@@ -147,18 +176,24 @@
       "problems": [],
       "queries": 8161,
       "report": "aarch64-scalar-conformance-report.json",
+      "report_file_sha256": "5fa945e4f0d6680664169eae7572e71c3d8ba1e309993bdb67bdef129dddc2b7",
+      "report_sha256": "1f2e9904aadc410a9fcf25af4de3d4e63d90fdfe70373fab4f2da47b7366122b",
       "rules": "aarch64-scalar.ldsl",
       "rules_matched": 91,
       "rules_sha256": "37abeb7d5b6940f4e0ba1e89005dd3052d1c16152ffae1261836a0be9fb8861e",
       "rules_total": 91,
       "scope": "AArch64 generic scalar subset",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "76734cf0ca196ef2236d8c333e13fc10afacfc74d1b81b2a16cac0971854a951",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "vector / SVE / FP16",
         "memory descriptors",
@@ -174,18 +209,24 @@
       "problems": [],
       "queries": 8161,
       "report": "aarch64-gen-conformance-report.json",
+      "report_file_sha256": "5fd9a7e1797f6e1a8da84c90e619208977a7db4336505db1cec844fdd95b68d2",
+      "report_sha256": "9a54915c6b6d10e66c3bbea193cc069109ccb89dd18a870a389411a599ab46b1",
       "rules": "aarch64-scalar.ldsl",
       "rules_matched": 91,
       "rules_sha256": "37abeb7d5b6940f4e0ba1e89005dd3052d1c16152ffae1261836a0be9fb8861e",
       "rules_total": 91,
       "scope": "C++ generated from aarch64-scalar.ldsl by codegen.py",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "76734cf0ca196ef2236d8c333e13fc10afacfc74d1b81b2a16cac0971854a951",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "vector / SVE / FP16",
         "memory descriptors",
@@ -201,18 +242,24 @@
       "problems": [],
       "queries": 8161,
       "report": "aarch64-cssc-scalar-conformance-report.json",
+      "report_file_sha256": "9cf63e4a933e2b7cc2a72eed839174a54f1dd1d4987a4ab708aa57ce6fcf5431",
+      "report_sha256": "cbdeaef815acb6149b07d57ae1a31b8d562dd7382c251d311ff56e8e0ea2b791",
       "rules": "aarch64-cssc-scalar.ldsl",
       "rules_matched": 95,
       "rules_sha256": "9050a54cab5af5fb8008be6c08c05d7af9017ea845310bdef78dcdd638a75a62",
       "rules_total": 95,
       "scope": "AArch64 scalar subset with +cssc",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "76734cf0ca196ef2236d8c333e13fc10afacfc74d1b81b2a16cac0971854a951",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "vector / SVE / FP16",
         "memory descriptors",
@@ -228,18 +275,24 @@
       "problems": [],
       "queries": 8161,
       "report": "aarch64-cssc-gen-conformance-report.json",
+      "report_file_sha256": "566c706f7baa34e644ff2fb39ca0a7005001839fbcca9670787f80b97d26d77b",
+      "report_sha256": "459c4b8ba8295dfcc1e8714ea336646109c2ce853ecff5d99e7c1f6ca938b91b",
       "rules": "aarch64-cssc-scalar.ldsl",
       "rules_matched": 95,
       "rules_sha256": "9050a54cab5af5fb8008be6c08c05d7af9017ea845310bdef78dcdd638a75a62",
       "rules_total": 95,
       "scope": "C++ generated from aarch64-cssc-scalar.ldsl by codegen.py",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "991f7f5abc20f06a9890d8a558f33e1df7a9c6c5d849092b55f36cf2eaf60c42",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "vector / SVE / FP16",
         "memory descriptors",
@@ -255,18 +308,24 @@
       "problems": [],
       "queries": 924,
       "report": "aarch64-pointer-conformance-report.json",
+      "report_file_sha256": "42f49e25870fb099534d829ae9a240c07c91721a3cb80613d46d19812a71ee59",
+      "report_sha256": "da362b50359c8f29368a94ea26de79ca71db68f4ff84bda359f2f5bef9cd174d",
       "rules": "aarch64-pointer.ldsl",
       "rules_matched": 17,
       "rules_sha256": "f019d702722d6ab13103ffa358b4bddfe5c7cf3f7995ab5f31201908c68ea5a9",
       "rules_total": 17,
       "scope": "AArch64 pointer subset",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "0de2cdbea70c2437f87bcc025b293a23d527082129e90d3a0118afbac60bcd33",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "vector / SVE / FP16",
         "memory descriptors",
@@ -283,18 +342,24 @@
       "problems": [],
       "queries": 612,
       "report": "aarch64-atomic-conformance-report.json",
+      "report_file_sha256": "2ffc6d4d9b20d9eedb81091d256590b4ec0311d02a46f9d62f5130941a81dc69",
+      "report_sha256": "227c56bfc534587fe434c7012b789176ef005a6c81cccf706e4aeab3e846a3b9",
       "rules": "aarch64-atomic.ldsl",
       "rules_matched": 11,
       "rules_sha256": "d79e998e4d63717ca629faa80a381c538ed3d1da25f4a4aa50d9bdd6d2ea0e36",
       "rules_total": 11,
       "scope": "AArch64 generic atomic subset (UseOutlineAtomics=false)",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "0de2cdbea70c2437f87bcc025b293a23d527082129e90d3a0118afbac60bcd33",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "vector / SVE / FP16",
         "memory descriptors",
@@ -311,18 +376,24 @@
       "problems": [],
       "queries": 612,
       "report": "aarch64-atomic-gen-conformance-report.json",
+      "report_file_sha256": "c5a0616d93cd5eafead78e030176cb6b3ba0a15f8ff87b08852f24825d2eab65",
+      "report_sha256": "57e3cd87ab8872a57800962ae5fa58bfbcd78a7cc8bc1408a64690209ff2ec9d",
       "rules": "aarch64-atomic.ldsl",
       "rules_matched": 11,
       "rules_sha256": "d79e998e4d63717ca629faa80a381c538ed3d1da25f4a4aa50d9bdd6d2ea0e36",
       "rules_total": 11,
       "scope": "C++ generated from aarch64-atomic.ldsl by codegen.py",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "0de2cdbea70c2437f87bcc025b293a23d527082129e90d3a0118afbac60bcd33",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "vector / SVE / FP16",
         "memory descriptors",
@@ -338,18 +409,24 @@
       "problems": [],
       "queries": 612,
       "report": "aarch64-atomic-outline-conformance-report.json",
+      "report_file_sha256": "5741e31ad6ee3204c1cb7f901a9008fe39104f32bd9dc6359def9defad97072c",
+      "report_sha256": "b5ef2b1275e65ed613f15e31f931c3e04e122a60f18c399ba96cc4e844400a71",
       "rules": "aarch64-atomic-outline.ldsl",
       "rules_matched": 10,
       "rules_sha256": "85d69029856b8ac8f3ed636f49ece832bda1fbaa6d66ed68c1910e2a6984a0d9",
       "rules_total": 10,
       "scope": "AArch64 atomic subset with +outline-atomics (UseOutlineAtomics=true)",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "0de2cdbea70c2437f87bcc025b293a23d527082129e90d3a0118afbac60bcd33",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "vector / SVE / FP16",
         "memory descriptors",
@@ -365,18 +442,24 @@
       "problems": [],
       "queries": 612,
       "report": "aarch64-atomic-outline-gen-conformance-report.json",
+      "report_file_sha256": "d9be7082b06e677f83b1f03e7cc96a06cc37ed0d8c5be79ecc92e1c98b34f122",
+      "report_sha256": "5a598948a97838e60158df821a796406c96191132b30ced6f345a667b8b58796",
       "rules": "aarch64-atomic-outline.ldsl",
       "rules_matched": 10,
       "rules_sha256": "85d69029856b8ac8f3ed636f49ece832bda1fbaa6d66ed68c1910e2a6984a0d9",
       "rules_total": 10,
       "scope": "C++ generated from aarch64-atomic-outline.ldsl by codegen.py",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "0de2cdbea70c2437f87bcc025b293a23d527082129e90d3a0118afbac60bcd33",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "vector / SVE / FP16",
         "memory descriptors",
@@ -392,18 +475,24 @@
       "problems": [],
       "queries": 612,
       "report": "aarch64-atomic-lse-conformance-report.json",
+      "report_file_sha256": "a821a41fe4740c16031f79b7a85b6bff057bcbe9458707f9ac5eac3227f4dfe1",
+      "report_sha256": "07a60152011019fc46159fa1f7b9ba4d66845b803016fc2636d729ed6d3e3dea",
       "rules": "aarch64-atomic.ldsl",
       "rules_matched": 11,
       "rules_sha256": "d79e998e4d63717ca629faa80a381c538ed3d1da25f4a4aa50d9bdd6d2ea0e36",
       "rules_total": 11,
       "scope": "AArch64 atomic subset with +lse (policy table identical to generic)",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "6ff963e82254456fbafba82088a98ccbca1c9e1e9e2a2bfa6bc5bd4b25ddbccb",
       "declared_shadowed": 0,
       "declared_unreachable": 1,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "FP16",
@@ -421,6 +510,8 @@
       "problems": [],
       "queries": 176,
       "report": "aarch64-vector-conformance-report.json",
+      "report_file_sha256": "daed8657422e7d095c76ae875aaab47ac84efc9510b10f326ab4dca68b426f8e",
+      "report_sha256": "1c368c00e700cfc9b7baade01de698ac424c3968a0d5f56ef96eb505f4c2e4c3",
       "rules": "aarch64-vector.ldsl",
       "rules_matched": 10,
       "rules_sha256": "9853efdd7277425525e3d5677a4c77d9840ebf3cabbdaf665b10693bbb1b338c",
@@ -432,13 +523,18 @@
           "rule": "more t0 to v2s32 when fixed_vector(t0, s32) and lanes(t0) < 2",
           "ruleset": "G_SMIN"
         }
-      ]
+      ],
+      "witness": "aarch64-vector-unreachable.witness",
+      "witness_sha256": "4f635e126094023547e1f5f9e4ecb898c4bb21245467e84ab8fadb5394c56401"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "6ff963e82254456fbafba82088a98ccbca1c9e1e9e2a2bfa6bc5bd4b25ddbccb",
       "declared_shadowed": 0,
       "declared_unreachable": 1,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "FP16",
@@ -456,6 +552,8 @@
       "problems": [],
       "queries": 176,
       "report": "aarch64-vector-gen-conformance-report.json",
+      "report_file_sha256": "eda5c86e85c362a2f8382f04a611a7e55cde621f7cd00844727bb4ce62008ca0",
+      "report_sha256": "d9d973de4e295d9e31606636abb98b0cb932484e016b48c65f2e532332d27663",
       "rules": "aarch64-vector.ldsl",
       "rules_matched": 10,
       "rules_sha256": "9853efdd7277425525e3d5677a4c77d9840ebf3cabbdaf665b10693bbb1b338c",
@@ -467,13 +565,18 @@
           "rule": "more t0 to v2s32 when fixed_vector(t0, s32) and lanes(t0) < 2",
           "ruleset": "G_SMIN"
         }
-      ]
+      ],
+      "witness": "aarch64-vector-unreachable.witness",
+      "witness_sha256": "4f635e126094023547e1f5f9e4ecb898c4bb21245467e84ab8fadb5394c56401"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "8b433c2e54040e0dfc48e6fd75904f67b28296ceff7cbbd0b588b83c92fcf13b",
       "declared_shadowed": 0,
       "declared_unreachable": 2,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "memory descriptors",
@@ -491,6 +594,8 @@
       "problems": [],
       "queries": 120,
       "report": "aarch64-vector-arith-conformance-report.json",
+      "report_file_sha256": "fb78b668da3c2bc68cfab827f47c31f180ca618b52afe5167273f5f182088781",
+      "report_sha256": "c671652225a6f469c130d9b0923ddc651f03359285999d83c0732fb2e32ab710",
       "rules": "aarch64-vector-arith.ldsl",
       "rules_matched": 13,
       "rules_sha256": "cc410b4fc51c7b2996f3e101d15d0286400896bd85852bb71e9ac05f81dc3f81",
@@ -507,13 +612,18 @@
           "rule": "more t0 to v2s64 when fixed_vector(t0, s64) and lanes(t0) < 2",
           "ruleset": "G_ADD"
         }
-      ]
+      ],
+      "witness": "aarch64-vector-arith.witness",
+      "witness_sha256": "3bdf4e2ed0e42c1f1c9b538e70ff93c127cb997116759053062c7337a108a6c1"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "8b433c2e54040e0dfc48e6fd75904f67b28296ceff7cbbd0b588b83c92fcf13b",
       "declared_shadowed": 0,
       "declared_unreachable": 2,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "memory descriptors",
@@ -531,6 +641,8 @@
       "problems": [],
       "queries": 120,
       "report": "aarch64-vector-arith-gen-conformance-report.json",
+      "report_file_sha256": "9766c98866c523d9e5b5d3e28a06a733ee15ced3e83e107b4b8f92a138dbd378",
+      "report_sha256": "7eb5872fee7190e9eabd46b2cc85db6bb2e8808e35d8629459a5c0e0cd61a6ff",
       "rules": "aarch64-vector-arith.ldsl",
       "rules_matched": 13,
       "rules_sha256": "cc410b4fc51c7b2996f3e101d15d0286400896bd85852bb71e9ac05f81dc3f81",
@@ -547,13 +659,18 @@
           "rule": "more t0 to v2s64 when fixed_vector(t0, s64) and lanes(t0) < 2",
           "ruleset": "G_ADD"
         }
-      ]
+      ],
+      "witness": "aarch64-vector-arith.witness",
+      "witness_sha256": "3bdf4e2ed0e42c1f1c9b538e70ff93c127cb997116759053062c7337a108a6c1"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "f6040a13d7ef98b7e1e00b9767b7856066ae4abdf3b4f200ae3e3cfb6049afaf",
       "declared_shadowed": 0,
       "declared_unreachable": 2,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "memory descriptors",
@@ -571,6 +688,8 @@
       "problems": [],
       "queries": 24,
       "report": "aarch64-vector-mul-conformance-report.json",
+      "report_file_sha256": "7f9a74fdccb7605bd2e95401641f1180b88096fce3cc55cd753ffc4bc9abfce3",
+      "report_sha256": "6e4e6766e9f8ae69b784b5bef5474469809d2cd8c0868e90b9f028a973850fc6",
       "rules": "aarch64-vector-mul.ldsl",
       "rules_matched": 13,
       "rules_sha256": "902fb69e06b9b2c34e9371249bed04d7a89a5d521b10f7123810f5bc5f27d662",
@@ -587,13 +706,18 @@
           "rule": "more t0 to v2s64 when fixed_vector(t0, s64) and lanes(t0) < 2",
           "ruleset": "G_MUL"
         }
-      ]
+      ],
+      "witness": "aarch64-vector-mul.witness",
+      "witness_sha256": "6ef068f508e8ab4eb56c01ffd75556d49e7038bb7900a5efc26b368a74be25c0"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "f6040a13d7ef98b7e1e00b9767b7856066ae4abdf3b4f200ae3e3cfb6049afaf",
       "declared_shadowed": 0,
       "declared_unreachable": 2,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "memory descriptors",
@@ -611,6 +735,8 @@
       "problems": [],
       "queries": 24,
       "report": "aarch64-vector-mul-gen-conformance-report.json",
+      "report_file_sha256": "cb296faf22036d3b9b641822827a12cd87fffe47489a57befb36131a9f9bb001",
+      "report_sha256": "dcbbb24fda594e5693bf1b9bdb9098c7e15cc6b13183a7091525f6dd483e2bb2",
       "rules": "aarch64-vector-mul.ldsl",
       "rules_matched": 13,
       "rules_sha256": "902fb69e06b9b2c34e9371249bed04d7a89a5d521b10f7123810f5bc5f27d662",
@@ -627,13 +753,18 @@
           "rule": "more t0 to v2s64 when fixed_vector(t0, s64) and lanes(t0) < 2",
           "ruleset": "G_MUL"
         }
-      ]
+      ],
+      "witness": "aarch64-vector-mul.witness",
+      "witness_sha256": "6ef068f508e8ab4eb56c01ffd75556d49e7038bb7900a5efc26b368a74be25c0"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "651f8f8b7bc4cca5b8b977d3ad7a1eca9fd6f4851ec2a4ce3e68786799191d27",
       "declared_shadowed": 0,
       "declared_unreachable": 2,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "memory descriptors",
@@ -651,6 +782,8 @@
       "problems": [],
       "queries": 270,
       "report": "aarch64-vector-shift-conformance-report.json",
+      "report_file_sha256": "c3736cc66c126b19e3e5434b47870bec02ba2b2302179a61e946e8cef0792db9",
+      "report_sha256": "390b29db063d620794cfe15a087d3dcbb16cef9c9874d5c18d377f318c3ecc27",
       "rules": "aarch64-vector-shift.ldsl",
       "rules_matched": 19,
       "rules_sha256": "27638cdc5c3ca63c6a639f72ce1479d0dd9bf66ccf391afca0963f4ecba25d53",
@@ -667,13 +800,18 @@
           "rule": "more t0 to v2s64 when fixed_vector(t0, s64) and lanes(t0) < 2",
           "ruleset": "G_SHL"
         }
-      ]
+      ],
+      "witness": "aarch64-vector-shift.witness",
+      "witness_sha256": "8e784d1f38d4231164dbf54fe69b94ba833ff2919458ee10b2d1f93c63fb1e29"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "651f8f8b7bc4cca5b8b977d3ad7a1eca9fd6f4851ec2a4ce3e68786799191d27",
       "declared_shadowed": 0,
       "declared_unreachable": 2,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "memory descriptors",
@@ -691,6 +829,8 @@
       "problems": [],
       "queries": 270,
       "report": "aarch64-vector-shift-gen-conformance-report.json",
+      "report_file_sha256": "f4f1d5f228fa6e7d9732d230a4f0e167e8bfa58095d2b5ed2526652e0b383fe6",
+      "report_sha256": "33eeaabd46bacc1e69386fba2cc5622ffd4659b7dbe3f59aa9da1ac8c718e076",
       "rules": "aarch64-vector-shift.ldsl",
       "rules_matched": 19,
       "rules_sha256": "27638cdc5c3ca63c6a639f72ce1479d0dd9bf66ccf391afca0963f4ecba25d53",
@@ -707,13 +847,18 @@
           "rule": "more t0 to v2s64 when fixed_vector(t0, s64) and lanes(t0) < 2",
           "ruleset": "G_SHL"
         }
-      ]
+      ],
+      "witness": "aarch64-vector-shift.witness",
+      "witness_sha256": "8e784d1f38d4231164dbf54fe69b94ba833ff2919458ee10b2d1f93c63fb1e29"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "021b3238b57e137a9910e65e0b62ab47947e35c1ca83b7f0ce971cf9b9a0f77d",
       "declared_shadowed": 1,
       "declared_unreachable": 3,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "memory descriptors",
@@ -731,6 +876,8 @@
       "problems": [],
       "queries": 173,
       "report": "aarch64-icmp-conformance-report.json",
+      "report_file_sha256": "da1740ffe7447d0e4d11e42bc591e9e4b9b2a06345d01b7a69a35c0888e1e6a4",
+      "report_sha256": "29c07b7b1c7fb38b1f5c2729c34275c515f20d097683a7a1d7b33a6479d35447",
       "rules": "aarch64-icmp.ldsl",
       "rules_matched": 19,
       "rules_sha256": "5acb2757a6b3568ce47fb4fbc65adc4e749430e4a665292705f7b7e8680c7a77",
@@ -757,13 +904,18 @@
           "rule": "more t1 to v2p0:64 when fixed_vector(t1, p0:64) and lanes(t1) < 2",
           "ruleset": "G_ICMP"
         }
-      ]
+      ],
+      "witness": "aarch64-icmp.witness",
+      "witness_sha256": "52316024196b801e7acf67937f3ae257fb9fbe603ed1e7aa17c12b823c8259e5"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "021b3238b57e137a9910e65e0b62ab47947e35c1ca83b7f0ce971cf9b9a0f77d",
       "declared_shadowed": 1,
       "declared_unreachable": 3,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "memory descriptors",
@@ -781,6 +933,8 @@
       "problems": [],
       "queries": 173,
       "report": "aarch64-icmp-gen-conformance-report.json",
+      "report_file_sha256": "c02e7496890090cc24e1301f6dba45c950199bb24d0b7ca5843673035cae9a97",
+      "report_sha256": "58a3c0de3cc88cc593840424b7dab43296789a975e5a9d7ec166d7c16424433e",
       "rules": "aarch64-icmp.ldsl",
       "rules_matched": 19,
       "rules_sha256": "5acb2757a6b3568ce47fb4fbc65adc4e749430e4a665292705f7b7e8680c7a77",
@@ -807,13 +961,18 @@
           "rule": "more t1 to v2p0:64 when fixed_vector(t1, p0:64) and lanes(t1) < 2",
           "ruleset": "G_ICMP"
         }
-      ]
+      ],
+      "witness": "aarch64-icmp.witness",
+      "witness_sha256": "52316024196b801e7acf67937f3ae257fb9fbe603ed1e7aa17c12b823c8259e5"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "e37faec3cf75e221013dae6195f6e07b732966068b622e8a7cca8609efd85915",
       "declared_shadowed": 0,
       "declared_unreachable": 1,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "memory descriptors",
@@ -832,6 +991,8 @@
       "problems": [],
       "queries": 185,
       "report": "aarch64-fcmp-conformance-report.json",
+      "report_file_sha256": "c930373cda95d4eab40478ed50b4ac9ccc811de3a157fd4f55c865f7d8a85944",
+      "report_sha256": "ad44025f71e3521bfc6f3fb6863a800155179812d2e9d9199106b2fba6caf45f",
       "rules": "aarch64-fcmp.ldsl",
       "rules_matched": 13,
       "rules_sha256": "f99046f45aef4209515bd38c40f6f4abe3f8a6471a6b508da8a6855106b02a9d",
@@ -843,13 +1004,18 @@
           "rule": "more t1 to v2s32 when fixed_vector(t1, s32) and lanes(t1) < 2",
           "ruleset": "G_FCMP"
         }
-      ]
+      ],
+      "witness": "aarch64-fcmp.witness",
+      "witness_sha256": "f9a6de4c7342b35fa4c27781b2ebc7a5d805532e78502d0083bb5f24b3d3892b"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "e37faec3cf75e221013dae6195f6e07b732966068b622e8a7cca8609efd85915",
       "declared_shadowed": 0,
       "declared_unreachable": 1,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "memory descriptors",
@@ -868,6 +1034,8 @@
       "problems": [],
       "queries": 185,
       "report": "aarch64-fcmp-gen-conformance-report.json",
+      "report_file_sha256": "9061251e82c6545576d477a6245790c0f6fcfbdd1850bf707a4757a27299a2c9",
+      "report_sha256": "2855bf2956a682fdb74a5eebc5f152848544a557565ffa8cc0e83d10b9318dcb",
       "rules": "aarch64-fcmp.ldsl",
       "rules_matched": 13,
       "rules_sha256": "f99046f45aef4209515bd38c40f6f4abe3f8a6471a6b508da8a6855106b02a9d",
@@ -879,13 +1047,18 @@
           "rule": "more t1 to v2s32 when fixed_vector(t1, s32) and lanes(t1) < 2",
           "ruleset": "G_FCMP"
         }
-      ]
+      ],
+      "witness": "aarch64-fcmp.witness",
+      "witness_sha256": "f9a6de4c7342b35fa4c27781b2ebc7a5d805532e78502d0083bb5f24b3d3892b"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "f4132db7915848cc5507789e4a39a507b438296850eca9b6edf3cc7c6b0504ae",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "custom handler bodies (legalizeConcatVectors MIR)",
@@ -903,18 +1076,25 @@
       "problems": [],
       "queries": 28,
       "report": "aarch64-concat-vectors-conformance-report.json",
+      "report_file_sha256": "e08a69e2ee6e50bd69b1fb163748ba66494ee6160964170501361d67a3b5b0c9",
+      "report_sha256": "a8c4938be97b60fab706eead99227b39a638102abaae3cdabcd5a05aa9acbef5",
       "rules": "aarch64-concat-vectors.ldsl",
       "rules_matched": 3,
       "rules_sha256": "9eb16cf9ae4afba3db88857cf36331bfa4f857a66b58696fc69dd20d7be4e674",
       "rules_total": 3,
       "scope": "AArch64 generic G_CONCAT_VECTORS: legalFor pairs, the sub-byte custom escape hatch, and the concat bitcast (source total size plus result lane division)",
-      "unmatched": []
+      "unmatched": [],
+      "witness": "aarch64-concat-vectors.witness",
+      "witness_sha256": "f5319c3756d0b7c51e53db61609b82598fd0c3e249e030182176dae0e6b071ec"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "f4132db7915848cc5507789e4a39a507b438296850eca9b6edf3cc7c6b0504ae",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "scalable vectors (SVE)",
         "custom handler bodies (legalizeConcatVectors MIR)",
@@ -932,18 +1112,25 @@
       "problems": [],
       "queries": 28,
       "report": "aarch64-concat-vectors-gen-conformance-report.json",
+      "report_file_sha256": "0a769b08e1ba9a746e8fd60a9d96fee5849264aa99fea4b3e7cbc804eb930cac",
+      "report_sha256": "c458030a740f0995268f107aed8ae78ed9060d91ea03aa5e1654ee3b7e95dca1",
       "rules": "aarch64-concat-vectors.ldsl",
       "rules_matched": 3,
       "rules_sha256": "9eb16cf9ae4afba3db88857cf36331bfa4f857a66b58696fc69dd20d7be4e674",
       "rules_total": 3,
       "scope": "C++ generated from aarch64-concat-vectors.ldsl by codegen.py, with LLT::setUseExtended(true) declared explicitly",
-      "unmatched": []
+      "unmatched": [],
+      "witness": "aarch64-concat-vectors.witness",
+      "witness_sha256": "f5319c3756d0b7c51e53db61609b82598fd0c3e249e030182176dae0e6b071ec"
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "e03e73ddedef463e3dccd92908d6a85191f4d254aa66fc2781ccab17895de839",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
         "vector / scalable vector",
@@ -960,18 +1147,24 @@
       "problems": [],
       "queries": 7861,
       "report": "riscv64-scalar-conformance-report.json",
+      "report_file_sha256": "5c2fb3d3d529863f31b903ffb323352b6bb4789150d452529c326596b52976b5",
+      "report_sha256": "1030af9e0b89e88ab696f5930e36476da8e07827913bf0dcc0189799a6acf07c",
       "rules": "riscv64-scalar.ldsl",
       "rules_matched": 103,
       "rules_sha256": "f114b3108346c412049493b000f7d0a1bc22e3c44fb5d1575e4f75a0b9b3145f",
       "rules_total": 103,
       "scope": "RV64 generic-rv64 (+64bit,+i) scalar subset",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "e03e73ddedef463e3dccd92908d6a85191f4d254aa66fc2781ccab17895de839",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
         "vector / scalable vector",
@@ -988,18 +1181,24 @@
       "problems": [],
       "queries": 7861,
       "report": "riscv64-gen-conformance-report.json",
+      "report_file_sha256": "f39a02b5e0a07082a6185f5171bf826dcd2ac630a49cfe69f26bf15127a524e5",
+      "report_sha256": "a022d33d3957d7e96a1898841f35894bdf9aeef93629585f5d4401d7ded9e25d",
       "rules": "riscv64-scalar.ldsl",
       "rules_matched": 103,
       "rules_sha256": "f114b3108346c412049493b000f7d0a1bc22e3c44fb5d1575e4f75a0b9b3145f",
       "rules_total": 103,
       "scope": "C++ generated from riscv64-scalar.ldsl by codegen.py (RV64)",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
-      "declared_shadowed": 0,
-      "declared_unreachable": 1,
+      "corpus_sha256": "e03e73ddedef463e3dccd92908d6a85191f4d254aa66fc2781ccab17895de839",
+      "declared_shadowed": 1,
+      "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
         "vector / scalable vector",
@@ -1016,6 +1215,8 @@
       "problems": [],
       "queries": 7861,
       "report": "riscv64-mzb-gen-conformance-report.json",
+      "report_file_sha256": "f20857c245224fee6a602acf3945e8bf3a521b066c80aff19540df791c1b6e8f",
+      "report_sha256": "78c0cf971da2455eb9acce7fa4ab1c81b16738673d885f948aebc8e7d7e465a1",
       "rules": "riscv64-mzb-scalar.ldsl",
       "rules_matched": 117,
       "rules_sha256": "8ffd42936d66c85cb89c7d6b588b36d5b298758d1365705d56096de016fdfb30",
@@ -1027,13 +1228,17 @@
           "rule": "lower",
           "ruleset": "G_CTLZ"
         }
-      ]
+      ],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "020ac70e10682b2010b9b59fbae735465fe6c2cc66d044d3708c2e1d82b4794a",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
         "vector / scalable vector",
@@ -1050,18 +1255,24 @@
       "problems": [],
       "queries": 770,
       "report": "riscv64-pointer-conformance-report.json",
+      "report_file_sha256": "b99e927b5f21da12f0809c42b6d7653c8f482bbbec78648582e864248173f58b",
+      "report_sha256": "11b33f6773fa39300f8e34a75c244e1fccee67a0298e17d1219716a051182126",
       "rules": "riscv64-pointer.ldsl",
       "rules_matched": 32,
       "rules_sha256": "7a30477c0ae0f8570a41f8c49fa795a89090ef4acb8d28e0942840e692ef1bc9",
       "rules_total": 32,
       "scope": "RV64 pointer subset",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
-      "declared_shadowed": 0,
-      "declared_unreachable": 1,
+      "corpus_sha256": "e03e73ddedef463e3dccd92908d6a85191f4d254aa66fc2781ccab17895de839",
+      "declared_shadowed": 1,
+      "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
         "vector / scalable vector",
@@ -1078,6 +1289,8 @@
       "problems": [],
       "queries": 7861,
       "report": "riscv64-mzb-scalar-conformance-report.json",
+      "report_file_sha256": "170d1518d9664b48e0dad8074c5f6b3f2d77cf3317b42f43c23cead55ce91608",
+      "report_sha256": "86d1a7317610d0eab504c31973bbe7188152e6704515696f70a1dcdd97d0a5e9",
       "rules": "riscv64-mzb-scalar.ldsl",
       "rules_matched": 117,
       "rules_sha256": "8ffd42936d66c85cb89c7d6b588b36d5b298758d1365705d56096de016fdfb30",
@@ -1089,13 +1302,17 @@
           "rule": "lower",
           "ruleset": "G_CTLZ"
         }
-      ]
+      ],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "020ac70e10682b2010b9b59fbae735465fe6c2cc66d044d3708c2e1d82b4794a",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
         "vector / scalable vector",
@@ -1112,18 +1329,24 @@
       "problems": [],
       "queries": 770,
       "report": "riscv64-pointer-mzb-conformance-report.json",
+      "report_file_sha256": "c8b60af7b293bb76e541d5cac55ced7bc3ed7c1d12060e3b698e55191c427682",
+      "report_sha256": "10687d983dec5db978a4bc1dd02c9a41f9ecee7a78e6f15c8129ea8aee7459e5",
       "rules": "riscv64-pointer.ldsl",
       "rules_matched": 32,
       "rules_sha256": "7a30477c0ae0f8570a41f8c49fa795a89090ef4acb8d28e0942840e692ef1bc9",
       "rules_total": 32,
       "scope": "RV64 pointer subset with +m,+zmmul,+zbb",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "e03e73ddedef463e3dccd92908d6a85191f4d254aa66fc2781ccab17895de839",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
         "vector / scalable vector",
@@ -1140,18 +1363,24 @@
       "problems": [],
       "queries": 7861,
       "report": "riscv32-scalar-conformance-report.json",
+      "report_file_sha256": "61973d49d68eeea5c1827d20a9c3e6546e8f2b835cca622fffb437f765a5286e",
+      "report_sha256": "4ebcd605ef73985363dd99cdec4c05ac3d104ff39d0d8c791d72e5471a8ccc1a",
       "rules": "riscv32-scalar.ldsl",
       "rules_matched": 100,
       "rules_sha256": "933cd5a229754e1e407f625af4ee1763ad2b1023395000585a9e79f8c9bb6d28",
       "rules_total": 100,
       "scope": "RV32 generic-rv32 (+32bit,+i) scalar subset",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "e03e73ddedef463e3dccd92908d6a85191f4d254aa66fc2781ccab17895de839",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
         "vector / scalable vector",
@@ -1168,18 +1397,24 @@
       "problems": [],
       "queries": 7861,
       "report": "riscv32-gen-conformance-report.json",
+      "report_file_sha256": "3cfa2757ee97a89a01e11c02e8b81fa3cbb3d64a31c3c86982d847d0ef10c254",
+      "report_sha256": "c1fb4409b57b26df21747c6c7bad54641e115e99a4e0c10689ec371fbe670997",
       "rules": "riscv32-scalar.ldsl",
       "rules_matched": 100,
       "rules_sha256": "933cd5a229754e1e407f625af4ee1763ad2b1023395000585a9e79f8c9bb6d28",
       "rules_total": 100,
       "scope": "C++ generated from riscv32-scalar.ldsl by codegen.py",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
-      "declared_shadowed": 0,
-      "declared_unreachable": 4,
+      "corpus_sha256": "e03e73ddedef463e3dccd92908d6a85191f4d254aa66fc2781ccab17895de839",
+      "declared_shadowed": 4,
+      "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
         "vector / scalable vector",
@@ -1196,6 +1431,8 @@
       "problems": [],
       "queries": 7861,
       "report": "riscv32-mzb-scalar-conformance-report.json",
+      "report_file_sha256": "fe547a0f5559d9556c6cc65b71e83a1f74c6a544a28242d63b4dfe741acc6af1",
+      "report_sha256": "05ede3e0df2300119830f5adc6b60b5406bd51582b166e53152d51318677ff1e",
       "rules": "riscv32-mzb-scalar.ldsl",
       "rules_matched": 111,
       "rules_sha256": "bf696467d124f8110fd25b104b971a1445bcf8808a52cee235d0c3d67e2eed1f",
@@ -1222,13 +1459,17 @@
           "rule": "custom when t0 == s32",
           "ruleset": "G_SDIV"
         }
-      ]
+      ],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "5cf8d0902ae4489371dd1b2340fce7700eabb815bb3722a10d99a7ccf7f08b9e",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
         "vector / scalable vector",
@@ -1245,18 +1486,24 @@
       "problems": [],
       "queries": 770,
       "report": "riscv32-pointer-conformance-report.json",
+      "report_file_sha256": "855f29bd249cdb236976f4d09ab126f33f1a2f700cf97a0d6c991b12e95d276c",
+      "report_sha256": "ce164aedeca5b41559438c262de9fa9fde942bb6d85dc8b0f20c22cc2907a91a",
       "rules": "riscv32-pointer.ldsl",
       "rules_matched": 31,
       "rules_sha256": "d9004611a870a552e0fcef276c9df9f46928503f50490185292c90d62402fe14",
       "rules_total": 31,
       "scope": "RV32 pointer subset",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {},
+      "corpus_sha256": "5cf8d0902ae4489371dd1b2340fce7700eabb815bb3722a10d99a7ccf7f08b9e",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
         "vector / scalable vector",
@@ -1273,21 +1520,27 @@
       "problems": [],
       "queries": 770,
       "report": "riscv32-pointer-mzb-conformance-report.json",
+      "report_file_sha256": "4b83f3e59b519cb98034123e1c84023f19e78342af7f82d95ea3f952a7dab770",
+      "report_sha256": "c35c1478c7a4382ed7cea70e6a96ac9fc3af145d285175dc6c26f44c15cd0418",
       "rules": "riscv32-pointer.ldsl",
       "rules_matched": 31,
       "rules_sha256": "d9004611a870a552e0fcef276c9df9f46928503f50490185292c90d62402fe14",
       "rules_total": 31,
       "scope": "RV32 pointer subset with +m,+zmmul,+zbb",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {
         "is64bit": true,
         "sXLen": "s64"
       },
+      "corpus_sha256": "b11a6abe93940637715c2d0dc1a119e7a6eca6eec95a52013c44f11653f5814b",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "everything outside G_CONSTANT"
       ],
@@ -1301,21 +1554,27 @@
       "problems": [],
       "queries": 9,
       "report": "riscv-conditional-gconstant-rv64-conformance.json",
+      "report_file_sha256": "83bba3b810ef02be3e48921fdde8a3ef539b52a194db98c97b68664cc8dbad32",
+      "report_sha256": "d757173c96d11d446e940dc114d21f0cc857f4b0057a438ebaf454a18ca25469",
       "rules": "riscv-conditional-gconstant.ldsl",
       "rules_matched": 4,
       "rules_sha256": "ce28a4e5301f1aa41ef141b1545f877e932269582c81d162ce1e8d438f85e702",
       "rules_total": 4,
       "scope": "G_CONSTANT guard experiment, RV64",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {
         "is64bit": false,
         "sXLen": "s32"
       },
+      "corpus_sha256": "b11a6abe93940637715c2d0dc1a119e7a6eca6eec95a52013c44f11653f5814b",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "everything outside G_CONSTANT"
       ],
@@ -1329,22 +1588,28 @@
       "problems": [],
       "queries": 9,
       "report": "riscv-conditional-gconstant-rv32-conformance.json",
+      "report_file_sha256": "138d0c56e9c5874ba981d122439856afcc0c788dc5d4a3689b360e5867391d15",
+      "report_sha256": "b08d456413205fcf46694f304bcfb2738db34f36ab4db427c068b7847fa2a0f5",
       "rules": "riscv-conditional-gconstant.ldsl",
       "rules_matched": 4,
       "rules_sha256": "ce28a4e5301f1aa41ef141b1545f877e932269582c81d162ce1e8d438f85e702",
       "rules_total": 4,
       "scope": "G_CONSTANT guard experiment, RV32",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {
         "is64bit": true,
         "sDoubleXLen": "s128",
         "sXLen": "s64"
       },
+      "corpus_sha256": "e03e73ddedef463e3dccd92908d6a85191f4d254aa66fc2781ccab17895de839",
       "declared_shadowed": 0,
       "declared_unreachable": 0,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
         "vector / scalable vector",
@@ -1361,22 +1626,28 @@
       "problems": [],
       "queries": 7861,
       "report": "riscv-conditional-scalar-rv64-conformance.json",
+      "report_file_sha256": "45d006d215194d6974562ac7fd27663c131f63ba3c5b925f379845556f0c70da",
+      "report_sha256": "1215d6c092c779f2edc3ab73954d43f240af48e09613cd6dbe317b5f87bea2d7",
       "rules": "riscv-scalar-conditional.ldsl",
       "rules_matched": 108,
       "rules_sha256": "b9820a7f5bfc3f4e91cf02d05b8c8c8decf8d9087ef2737a0b443fb9f9d3d73a",
       "rules_total": 108,
       "scope": "one-source scalar subset, RV64",
-      "unmatched": []
+      "unmatched": [],
+      "witness": null
     },
     {
+      "codegen_sha256": "81ed9ac3b55abcd604402a69b1f913f3e0fbf49dfd3cf1f373a31aa1bd072328",
       "config": {
         "is64bit": false,
         "sDoubleXLen": "s64",
         "sXLen": "s32"
       },
+      "corpus_sha256": "e03e73ddedef463e3dccd92908d6a85191f4d254aa66fc2781ccab17895de839",
       "declared_shadowed": 0,
       "declared_unreachable": 1,
       "divergences": 0,
+      "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
       "excludes": [
         "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
         "vector / scalable vector",
@@ -1393,6 +1664,8 @@
       "problems": [],
       "queries": 7861,
       "report": "riscv-conditional-scalar-rv32-conformance.json",
+      "report_file_sha256": "3736d15ee43374efac407cf3f38701f859e65d9316807ffa85b51b4650452253",
+      "report_sha256": "facde6f25128b0a9d0af04217727488f87178be57ed639d5420dd099ad17673c",
       "rules": "riscv-scalar-conditional.ldsl",
       "rules_matched": 100,
       "rules_sha256": "b9820a7f5bfc3f4e91cf02d05b8c8c8decf8d9087ef2737a0b443fb9f9d3d73a",
@@ -1404,9 +1677,12 @@
           "rule": "legal when ((t0 == s32) and (bits(t0) == 64)) and (imm0 == 32)",
           "ruleset": "G_SEXT_INREG"
         }
-      ]
+      ],
+      "witness": "riscv-scalar-conditional-rv32.witness",
+      "witness_sha256": "1557b1f525e32237452277f279c49f879fc426ccf5ac3aab16366e70c0528ebb"
     }
   ],
+  "evaluator_sha256": "8c6468dd01f7c04454f57f70fc5598dd72f6c3ed36f2fb7287954a57aa4dc084",
   "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
   "schema": "legalizer-dsl-claims-v1"
 }

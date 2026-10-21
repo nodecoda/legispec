@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import pathlib
 import sys
 import tempfile
@@ -19,15 +20,17 @@ import unittest
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
 from legalizer_dsl.conformance import (
+    ComparisonReport,
     Observation,
     _closure_outside_d,
     _write_input,
+    build_report,
     closure_queries,
     iter_d_queries,
     python_observation,
 )
 from legalizer_dsl.model import Query, parse_llt
-from legalizer_dsl.parser import parse
+from legalizer_dsl.parser import parse, parse_file
 
 
 class ConformanceTests(unittest.TestCase):
@@ -94,6 +97,54 @@ class ConformanceTests(unittest.TestCase):
             first,
             '{"id":0,"opcode":"G_X","types":["s32"],"mems":[],"imms":[]}',
         )
+
+
+
+class ReportDeterminismTests(unittest.TestCase):
+    def test_report_bytes_do_not_depend_on_temp_directory_or_jsonl_path(self):
+        here = pathlib.Path(__file__).resolve().parents[1]
+        rules = here / "rules" / "toycpu.ldsl"
+        oracle = here / "out" / "oracle" / "legalizer-oracle.exe"
+        if not oracle.is_file():
+            self.skipTest("toycpu oracle not collected; see docs/EVIDENCE.md")
+        info = parse_file(rules)
+        comparison = ComparisonReport(
+            queries=0, divergence_count=0, oracle_errors=0, stdout_lines=0
+        )
+        with tempfile.TemporaryDirectory() as one, tempfile.TemporaryDirectory() as two:
+            first = build_report(
+                info,
+                rules,
+                oracle,
+                pathlib.Path(one),
+                0,
+                "a" * 64,
+                [],
+                [],
+                [],
+                comparison,
+                llvm_build="F:/llvm/build-toycpu",
+            )
+            second = build_report(
+                info,
+                rules,
+                oracle,
+                pathlib.Path(two),
+                0,
+                "a" * 64,
+                [],
+                [],
+                [],
+                comparison,
+                llvm_build="F:/llvm/build-toycpu",
+            )
+        self.assertEqual(
+            json.dumps(first, ensure_ascii=False, indent=2),
+            json.dumps(second, ensure_ascii=False, indent=2),
+        )
+        self.assertNotIn("jsonl", first["inputs"])
+        self.assertEqual(len(first["evaluator_sha256"]), 64)
+        self.assertEqual(len(first["codegen_sha256"]), 64)
 
 
 if __name__ == "__main__":

@@ -19,6 +19,16 @@ def run(info: LegalizerInfo, analyses: dict[str, RuleSetAnalysis]) -> list[Diagn
     diagnostics: list[Diagnostic] = []
     for ruleset in info.rulesets:
         analysis = analyses[ruleset.opcodes[0]]
+        if analysis.apply_error is not None:
+            diagnostics.append(
+                Diagnostic(
+                    "M006",
+                    Severity.ERROR,
+                    f"{', '.join(ruleset.opcodes)}: rule evaluation failed: "
+                    f"{analysis.apply_error}",
+                    ruleset.span,
+                )
+            )
         for (rule_index, code), issue in sorted(analysis.mutation_issues.items()):
             rule = ruleset.rules[rule_index]
             diagnostics.append(

@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from typing import Iterator, Optional
 
 from .checker.analysis import iter_queries
-from .diagnostics import Diagnostic, Severity
+from .diagnostics import Diagnostic, DslError, Severity
 from .model import Action, LegalizerInfo, Query, Step
 
 TERMINAL_ACTIONS = {
@@ -97,8 +97,12 @@ def legalize(info: LegalizerInfo, query: Query, max_steps: int = 64) -> Trace:
         if step.new_type is None:
             return Trace(start, steps, current, "Stuck")
         types = list(current.types)
-        if step.type_idx >= len(types):
-            return Trace(start, steps, current, "Stuck")
+        if not 0 <= step.type_idx < len(types):
+            raise DslError(
+                f"mutation target t{step.type_idx} is out of range for "
+                f"{len(types)} type slot(s)",
+                code="T010",
+            )
         types[step.type_idx] = step.new_type
         current = Query(current.opcode, tuple(types), current.mems, current.imms)
     return Trace(start, steps, current, "Budget")

@@ -29,19 +29,17 @@ import ast
 import hashlib
 import json
 import re
-import sys
 from pathlib import Path
 
-import os
+from . import paths
 
-HERE = Path(__file__).resolve().parent
-ROOT = HERE.parents[1]                      # repo root
-RULES = ROOT / "rules"
-OUT = Path(os.environ.get("LEGALIZER_DSL_OUT", ROOT / "out"))
-LEDGER = ROOT / "claims" / "claims.json"
-CONSTRUCTS = ROOT / "claims" / "construct-coverage.json"
-CLOSURE_MD = ROOT / "docs" / "CLOSURE.md"
-TESTS = ROOT / "tests"
+ROOT = paths.REPO_ROOT                      # repo root (compat)
+RULES = paths.RULES
+OUT = paths.OUT
+LEDGER = paths.LEDGER
+CONSTRUCTS = paths.CONSTRUCT_COVERAGE
+CLOSURE_MD = paths.DOCS / "CLOSURE.md"
+TESTS = paths.TESTS
 
 PIN_KEYS = (
     "claims",
@@ -108,18 +106,28 @@ def aggregate(claims: list[dict]) -> dict[str, dict]:
     return targets
 
 
-def audit(write: bool, skip_evidence: bool = False) -> int:
-    ledger = json.loads(LEDGER.read_text(encoding="utf-8"))
-    claims = ledger["claims"]
+def audit(write: bool, skip_evidence: bool = False, skip_tests: bool = False) -> int:
+    ledger = json.loads(LEDGER.read_text(encoding="utf-8-sig"))
+    if skip_evidence:
+        entries = ledger["claims"]
+    else:
+        from . import claims as claims_module
+
+        entries = claims_module.audit_all()
     problems: list[str] = []
 
-    for claim in claims:
+    for claim in entries:
         cid = claim["id"]
-        if not skip_evidence:
-            if not claim.get("ok"):
-                problems.append(f"{cid}: claim is not ok: {claim.get('problems')}")
-            if claim.get("divergences", 0) != 0:
-                problems.append(f"{cid}: {claim['divergences']} divergence(s)")
+        # Even in structural mode the ledger's cached verdict must not be
+        # negative: a tampered ledger (ok=false / divergences>0) must fail.
+        if claim.get("ok") is not True:
+            problems.append(
+                f"{cid}: ledger entry is not marked ok; run claims verify"
+            )
+            for problem in claim.get("problems", []):
+                problems.append(f"{cid}: {problem}")
+        if claim.get("divergences", 0) != 0:
+            problems.append(f"{cid}: {claim['divergences']} divergence(s)")
 
         rules_path = RULES / claim["rules"]
         if not rules_path.exists():
@@ -136,7 +144,7 @@ def audit(write: bool, skip_evidence: bool = False) -> int:
             problems.append(f"{cid}: report missing: {report_path}")
             continue
         try:
-            report = json.loads(report_path.read_text(encoding="utf-8"))
+            report = json.loads(report_path.read_text(encoding="utf-8-sig"))
         except json.JSONDecodeError as exc:
             problems.append(f"{cid}: report is not JSON: {exc}")
             continue
@@ -144,14 +152,14 @@ def audit(write: bool, skip_evidence: bool = False) -> int:
         if reported != claim.get("rules_sha256"):
             problems.append(f"{cid}: report was produced from a different rules hash")
 
-    referenced = {claim["rules"] for claim in claims}
+    referenced = {claim["rules"] for claim in entries}
     on_disk = {path.name for path in RULES.glob("*.ldsl")}
     for missing in sorted(on_disk - referenced):
         problems.append(f"rules file has no claim: {missing}")
     for missing in sorted(referenced - on_disk):
         problems.append(f"claim references a missing rules file: {missing}")
 
-    coverage = json.loads(CONSTRUCTS.read_text(encoding="utf-8"))
+    coverage = json.loads(CONSTRUCTS.read_text(encoding="utf-8-sig"))
     buckets = coverage["counts"]
     methods = coverage["methods"]
     if sum(buckets.values()) != len(methods):
@@ -163,15 +171,15 @@ def audit(write: bool, skip_evidence: bool = False) -> int:
         problems.append(f"unknown construct buckets: {sorted(unknown)}")
 
     computed = {
-        "claims": len(claims),
-        "hand-claims": sum(1 for c in claims if not c["id"].endswith("-generated")),
-        "generated-claims": sum(1 for c in claims if c["id"].endswith("-generated")),
+        "claims": len(entries),
+        "hand-claims": sum(1 for c in entries if not c["id"].endswith("-generated")),
+        "generated-claims": sum(1 for c in entries if c["id"].endswith("-generated")),
         "rules-files": len(on_disk),
         "hand-queries": sum(
-            c["queries"] for c in claims if not c["id"].endswith("-generated")
+            c["queries"] for c in entries if not c["id"].endswith("-generated")
         ),
         "constructs": len(methods),
-        "tests": count_tests(),
+        "tests": 0 if skip_tests else count_tests(),
     }
     try:
         pinned = read_pinned()
@@ -179,6 +187,8 @@ def audit(write: bool, skip_evidence: bool = False) -> int:
         problems.append(str(exc))
         pinned = {}
     for key in PIN_KEYS:
+        if skip_tests and key == "tests":
+            continue
         if key in pinned and pinned[key] != computed[key]:
             problems.append(f"pinned {key}={pinned[key]} but computed {computed[key]}")
 
@@ -188,7 +198,7 @@ def audit(write: bool, skip_evidence: bool = False) -> int:
         "boundary": ledger.get("boundary"),
         "computed": computed,
         "pinned": pinned,
-        "targets": aggregate(claims),
+        "targets": aggregate(entries),
         "constructs": buckets,
         "problems": problems,
     }
@@ -227,10 +237,17 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="check structure and pinned numbers only; claims are not re-audited",
     )
+    parser.add_argument(
+        "--skip-tests",
+        action="store_true",
+        help="do not compare the pinned test count (installed wheel has no tests/)",
+    )
     args = parser.parse_args(argv)
     if args.skip_evidence:
         print("evidence: skipped (--skip-evidence); claims are NOT audited by this run")
-    return audit(args.write, args.skip_evidence)
+    if args.skip_tests:
+        print("tests: pinned test count not checked (--skip-tests)")
+    return audit(args.write, args.skip_evidence, args.skip_tests)
 
 
 if __name__ == "__main__":

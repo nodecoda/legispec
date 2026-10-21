@@ -43,14 +43,19 @@ import sys
 from dataclasses import dataclass
 from typing import Optional
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]          # repo root (src/legalizer_dsl -> src -> repo)
-_llvm_src = os.environ.get("LEGALIZER_DSL_LLVM_SRC", "")
-LLVM_SRC = pathlib.Path(_llvm_src) if _llvm_src else ROOT / ".ci" / "llvm-src"
+from . import paths
+
+ROOT = paths.REPO_ROOT
+LLVM_SRC = pathlib.Path(paths.LLVM_SRC) if paths.LLVM_SRC else ROOT / ".ci" / "llvm-src"
 HEADER = LLVM_SRC / "llvm" / "include" / "llvm" / "CodeGen" / "GlobalISel" / "LegalizerInfo.h"
-OUT_JSON = ROOT / "claims" / "construct-coverage.json"
-OUT_MD = ROOT / "docs" / "construct-coverage.md"
+OUT_JSON = paths.CONSTRUCT_COVERAGE
+OUT_MD = paths.DOCS / "construct-coverage.md"
 
 EXCLUDED = {"getActionDefinitions", "getActionDefinitionsBuilder"}
+
+
+class ConstructsError(RuntimeError):
+    """The construct snapshot or claim registry is unreadable."""
 
 
 @dataclass(frozen=True)
@@ -174,7 +179,8 @@ SUPPORT: dict[str, Support] = {
 }
 
 
-SNAPSHOT = ROOT / "claims" / "legalizerinfo-methods.txt"
+SNAPSHOT = paths.CLAIMS_DIR / "legalizerinfo-methods.txt"
+LEDGER = paths.LEDGER
 
 
 def _header_sha256() -> Optional[str]:
@@ -196,7 +202,7 @@ def load_snapshot() -> tuple[dict[str, str], list[str]]:
     """Read the committed method list used when no LLVM source tree is present."""
     meta: dict[str, str] = {}
     methods: list[str] = []
-    for line in SNAPSHOT.read_text(encoding="utf-8").splitlines():
+    for line in SNAPSHOT.read_text(encoding="utf-8-sig").splitlines():
         line = line.strip()
         if not line:
             continue
@@ -208,6 +214,73 @@ def load_snapshot() -> tuple[dict[str, str], list[str]]:
             continue
         methods.append(line)
     return meta, methods
+
+
+def load_ledger_commit() -> Optional[str]:
+    """Top-level ``llvm_commit`` from the claim registry, or None.
+
+    A missing registry means "no ledger in this installation".  A registry
+    that exists but cannot be read or parsed is corrupt, not empty: turning
+    that into ``None`` would silently disable the snapshot commit gate.
+    """
+    if not LEDGER.exists():
+        return None
+    try:
+        payload = json.loads(LEDGER.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ConstructsError(
+            f"cannot read claim registry {LEDGER}: {exc}"
+        ) from exc
+    if not isinstance(payload, dict):
+        raise ConstructsError(f"claim registry {LEDGER} is not an object")
+    commit = payload.get("llvm_commit")
+    if commit is not None and not isinstance(commit, str):
+        raise ConstructsError(
+            f"claim registry {LEDGER} has a non-string llvm_commit"
+        )
+    return commit or None
+
+
+def committed_method_count() -> Optional[int]:
+    """Total method count from the committed construct-coverage artifact."""
+    if not OUT_JSON.is_file():
+        return None
+    try:
+        payload = json.loads(OUT_JSON.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise ConstructsError(
+            f"cannot read construct coverage {OUT_JSON}: {exc}"
+        ) from exc
+    counts = payload.get("counts") if isinstance(payload, dict) else None
+    if not isinstance(counts, dict):
+        return None
+    try:
+        return sum(int(value) for value in counts.values())
+    except (TypeError, ValueError):
+        raise ConstructsError(
+            f"construct coverage {OUT_JSON} has non-integer counts"
+        ) from None
+
+
+def snapshot_commit_mismatch(
+    meta: dict[str, str], ledger_commit: Optional[str]
+) -> Optional[str]:
+    """Describe a snapshot/ledger commit mismatch, or return None.
+
+    An unknown snapshot commit or a missing ledger commit cannot be compared
+    and is not reported as a mismatch.
+    """
+    snapshot_commit = meta.get("llvm_commit")
+    if not snapshot_commit or snapshot_commit == "unknown":
+        return None
+    if not ledger_commit:
+        return None
+    if snapshot_commit == ledger_commit:
+        return None
+    return (
+        f"snapshot llvm_commit {snapshot_commit} does not match "
+        f"claims/claims.json llvm_commit {ledger_commit}"
+    )
 
 
 def write_snapshot(methods: list[str]) -> None:
@@ -293,11 +366,24 @@ def main(argv: Optional[list[str]] = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    try:
+        ledger_commit = load_ledger_commit()
+    except ConstructsError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
     if args.write_snapshot:
         if not HEADER.exists():
             print(f"header not found: {HEADER}")
             return 2
         methods = extract_methods()
+        if not methods:
+            print(
+                "ERROR: extraction found no LegalizerInfo builder methods; "
+                "refusing to overwrite the committed snapshot",
+                file=sys.stderr,
+            )
+            return 1
         write_snapshot(methods)
         print(f"wrote {SNAPSHOT.name}: {len(methods)} methods")
 
@@ -306,6 +392,10 @@ def main(argv: Optional[list[str]] = None) -> int:
         source = f"header {HEADER}"
         if SNAPSHOT.exists():
             meta, snap_methods = load_snapshot()
+            mismatch = snapshot_commit_mismatch(meta, ledger_commit)
+            if mismatch is not None:
+                print(f"ERROR: {mismatch}", file=sys.stderr)
+                return 1
             if meta.get("header_sha256") != _header_sha256():
                 print(
                     "note: claims/legalizerinfo-methods.txt is stale "
@@ -315,6 +405,10 @@ def main(argv: Optional[list[str]] = None) -> int:
                 print("note: snapshot method list differs from the header")
     elif SNAPSHOT.exists():
         meta, methods = load_snapshot()
+        mismatch = snapshot_commit_mismatch(meta, ledger_commit)
+        if mismatch is not None:
+            print(f"ERROR: {mismatch}", file=sys.stderr)
+            return 1
         source = (
             f"snapshot @{meta.get('llvm_commit', 'unknown')[:12]} "
             f"(no LLVM source tree; set LEGALIZER_DSL_LLVM_SRC to check upstream)"
@@ -323,7 +417,22 @@ def main(argv: Optional[list[str]] = None) -> int:
         print(f"header not found: {HEADER}")
         print("and no committed snapshot at claims/legalizerinfo-methods.txt")
         return 2
+    if not methods:
+        print(
+            "ERROR: no LegalizerInfo builder methods found; "
+            "refusing to report empty construct coverage",
+            file=sys.stderr,
+        )
+        return 1
     print(f"source: {source}")
+    committed = committed_method_count()
+    if committed is not None and len(methods) < committed:
+        print(
+            f"ERROR: source lists {len(methods)} methods but committed "
+            f"coverage has {committed}; the snapshot looks truncated",
+            file=sys.stderr,
+        )
+        return 1
     entries, unclassified = classify(methods)
     counts: dict[str, int] = {}
     for e in entries:

@@ -56,9 +56,9 @@ R = closure(Q0) 在 D 内的一步 legalize 后继
 | `diagnostics.py` | T/K/C 诊断码 | 读懂报错 |
 | `measure_concat_shapes.py` | 真实 MIR 形状审计 | 域是否覆盖真实查询 |
 | `closure.py` | 收口审计：pinned 数字 vs 产物 | 文档数字或资产清单漂移时 |
-| `cli.py` / `legalizer-dsl.py` | `check` / `codegen` / `conform` / `witness` | 日常入口 |
+| `cli.py` / `legalizer-dsl` | `check` / `codegen` / `conform` / `witness` | 日常入口 |
 | `rules/*.ldsl` | 22 份规则转写 | 证明对象 |
-| `tests/` | 219 个单元测试 | 改任何实现前先跑 |
+| `tests/` | 305 个单元测试 | 改任何实现前先跑 |
 | `witness/` | 每片的固定证据 | 回归 |
 | `*capabilities.json` | custom/libcall/lower 的 provider 契约 | strict check |
 
@@ -71,7 +71,7 @@ generated-claims=16
 rules-files=22
 hand-queries=321627
 constructs=63
-tests=219
+tests=305
 <!-- /closure:pinned -->
 
 这些数字由 `closure.py check` 从 `claims.json`、`rules/`、`construct-coverage.json`、
@@ -199,8 +199,8 @@ python -m legalizer_dsl.closure check
 python -X utf8 measure_concat_shapes.py
 
 # 语法/静态检查与代码生成
-python -X utf8 ..\legalizer-dsl.py --rules rules\aarch64-concat-vectors.ldsl check --strict
-python -X utf8 ..\legalizer-dsl.py --rules rules\aarch64-concat-vectors.ldsl codegen --out out\codegen
+python -X utf8 -m legalizer_dsl --rules rules\aarch64-concat-vectors.ldsl check --strict
+python -X utf8 -m legalizer_dsl --rules rules\aarch64-concat-vectors.ldsl codegen --out-dir out\codegen
 ```
 
 ## 10. 阅读顺序（新人 2 小时）
@@ -238,7 +238,7 @@ python -X utf8 ..\legalizer-dsl.py --rules rules\aarch64-concat-vectors.ldsl cod
 ```text
 claims=43 proven=43 failed=0
 11 gates PASS
-219 tests OK
+305 tests OK
 constructs 63/63 classified
 closure.py check PASS（pinned 数字与产物一致）
 ```

@@ -38,13 +38,13 @@ if __package__ in (None, ""):
 import argparse
 import hashlib
 import json
-import os
-import keyword
+import re
 import sys
 from pathlib import Path
 from typing import Optional
 
-from . import model
+from . import model, paths
+from .checker.capability import CapabilityManifestError
 from .diagnostics import DslError
 from .model import (
     Action,
@@ -100,6 +100,61 @@ GENERATED_HEADER = "toycpu_rules_gen.h"
 GENERATED_SOURCE = "toycpu_rules_gen.cpp"
 GENERATED_MANIFEST = "codegen-manifest.json"
 
+_CPP_IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+# C++20 keywords plus the alternative tokens.  ``str.isidentifier()`` alone
+# accepts Python keywords and misses C++ ones such as ``int`` or ``template``.
+_CPP_KEYWORDS = frozenset(
+    """
+    alignas alignof and and_eq asm atomic_cancel atomic_commit atomic_noexcept
+    auto bitand bitor bool break case catch char char8_t char16_t char32_t
+    class compl concept const consteval constexpr constinit const_cast continue
+    co_await co_return co_yield decltype default delete do double dynamic_cast
+    else enum explicit export extern false float for friend goto if inline int
+    long mutable namespace new noexcept not not_eq nullptr operator or or_eq
+    private protected public reflexpr register reinterpret_cast requires return
+    short signed sizeof static static_assert static_cast struct switch
+    synchronized template this thread_local throw true try typedef typeid
+    typename union unsigned using virtual void volatile wchar_t while xor xor_eq
+    """.split()
+)
+
+
+def _is_valid_namespace(namespace: str) -> bool:
+    return (
+        _CPP_IDENTIFIER_RE.fullmatch(namespace) is not None
+        and namespace not in _CPP_KEYWORDS
+    )
+
+
+def _require_valid_namespace(namespace: str) -> None:
+    if not _is_valid_namespace(namespace):
+        raise DslError(
+            f"not a valid C++ namespace identifier: {namespace!r}",
+            code="G002",
+        )
+
+
+_STEM_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def _require_valid_output_stem(stem: str) -> None:
+    if _STEM_RE.fullmatch(stem) is None:
+        raise DslError(
+            "output stem must be a single C++ identifier without path "
+            f"separators: {stem!r}",
+            code="G003",
+        )
+
+
+def _derive_output_stem(rules_path: Path) -> str:
+    """Derive a filename-safe C++ identifier from the rules file stem."""
+    stem = re.sub(r"[^A-Za-z0-9_]", "_", rules_path.stem)
+    if not stem or stem[0].isdigit():
+        stem = f"_{stem}"
+    return f"{stem}_rules_gen"
+
+
 # Public builder helpers for "type set / type pair" predicates.  The generic
 # ``actionFor`` is private in LegalizeRuleSet, so codegen must use the public
 # per-action spelling (legalFor/customFor/...).
@@ -148,6 +203,36 @@ class CodegenError(DslError):
 
     def __init__(self, message: str, *, code: str = "G001", span=None) -> None:
         super().__init__(message, code=code, span=span)
+
+
+_SLOT_FIELDS = (
+    "idx",
+    "i",
+    "j",
+    "lhs",
+    "rhs",
+    "mem_idx",
+    "src_idx",
+    "scalar_idx",
+    "size_idx",
+)
+
+
+def _reject_negative_slots(node, *, kind: str) -> None:
+    """Never emit a negative slot index into generated C++.
+
+    Parsing already rejects negative indices, but predicates and mutations can
+    also be built programmatically.  A negative index would become
+    ``Q.Types[-1]`` (or ``-1u``) in C++, so reject it at the emission boundary.
+    """
+    for name in _SLOT_FIELDS:
+        value = getattr(node, name, None)
+        if isinstance(value, int) and not isinstance(value, bool) and value < 0:
+            raise DslError(
+                f"{kind} {type(node).__name__} uses negative slot index "
+                f"{name}={value}",
+                code="G006",
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -216,12 +301,18 @@ def _pred(pred, table: LLTTable) -> str:
 
     Primitive helpers are used whenever LLVM has one with exactly the DSL
     semantics.  The remaining predicates are inline lambdas with an explicit
-    bounds check, mirroring the interpreter's ``idx < len`` guard.
+    bounds check, mirroring the interpreter's non-negative slot guard.
     """
+
+    _reject_negative_slots(pred, kind="predicate")
 
     if isinstance(pred, Always):
         return "LegalityPredicate([](const LegalityQuery &) { return true; })"
     if isinstance(pred, TypeIn):
+        if not pred.types:
+            # Defensive: the parser rejects empty sets, but a hand-built model
+            # must still generate a valid predicate (never `typeInSet(idx, {})`).
+            return "LegalityPredicate([](const LegalityQuery &) { return false; })"
         return f"typeInSet({pred.idx}, {_llt_set(pred.types, table)})"
     if isinstance(pred, TypeEq):
         return f"typeIs({pred.idx}, {table.add(pred.ty)})"
@@ -385,6 +476,9 @@ def _pred(pred, table: LLTTable) -> str:
             f"Q.Types[{pred.idx}].getSizeInBits() % {pred.divisor} == 0; }})"
         )
     if isinstance(pred, MemTypeIn):
+        if not pred.types:
+            # Defensive: an empty alternative list would emit `return ;`.
+            return "LegalityPredicate([](const LegalityQuery &) { return false; })"
         alts = " || ".join(f"T == {table.add(t)}" for t in pred.types)
         return (
             "LegalityPredicate([](const LegalityQuery &Q) { "
@@ -430,6 +524,7 @@ def _pred(pred, table: LLTTable) -> str:
 
 
 def _mutation(mut, table: LLTTable) -> str:
+    _reject_negative_slots(mut, kind="mutation")
     if isinstance(mut, SetElementSize):
         return f"changeElementSizeTo({mut.idx}, {table.add(LLT.scalar(mut.bits))})"
     if isinstance(mut, SameSizeAs):
@@ -594,9 +689,14 @@ def _required_capabilities(info: model.LegalizerInfo) -> dict[str, list[str]]:
     return {key: sorted(value) for key, value in required.items()}
 
 
-def _generated_header(namespace: str, rules_rel: str, rules_sha: str) -> str:
+def _generated_header(
+    namespace: str,
+    rules_rel: str,
+    rules_sha: str,
+    header_name: str = GENERATED_HEADER,
+) -> str:
     guard = f"{namespace.upper()}_RULES_GEN_H"
-    return f"""//===-- {GENERATED_HEADER} - Generated Legalizer rules -*- C++ -*-===//
+    return f"""//===-- {header_name} - Generated Legalizer rules -*- C++ -*-===//
 //
 // GENERATED FILE. DO NOT EDIT.
 // Source: {rules_rel}
@@ -623,7 +723,12 @@ void applyGeneratedLegalizerRules(LegalizerInfo &LI);
 
 
 def _generated_source(
-    info: model.LegalizerInfo, namespace: str, rules_rel: str, rules_sha: str
+    info: model.LegalizerInfo,
+    namespace: str,
+    rules_rel: str,
+    rules_sha: str,
+    header_name: str = GENERATED_HEADER,
+    source_name: str = GENERATED_SOURCE,
 ) -> str:
     table = LLTTable()
 
@@ -641,7 +746,7 @@ def _generated_source(
 
     lines: list[str] = []
     lines.append(
-        f"//===-- {GENERATED_SOURCE} - Generated Legalizer rules -*- C++ -*-===//"
+        f"//===-- {source_name} - Generated Legalizer rules -*- C++ -*-===//"
     )
     lines.append("//")
     lines.append("// GENERATED FILE. DO NOT EDIT.")
@@ -650,7 +755,7 @@ def _generated_source(
     lines.append("//")
     lines.append("//===----------------------------------------------------------------------===//")
     lines.append("")
-    lines.append(f'#include "{GENERATED_HEADER}"')
+    lines.append(f'#include "{header_name}"')
     lines.append('#include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"')
     lines.append('#include "llvm/CodeGen/TargetOpcodes.h"')
     lines.append('#include "llvm/CodeGenTypes/LowLevelType.h"')
@@ -697,59 +802,6 @@ def _generated_source(
     return "\n".join(lines)
 
 
-def _collect_rule_types(rule: model.Rule, table: LLTTable) -> None:
-    """Populate ``table`` with every LLT referenced by ``rule``."""
-
-    def visit_pred(pred) -> None:
-        if isinstance(pred, Always):
-            return
-        if isinstance(pred, (TypeIn,)):
-            for ty in pred.types:
-                table.add(ty)
-            return
-        if isinstance(pred, TypeEq):
-            table.add(pred.ty)
-            return
-        if isinstance(pred, FixedVectorElemCountCmp):
-            table.add(pred.elem)
-            return
-        if isinstance(pred, TypePairInSet):
-            for a, b in pred.pairs:
-                table.add(a)
-                table.add(b)
-            return
-        if isinstance(pred, MemTypeIn):
-            for ty in pred.types:
-                table.add(ty)
-            return
-        if isinstance(pred, MemCompatInSet):
-            for t0, t1, mem, _align in pred.entries:
-                table.add(t0)
-                table.add(t1)
-                table.add(mem)
-            return
-        if isinstance(pred, (And, Or)):
-            visit_pred(pred.lhs)
-            visit_pred(pred.rhs)
-            return
-        if isinstance(pred, Not):
-            visit_pred(pred.inner)
-            return
-        # Scalar/Vector/Pointer/BitsCmp/... carry no LLT payload.
-
-    def visit_mut(mut) -> None:
-        if isinstance(mut, SetElementSize):
-            table.add(LLT.scalar(mut.bits))
-            return
-        if isinstance(mut, ElementOf):
-            return
-        # SameSizeAs/NextPow2/NextMultiple/SetElementCount carry no LLT payload.
-
-    visit_pred(rule.pred)
-    if rule.new_type is not None:
-        visit_mut(rule.new_type)
-
-
 def _sha256_text(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
@@ -771,15 +823,23 @@ def generate(
     rules_sha: str,
     config: Optional[dict[str, object]] = None,
     namespace: str = "ToyCPU",
+    output_stem: str = "toycpu_rules_gen",
 ) -> dict:
     """Write the generated header/source/manifest and return the manifest."""
 
-    out_dir.mkdir(parents=True, exist_ok=True)
-    header_text = _generated_header(namespace, rules_rel, rules_sha)
-    source_text = _generated_source(info, namespace, rules_rel, rules_sha)
+    _require_valid_namespace(namespace)
+    _require_valid_output_stem(output_stem)
+    header_name = f"{output_stem}.h"
+    source_name = f"{output_stem}.cpp"
 
-    header_path = out_dir / GENERATED_HEADER
-    source_path = out_dir / GENERATED_SOURCE
+    out_dir.mkdir(parents=True, exist_ok=True)
+    header_text = _generated_header(namespace, rules_rel, rules_sha, header_name)
+    source_text = _generated_source(
+        info, namespace, rules_rel, rules_sha, header_name, source_name
+    )
+
+    header_path = out_dir / header_name
+    source_path = out_dir / source_name
     manifest_path = out_dir / GENERATED_MANIFEST
 
     header_path.write_text(header_text, encoding="utf-8", newline="\n")
@@ -795,9 +855,9 @@ def generate(
         "opcodes": len(info.by_opcode),
         "rules": sum(len(rs.rules) for rs in info.rulesets),
         "generated": {
-            "header": GENERATED_HEADER,
+            "header": header_name,
             "header_sha256": _sha256_text(header_text),
-            "source": GENERATED_SOURCE,
+            "source": source_name,
             "source_sha256": _sha256_text(source_text),
         },
         "capabilities_required": _required_capabilities(info),
@@ -816,10 +876,7 @@ def generate(
 
 
 def _default_paths() -> tuple[Path, Path]:
-    here = Path(__file__).resolve()
-    repo = here.parents[1]
-    out_dir = Path(os.environ.get("LEGALIZER_DSL_OUT", repo / "out"))
-    return repo / "rules" / "toycpu.ldsl", out_dir / "codegen"
+    return paths.RULES / "toycpu.ldsl", paths.OUT / "codegen"
 
 
 def main(argv: Optional[list[str]] = None) -> int:
@@ -849,8 +906,14 @@ def main(argv: Optional[list[str]] = None) -> int:
         default="ToyCPU",
         help="C++ namespace for the generated entry point (default: ToyCPU)",
     )
+    parser.add_argument(
+        "--output-stem",
+        default=None,
+        metavar="STEM",
+        help="generated file stem (default: <rules-stem>_rules_gen)",
+    )
     args = parser.parse_args(argv)
-    if not args.namespace.isidentifier() or keyword.iskeyword(args.namespace):
+    if not _is_valid_namespace(args.namespace):
         print(f"error: not a C++ identifier: {args.namespace!r}", file=sys.stderr)
         return 2
 
@@ -860,13 +923,16 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 2
     data = rules_path.read_bytes()
     rules_sha = hashlib.sha256(data).hexdigest()
-    package_dir = Path(__file__).resolve().parent
+    resolved_rules = rules_path.resolve()
     try:
-        rel = "tools/legalizer_dsl/" + rules_path.resolve().relative_to(
-            package_dir
-        ).as_posix()
+        rel = resolved_rules.relative_to(Path.cwd().resolve()).as_posix()
     except ValueError:
-        rel = rules_path.name
+        rel = resolved_rules.as_posix()
+    output_stem = (
+        args.output_stem
+        if args.output_stem is not None
+        else _derive_output_stem(rules_path)
+    )
 
     try:
         config = parse_defines(args.define)
@@ -880,7 +946,12 @@ def main(argv: Optional[list[str]] = None) -> int:
                 if args.custom_source
                 else None
             )
-            diagnostics = run_capability(info, manifest, custom_source=source_text)
+            diagnostics = run_capability(
+                info,
+                manifest,
+                custom_source=source_text,
+                custom_source_name=args.custom_source,
+            )
             fatal = [d for d in diagnostics if d.severity.value == "ERROR"]
             for diagnostic in diagnostics:
                 print(diagnostic.format(args.capabilities), file=sys.stderr)
@@ -897,9 +968,16 @@ def main(argv: Optional[list[str]] = None) -> int:
             rules_sha=rules_sha,
             config=config,
             namespace=args.namespace,
+            output_stem=output_stem,
         )
     except DslError as exc:
         print(f"{rules_path}:{exc}", file=sys.stderr)
+        return 2
+    except CapabilityManifestError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    except OSError as exc:
+        print(f"error: cannot write generated files: {exc}", file=sys.stderr)
         return 2
 
     print(

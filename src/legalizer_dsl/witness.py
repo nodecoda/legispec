@@ -97,6 +97,14 @@ class WitnessReport:
     def ok(self) -> bool:
         return not self.failures and not self.uncovered_rules
 
+    @property
+    def complete(self) -> bool:
+        return (
+            self.ok
+            and not self.rulesets_without_positive
+            and not self.rulesets_without_negative
+        )
+
     def summary(self) -> str:
         return (
             f"witnesses={self.total} positives={self.positives} "
@@ -123,8 +131,6 @@ def _parse_query(text: str, *, line: int) -> Query:
             _parse_mem(item, line=line) for item in _split_items(match.group("mems"))
         )
         imms = tuple(int(item) for item in _split_items(match.group("imms")))
-    except DslError:
-        raise
     except ValueError as exc:
         raise DslError(f"bad witness integer: {exc}", code="X002",
                        span=Span.point(line, 1)) from None
@@ -259,10 +265,6 @@ def parse_witness_text(text: str) -> list[Witness]:
             )
         witnesses.append(witness)
     return witnesses
-
-
-def _format_step(step) -> str:
-    return str(step)
 
 
 def run_witnesses(info: LegalizerInfo, witnesses: list[Witness]) -> WitnessReport:

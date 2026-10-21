@@ -10,14 +10,18 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import pathlib
 import sys
+import tempfile
 import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from legalizer_dsl.parser import parse_file
-from legalizer_dsl.witness import parse_witness_file, run_witnesses
+from legalizer_dsl import cli
+from legalizer_dsl.parser import parse, parse_file
+from legalizer_dsl.witness import parse_witness_file, parse_witness_text, run_witnesses
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
 RULES = HERE / "rules" / "toycpu.ldsl"
@@ -49,6 +53,31 @@ class WitnessCorpusTests(unittest.TestCase):
 
     def test_report_is_ok(self):
         self.assertTrue(self.report.ok)
+
+
+class WitnessStrictTests(unittest.TestCase):
+    RULES = "ruleset G_X { legal; }"
+    WITNESS = """
+    witness positive_only {
+        query = (G_X, [])
+        step = Legal rule 0
+    }
+    """
+
+    def test_complete_requires_positive_and_negative_coverage(self):
+        info = parse(self.RULES)
+        report = run_witnesses(info, parse_witness_text(self.WITNESS))
+        self.assertTrue(report.ok)
+        self.assertFalse(report.complete)
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = pathlib.Path(tmp) / "probe.witness"
+            path.write_text(self.WITNESS, encoding="utf-8")
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+                io.StringIO()
+            ):
+                self.assertEqual(cli._cmd_witness(info, str(path)), 0)
+                self.assertEqual(cli._cmd_witness(info, str(path), strict=True), 1)
 
 
 if __name__ == "__main__":

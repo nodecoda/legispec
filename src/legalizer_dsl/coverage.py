@@ -42,7 +42,9 @@ from .model import (
     IsPow2ElemBits,
     LanesCmp,
     LegalizerInfo,
+    MemAlignCmp,
     MemCompatInSet,
+    MemTypeIn,
     Not,
     NotPow2OrSmaller,
     NumElementsNotPow2,
@@ -51,6 +53,7 @@ from .model import (
     PointerVector,
     Pred,
     RuleSet,
+    SameShape,
     SameSize,
     Scalar,
     ScalarBitsCmp,
@@ -60,6 +63,14 @@ from .model import (
     TypePairInSet,
     Vector,
 )
+
+
+class UnhandledPredicate(Exception):
+    """Coverage has no read-set rule for this predicate node."""
+
+    def __init__(self, pred: object) -> None:
+        self.predicate_name = type(pred).__name__
+        super().__init__(f"unhandled predicate type {self.predicate_name}")
 
 
 @dataclass(frozen=True)
@@ -72,6 +83,9 @@ class CoverageEntry:
     imm_arity: Optional[int]
     covered_imms: tuple[int, ...]
     uncovered_imms: tuple[int, ...]
+    mem_arity: int = 0
+    covered_mems: tuple[int, ...] = ()
+    uncovered_mems: tuple[int, ...] = ()
 
 
 @dataclass
@@ -107,7 +121,10 @@ def type_read_set(pred: Pred) -> set[int]:
         return {pred.idx}
     if isinstance(pred, NumElementsNotPow2):
         return {pred.idx}
-    if isinstance(pred, (SameSize, ElemTypesEq, ConcatShape, ConcatShapeAny)):
+    if isinstance(
+        pred,
+        (SameSize, ElemTypesEq, ConcatShape, ConcatShapeAny, SameShape),
+    ):
         return {pred.i, pred.j}
     if isinstance(pred, ScalarBitsCmp):
         return {pred.lhs, pred.rhs}
@@ -121,13 +138,14 @@ def type_read_set(pred: Pred) -> set[int]:
         return {pred.i, pred.j}
     if isinstance(pred, MemCompatInSet):
         return {pred.i, pred.j}
-    if isinstance(pred, ImmCmp):
+    if isinstance(pred, (ImmCmp, MemTypeIn, MemAlignCmp)):
+        # Immediate and memory descriptors do not occupy a type slot.
         return set()
     if isinstance(pred, Not):
         return type_read_set(pred.inner)
     if isinstance(pred, (And, Or)):
         return type_read_set(pred.lhs) | type_read_set(pred.rhs)
-    raise TypeError(f"coverage: unhandled predicate type {type(pred).__name__}")
+    raise UnhandledPredicate(pred)
 
 
 def imm_read_set(pred: Pred) -> set[int]:
@@ -140,16 +158,32 @@ def imm_read_set(pred: Pred) -> set[int]:
     return set()
 
 
+def mem_read_set(pred: Pred) -> set[int]:
+    if isinstance(pred, (MemTypeIn, MemAlignCmp, MemCompatInSet)):
+        return {pred.mem_idx}
+    if isinstance(pred, Not):
+        return mem_read_set(pred.inner)
+    if isinstance(pred, (And, Or)):
+        return mem_read_set(pred.lhs) | mem_read_set(pred.rhs)
+    # A node coverage does not know must be reported, not treated as
+    # "reads no memory".  type_read_set owns the list of known nodes.
+    type_read_set(pred)
+    return set()
+
+
 def _entry(info: LegalizerInfo, ruleset: RuleSet) -> CoverageEntry:
     domain = info.domain
     assert domain is not None
     queries = domain.q0_for(ruleset.opcodes)
     arity = max((len(q.types) for q in queries), default=None)
     imm_arity = max((len(q.imms) for q in queries), default=None)
+    mem_arity = max((len(q.mems) for q in queries), default=0)
     covered_types = sorted({i for rule in ruleset.rules for i in type_read_set(rule.pred)})
     covered_imms = sorted({i for rule in ruleset.rules for i in imm_read_set(rule.pred)})
+    covered_mems = sorted({i for rule in ruleset.rules for i in mem_read_set(rule.pred)})
     uncovered_types = tuple(i for i in range(arity or 0) if i not in covered_types)
     uncovered_imms = tuple(i for i in range(imm_arity or 0) if i not in covered_imms)
+    uncovered_mems = tuple(i for i in range(mem_arity) if i not in covered_mems)
     return CoverageEntry(
         opcodes=ruleset.opcodes,
         arity=arity,
@@ -159,6 +193,9 @@ def _entry(info: LegalizerInfo, ruleset: RuleSet) -> CoverageEntry:
         imm_arity=imm_arity,
         covered_imms=tuple(covered_imms),
         uncovered_imms=uncovered_imms,
+        mem_arity=mem_arity,
+        covered_mems=tuple(covered_mems),
+        uncovered_mems=uncovered_mems,
     )
 
 
@@ -167,7 +204,19 @@ def run_coverage(info: LegalizerInfo) -> CoverageReport:
     if info.domain is None:
         return report
     for ruleset in info.rulesets:
-        entry = _entry(info, ruleset)
+        try:
+            entry = _entry(info, ruleset)
+        except UnhandledPredicate as exc:
+            report.diagnostics.append(
+                Diagnostic(
+                    "C007",
+                    Severity.ERROR,
+                    f"{', '.join(ruleset.opcodes)}: unhandled predicate "
+                    f"{exc.predicate_name} in coverage analysis",
+                    ruleset.span,
+                )
+            )
+            continue
         report.entries.append(entry)
         span = ruleset.span
         if entry.arity is None:
@@ -195,6 +244,15 @@ def run_coverage(info: LegalizerInfo) -> CoverageReport:
                     "C002",
                     Severity.WARN,
                     f"{', '.join(entry.opcodes)}: immediate index {idx} is never mentioned by a rule predicate",
+                    span,
+                )
+            )
+        for idx in entry.uncovered_mems:
+            report.diagnostics.append(
+                Diagnostic(
+                    "C006",
+                    Severity.WARN,
+                    f"{', '.join(entry.opcodes)}: memory index {idx} is never mentioned by a rule predicate",
                     span,
                 )
             )

@@ -17,7 +17,7 @@ import unittest
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
 from legalizer_dsl.checker import run_checks
-from legalizer_dsl.diagnostics import Severity
+from legalizer_dsl.diagnostics import DslError, Severity
 from legalizer_dsl.parser import parse, parse_file
 from legalizer_dsl.witness import parse_witness_file
 
@@ -135,6 +135,38 @@ class CheckerFixtureTests(unittest.TestCase):
         )
         diagnostics = run_checks(info, strict=True)
         self.assertIn("W002", _codes(diagnostics))
+
+    def test_zero_is_multiple_divisor_is_rejected_by_parse(self):
+        with self.assertRaises(DslError):
+            parse("ruleset G_X { legal when is_multiple(bits(t0), 0); }")
+
+    def test_zero_next_multiple_size_is_rejected_by_parse(self):
+        with self.assertRaises(DslError):
+            parse("ruleset G_X { widen 0 to next_multiple(bits(t0), 0); }")
+
+    def test_zero_widen_to_next_multiple_size_is_rejected_by_parse(self):
+        with self.assertRaises(DslError):
+            parse("ruleset G_X { widen_to_next_multiple 0, 0; }")
+
+    def test_empty_type_set_is_rejected_by_parse(self):
+        with self.assertRaises(DslError):
+            parse("ruleset G_X { legal when t0 in {}; }")
+
+    def test_empty_pair_set_is_rejected_by_parse(self):
+        with self.assertRaises(DslError):
+            parse("ruleset G_X { legal_for_pairs {}; }")
+
+    def test_more_scalar_to_vector_reports_m006_without_exception(self):
+        info = parse(
+            """
+            domain { types { s32 }; q0 { (G_X, [s32]); } }
+            ruleset G_X { more 0 to v4s32; }
+            """
+        )
+        diagnostics = run_checks(info, strict=True)
+        m006 = _by_code(diagnostics, "M006")
+        self.assertTrue(m006, [d.format("check") for d in diagnostics])
+        self.assertTrue(all(d.severity is Severity.ERROR for d in m006))
 
     def test_missing_q0_yields_unknown(self):
         info = parse(

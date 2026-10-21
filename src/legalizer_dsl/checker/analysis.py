@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from itertools import product
 from typing import Optional
 
+from ..diagnostics import DslError
 from ..model import Action, LLT, LegalizerInfo, MUTATING_ACTIONS, Query, Rule, RuleSet
 
 
@@ -48,6 +49,10 @@ class RuleSetAnalysis:
     transitions: dict[Query, set[Query]] = field(default_factory=dict)
     self_loops: dict[int, LLT] = field(default_factory=dict)
     samples: dict[int, Query] = field(default_factory=dict)
+    # First ``ruleset.apply`` failure seen in D.  ``None`` means every query
+    # could be evaluated; the message includes a sample query so mutation.run
+    # can report a reproducible M006 at the ruleset span.
+    apply_error: Optional[str] = None
 
 
 def shape(info: LegalizerInfo, ruleset: RuleSet) -> tuple[Optional[int], int, int]:
@@ -61,15 +66,15 @@ def shape(info: LegalizerInfo, ruleset: RuleSet) -> tuple[Optional[int], int, in
 
 def iter_queries(info: LegalizerInfo, ruleset: RuleSet):
     assert info.domain is not None
+    domain = info.domain
     arity, mem_arity, imm_arity = shape(info, ruleset)
     if arity is None:
         return
-    for types in product(info.domain.types, repeat=arity):
-        for mems in product(info.domain.mems, repeat=mem_arity):
-            for imms in product(info.domain.imms, repeat=imm_arity):
+    for types in product(domain.types, repeat=arity):
+        for mems in product(domain.mems, repeat=mem_arity):
+            for imms in product(domain.imms, repeat=imm_arity):
                 query = Query(ruleset.opcodes[0], types, mems, imms)
-                domain = info.domain
-                if domain.filter is not None and not domain.filter.eval(query):
+                if not domain.accepts(query):
                     continue
                 yield query
 
@@ -80,9 +85,9 @@ def _mutation_issue(rule: Rule, query: Query) -> Optional[tuple[str, str]]:
             return ("M006", "mutating action has no mutation")
         try:
             new = rule.new_type.eval(query)
-        except Exception as exc:  # DslError or shape error
+        except (DslError, ArithmeticError) as exc:
             return ("M006", f"mutation failed: {exc}")
-        if rule.type_idx >= len(query.types):
+        if not (0 <= rule.type_idx < len(query.types)):
             return ("M006", f"mutation type index t{rule.type_idx} is out of range")
         old = query.types[rule.type_idx]
         if new == old:
@@ -124,7 +129,12 @@ def analyze_ruleset(info: LegalizerInfo, ruleset: RuleSet) -> RuleSetAnalysis:
         result.queries += 1
         # ``apply`` short-circuits at the first match.  Reachability and
         # overlap need every rule's predicate evaluated independently.
-        step, _ = ruleset.apply(query)
+        try:
+            step, _ = ruleset.apply(query)
+        except (DslError, ArithmeticError) as exc:
+            if result.apply_error is None:
+                result.apply_error = f"{exc} (sample query: {query})"
+            continue
         matched_indices: list[int] = []
         for index, rule in enumerate(ruleset.rules):
             if not rule.pred.eval(query):
@@ -144,7 +154,7 @@ def analyze_ruleset(info: LegalizerInfo, ruleset: RuleSet) -> RuleSetAnalysis:
         for a_pos, i in enumerate(matched_indices):
             for j in matched_indices[a_pos + 1:]:
                 result.overlaps[(i, j)] = result.overlaps.get((i, j), 0) + 1
-        if step.new_type is not None and step.type_idx < len(query.types):
+        if step.new_type is not None and 0 <= step.type_idx < len(query.types):
             old = query.types[step.type_idx]
             if step.new_type == old:
                 result.self_loops.setdefault(step.rule_index if step.rule_index is not None else -1, old)

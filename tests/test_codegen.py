@@ -160,6 +160,43 @@ class CodegenContractTests(unittest.TestCase):
                 codegen.main(["--namespace", "1bad", "--out-dir", tmp]), 2
             )
 
+    def test_cpp_keyword_namespace_is_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(
+                codegen.main(["--namespace", "int", "--out-dir", tmp]), 2
+            )
+
+    def test_cli_output_stem_controls_generated_names(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp)
+            self.assertEqual(
+                codegen.main(
+                    [
+                        "--rules",
+                        str(RULES),
+                        "--out-dir",
+                        str(out),
+                        "--output-stem",
+                        "custom_stem",
+                    ]
+                ),
+                0,
+            )
+            header = out / "custom_stem.h"
+            source = out / "custom_stem.cpp"
+            self.assertTrue(header.is_file())
+            self.assertTrue(source.is_file())
+            manifest = json.loads(
+                (out / codegen.GENERATED_MANIFEST).read_text(encoding="utf-8")
+            )
+            self.assertEqual(manifest["generated"]["header"], "custom_stem.h")
+            self.assertEqual(manifest["generated"]["source"], "custom_stem.cpp")
+            self.assertIn(
+                '#include "custom_stem.h"', source.read_text(encoding="utf-8")
+            )
+            self.assertFalse((out / codegen.GENERATED_HEADER).exists())
+            self.assertFalse((out / codegen.GENERATED_SOURCE).exists())
+
     def test_each_llt_is_declared_once(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = pathlib.Path(tmp)
@@ -190,6 +227,68 @@ class CodegenContractTests(unittest.TestCase):
         self.assertIn("getElementType()", source)
         self.assertIn("moreElementsIf", source)
         self.assertIn("fewerElementsIf", source)
+
+
+
+class OutputStemSafetyTests(unittest.TestCase):
+    def test_path_like_stems_are_rejected_before_writing(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp) / "out"
+            for stem in ("../escape", "bad/name", "..", "C:\\evil", "", "1bad"):
+                with self.subTest(stem=stem):
+                    rc = codegen.main(
+                        [
+                            "--rules",
+                            str(RULES),
+                            "--out-dir",
+                            str(out),
+                            "--output-stem",
+                            stem,
+                        ]
+                    )
+                    self.assertNotEqual(rc, 0)
+                    self.assertFalse(out.exists())
+                    self.assertFalse((pathlib.Path(tmp) / "escape.h").exists())
+
+    def test_valid_stem_is_accepted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp) / "out"
+            self.assertEqual(
+                codegen.main(
+                    [
+                        "--rules",
+                        str(RULES),
+                        "--out-dir",
+                        str(out),
+                        "--output-stem",
+                        "_ok2",
+                    ]
+                ),
+                0,
+            )
+            self.assertTrue((out / "_ok2.h").is_file())
+
+    def test_default_stem_sanitizes_hyphenated_rules(self):
+        rules = HERE / "rules" / "aarch64-concat-vectors.ldsl"
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp) / "out"
+            self.assertEqual(
+                codegen.main(["--rules", str(rules), "--out-dir", str(out)]),
+                0,
+            )
+            stem = "aarch64_concat_vectors_rules_gen"
+            header = out / f"{stem}.h"
+            source = out / f"{stem}.cpp"
+            self.assertTrue(header.is_file())
+            self.assertTrue(source.is_file())
+            manifest = json.loads(
+                (out / codegen.GENERATED_MANIFEST).read_text(encoding="utf-8")
+            )
+            self.assertEqual(manifest["generated"]["header"], f"{stem}.h")
+            self.assertEqual(manifest["generated"]["source"], f"{stem}.cpp")
+            self.assertIn(
+                f'#include "{stem}.h"', source.read_text(encoding="utf-8")
+            )
 
 
 if __name__ == "__main__":

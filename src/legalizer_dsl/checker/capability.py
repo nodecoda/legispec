@@ -97,6 +97,7 @@ def run(
     manifest: dict,
     *,
     custom_source: Optional[str] = None,
+    custom_source_name: Optional[str] = None,
 ) -> list[Diagnostic]:
     diagnostics: list[Diagnostic] = []
     required = required_capabilities(info)
@@ -126,6 +127,7 @@ def run(
 
     if custom_source is not None:
         symbol = manifest.get("custom", {}).get("symbol")
+        handler = symbol or "the custom handler"
         body = _custom_body(custom_source, symbol)
         cases = set(_CASE_RE.findall(body))
         for opcode in sorted(set(required["custom"]) - cases):
@@ -134,7 +136,7 @@ def run(
                     "C003",
                     Severity.ERROR,
                     f"custom: {opcode} is declared but has no case in "
-                    "ToyCPULegalizerInfo::legalizeCustom",
+                    f"{handler}",
                     None,
                 )
             )
@@ -154,7 +156,7 @@ def run(
                     "C005",
                     Severity.ERROR,
                     f"custom: provider symbol {symbol!r} not found in "
-                    "ToyCPULegalizerInfo.cpp",
+                    f"{custom_source_name or 'the provided custom source'}",
                     None,
                 )
             )

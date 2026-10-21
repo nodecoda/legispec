@@ -395,6 +395,15 @@ class LLTRepresentabilityTests(unittest.TestCase):
         self.assertEqual(ty.lanes, 2)
 
 
+class CliMainGuardTests(unittest.TestCase):
+    def test_cli_module_has_main_guard(self):
+        import legalizer_dsl.cli as cli
+
+        source = pathlib.Path(cli.__file__).read_text(encoding="utf-8")
+        self.assertIn('if __name__ == "__main__":', source)
+        self.assertIn("raise SystemExit(main())", source)
+
+
 class ParseErrorTests(unittest.TestCase):
     def test_bad_type_is_rejected(self):
         with self.assertRaises(DslError):

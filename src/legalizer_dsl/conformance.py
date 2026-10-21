@@ -41,9 +41,15 @@ TOOLS_DIR = Path(__file__).resolve().parent.parent
 if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
+from legalizer_dsl import paths  # noqa: E402
+from legalizer_dsl.fingerprint import (  # noqa: E402
+    codegen_sha256,
+    hand_evaluator_sha256,
+)
 from legalizer_dsl.model import LegalizerInfo, Query  # noqa: E402
 from legalizer_dsl.parser import parse_defines, parse_file  # noqa: E402
 from legalizer_dsl.checker.analysis import shape  # noqa: E402
+from legalizer_dsl.diagnostics import DslError  # noqa: E402
 from legalizer_dsl.interp import TERMINAL_ACTIONS  # noqa: E402
 from itertools import product  # noqa: E402
 
@@ -120,7 +126,7 @@ def iter_d_queries(info: LegalizerInfo) -> Iterator[Query]:
                 for mems in product(info.domain.mems, repeat=mem_arity):
                     for imms in product(info.domain.imms, repeat=imm_arity):
                         query = Query(opcode, types, mems, imms)
-                        if info.domain.filter and not info.domain.filter.eval(query):
+                        if not info.domain.accepts(query):
                             continue
                         yield query
 
@@ -165,9 +171,15 @@ def closure_queries(
         step, _ = info.action(query)
         if step.action in TERMINAL_ACTIONS:
             continue
-        if step.new_type is None or step.type_idx >= len(query.types):
+        if step.new_type is None:
             continue
         types = list(query.types)
+        if not 0 <= step.type_idx < len(types):
+            raise DslError(
+                f"mutation target t{step.type_idx} is out of range for "
+                f"{len(types)} type slot(s)",
+                code="T010",
+            )
         types[step.type_idx] = step.new_type
         queue.append(
             (Query(query.opcode, tuple(types), query.mems, query.imms), depth + 1)
@@ -203,10 +215,7 @@ def _closure_outside_d(info: LegalizerInfo, queries: Iterable[Query]) -> list[Qu
             or any(ty not in domain_types for ty in query.types)
             or any(mem not in domain_mems for mem in query.mems)
             or any(imm not in domain_imms for imm in query.imms)
-            or (
-                info.domain.filter is not None
-                and not info.domain.filter.eval(query)
-            )
+            or not info.domain.accepts(query)
         ):
             outside.append(query)
     return outside
@@ -423,11 +432,28 @@ def _rule_coverage(info: LegalizerInfo, matched: set[tuple[int, int]]) -> tuple[
     return matched_count, missing
 
 
+def _stable_path(path: Path, base: Path) -> str:
+    """Record a path without leaking a checkout or temp-directory root.
+
+    Reports are hashed byte-for-byte.  Paths that would make two identical
+    runs differ (the generated JSONL file, absolute checkout roots) are
+    either omitted or written relative to a stable base.  Provenance is
+    carried by the content hashes; the path is only a human hint.
+    """
+    resolved = Path(path).resolve()
+    for root in (base, paths.DATA_ROOT, paths.REPO_ROOT):
+        try:
+            return resolved.relative_to(Path(root).resolve()).as_posix()
+        except ValueError:
+            continue
+    return resolved.as_posix()
+
+
 def build_report(
     info: LegalizerInfo,
     rules_path: Path,
     oracle_path: Path,
-    input_path: Path,
+    report_dir: Path,
     query_count: int,
     input_sha256: str,
     closure: list[Query],
@@ -442,19 +468,20 @@ def build_report(
     llvm_src = os.environ.get("LEGALIZER_DSL_LLVM_SRC", "F:/llvm/llvm-project")
     return {
         "schema": SCHEMA,
+        "evaluator_sha256": hand_evaluator_sha256(),
+        "codegen_sha256": codegen_sha256(),
         "reference": {
             "llvm_src": llvm_src,
             "llvm_commit": _git_commit(Path(llvm_src)),
             "llvm_build": llvm_build,
-            "oracle": str(oracle_path),
+            "oracle": _stable_path(oracle_path, report_dir),
             "oracle_sha256": _file_sha256(oracle_path),
             "oracle_size": oracle_path.stat().st_size,
             "oracle_entry": "LegalizerInfo::getAction(LegalityQuery)",
         },
         "inputs": {
-            "rules": str(rules_path),
+            "rules": _stable_path(rules_path, paths.DATA_ROOT),
             "rules_sha256": _file_sha256(rules_path),
-            "jsonl": str(input_path),
             # sha256 covers the generated query corpus, not the rules file.
             "sha256": input_sha256,
             "config": _config_record(config),
@@ -495,12 +522,9 @@ def build_report(
 
 
 def main(argv: Optional[list[str]] = None) -> int:
-    here = Path(__file__).resolve()
-    repo = here.parents[1]
-    out_dir = Path(os.environ.get("LEGALIZER_DSL_OUT", repo / "out"))
-    default_rules = repo / "rules" / "toycpu.ldsl"
-    default_oracle = out_dir / "oracle" / "legalizer-oracle.exe"
-    default_out = out_dir / "conformance-report.json"
+    default_rules = paths.RULES / "toycpu.ldsl"
+    default_oracle = paths.OUT / "oracle" / "legalizer-oracle.exe"
+    default_out = paths.OUT / "conformance-report.json"
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--rules", default=str(default_rules), help="LDSL rules file")
@@ -577,7 +601,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             info,
             rules_path,
             oracle_path,
-            input_path,
+            out_path.parent,
             query_count,
             input_sha256,
             closure,

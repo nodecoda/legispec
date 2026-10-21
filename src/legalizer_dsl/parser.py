@@ -299,6 +299,16 @@ class Parser:
         self.advance()
         return int(token.value)
 
+    def expect_index(self) -> int:
+        """Read a slot index and reject negative values at parse time."""
+        token = self.peek()
+        value = self.expect_int()
+        if value < 0:
+            raise _err(
+                "P037", token, f"slot index must be non-negative, got {value}"
+            )
+        return value
+
     def parse_bit_count(self) -> int:
         """Bit-count operand: an integer literal or a type-valued config alias.
 
@@ -343,7 +353,17 @@ class Parser:
         if token.kind not in ("IDENT", "LLT"):
             raise _err("P011", token, f"expected identifier, got {token.value!r}")
         name = self.advance().value
-        if token.kind == "LLT" or re.fullmatch(r"[spv]\d+.*", name):
+        shadows_llt = token.kind == "LLT" or re.fullmatch(r"[spv]\d+.*", name)
+        if not shadows_llt:
+            try:
+                parse_llt(name)
+            except DslError:
+                pass
+            else:
+                # Names such as ``f32`` and ``bf16`` are IDENT tokens but are
+                # still built-in LLT spellings, so an alias would be ambiguous.
+                shadows_llt = True
+        if shadows_llt:
             raise _err(
                 "W010", token, f"type alias {name!r} shadows a built-in LLT spelling"
             )
@@ -911,7 +931,14 @@ class Parser:
         if name == "widen_to_next_multiple":
             idx = self.parse_type_idx()
             self.expect(",")
+            size_token = self.peek()
             size = self.expect_int()
+            if size <= 0:
+                raise _err(
+                    "P040",
+                    size_token,
+                    f"widen_to_next_multiple size must be positive, got {size}",
+                )
             add(
                 [
                     Rule(
@@ -1045,8 +1072,7 @@ class Parser:
     def parse_type_idx(self) -> int:
         token = self.peek()
         if token.kind == "INT":
-            self.advance()
-            return int(token.value)
+            return self.expect_index()
         if token.kind == "IDENT" and re.fullmatch(r"t\d+", token.value):
             self.advance()
             return int(token.value[1:])
@@ -1076,27 +1102,37 @@ class Parser:
     def parse_type_set(self) -> tuple[LLT, ...]:
         self.expect("{")
         types: list[LLT] = []
-        if not self.accept("}"):
+        if self.accept("}"):
+            raise _err(
+                "P042",
+                self.tokens[self.pos - 1],
+                "type set must not be empty",
+            )
+        types.append(self.parse_type())
+        while self.accept(","):
             types.append(self.parse_type())
-            while self.accept(","):
-                types.append(self.parse_type())
-            self.expect("}")
+        self.expect("}")
         return tuple(types)
 
     def parse_pair_set(self) -> tuple[tuple[LLT, LLT], ...]:
         self.expect("{")
         pairs: list[tuple[LLT, LLT]] = []
-        if not self.accept("}"):
-            while True:
-                self.expect("(")
-                a = self.parse_type()
-                self.expect(",")
-                b = self.parse_type()
-                self.expect(")")
-                pairs.append((a, b))
-                if not self.accept(","):
-                    break
-            self.expect("}")
+        if self.accept("}"):
+            raise _err(
+                "P043",
+                self.tokens[self.pos - 1],
+                "type pair set must not be empty",
+            )
+        while True:
+            self.expect("(")
+            a = self.parse_type()
+            self.expect(",")
+            b = self.parse_type()
+            self.expect(")")
+            pairs.append((a, b))
+            if not self.accept(","):
+                break
+        self.expect("}")
         return tuple(pairs)
 
     def parse_mem_set(self) -> tuple[tuple[LLT, LLT, LLT, int], ...]:
@@ -1147,8 +1183,15 @@ class Parser:
             inner = self.parse_type_idx()
             self.expect(")")
             self.expect(",")
+            size_token = self.peek()
             size = self.expect_int()
             self.expect(")")
+            if size <= 0:
+                raise _err(
+                    "P039",
+                    size_token,
+                    f"next_multiple size must be positive, got {size}",
+                )
             if inner != idx:
                 raise _err(
                     "P014",
@@ -1238,6 +1281,12 @@ class Parser:
                 "P015",
                 self.tokens[self.pos - 1],
                 f"more/fewer needs a vector target type, got {ty}",
+            )
+        if ty.lanes <= 0:
+            raise _err(
+                "P041",
+                self.tokens[self.pos - 1],
+                f"more/fewer element count must be positive, got {ty.lanes}",
             )
         return SetElementCount(idx, ty.lanes, str(ty))
 
@@ -1359,8 +1408,15 @@ class Parser:
                     "is_multiple only supports bits(tN)",
                 )
             self.expect(",")
+            divisor_token = self.peek()
             divisor = self.expect_int()
             self.expect(")")
+            if divisor <= 0:
+                raise _err(
+                    "P038",
+                    divisor_token,
+                    f"is_multiple divisor must be positive, got {divisor}",
+                )
             return IsMultipleBits(idx, divisor)
 
         if name in ("same_shape", "concat_shape", "concat_shape_any"):
@@ -1417,7 +1473,7 @@ class Parser:
 
         if name == "mem":
             self.advance()
-            mem_idx = self.expect_int()
+            mem_idx = self.expect_index()
             self.expect(".")
             field = self.expect_ident()
             if field == "type":
@@ -1439,7 +1495,7 @@ class Parser:
 
         if name == "imm":
             self.advance()
-            idx = self.expect_int()
+            idx = self.expect_index()
             op = self.parse_cmp_op()
             value = self.expect_int()
             return ImmCmp(idx, op, value)

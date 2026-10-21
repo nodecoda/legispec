@@ -385,6 +385,15 @@ class Step:
 # ---------------------------------------------------------------------------
 
 
+def _has_slot(seq: Sequence[object], idx: int) -> bool:
+    """True only when ``idx`` addresses an existing slot.
+
+    A bare ``idx < len(seq)`` check accepts negative indices, which Python then
+    resolves from the end of the sequence and silently aliases a real slot.
+    """
+    return 0 <= idx < len(seq)
+
+
 def _cmp(op: str, lhs: int, rhs: int) -> bool:
     if op == "==":
         return lhs == rhs
@@ -424,7 +433,7 @@ class TypeIn(Pred):
     types: tuple[LLT, ...]
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         return any(query.types[self.idx].eq_llvm(ty) for ty in self.types)
 
@@ -438,7 +447,7 @@ class TypeEq(Pred):
     ty: LLT
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         return query.types[self.idx].eq_llvm(self.ty)
 
@@ -462,7 +471,7 @@ class FixedVectorElemCountCmp(Pred):
     count: int
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         ty = query.types[self.idx]
         return (
@@ -486,7 +495,7 @@ class TypePairInSet(Pred):
     pairs: tuple[tuple[LLT, LLT], ...]
 
     def eval(self, query: Query) -> bool:
-        if self.i >= len(query.types) or self.j >= len(query.types):
+        if not _has_slot(query.types, self.i) or not _has_slot(query.types, self.j):
             return False
         lhs = query.types[self.i]
         rhs = query.types[self.j]
@@ -504,7 +513,7 @@ class Scalar(Pred):
     idx: int
 
     def eval(self, query: Query) -> bool:
-        return self.idx < len(query.types) and query.types[self.idx].is_scalar
+        return _has_slot(query.types, self.idx) and query.types[self.idx].is_scalar
 
     def __str__(self) -> str:
         return f"scalar(t{self.idx})"
@@ -515,7 +524,7 @@ class Vector(Pred):
     idx: int
 
     def eval(self, query: Query) -> bool:
-        return self.idx < len(query.types) and query.types[self.idx].is_vector
+        return _has_slot(query.types, self.idx) and query.types[self.idx].is_vector
 
     def __str__(self) -> str:
         return f"vector(t{self.idx})"
@@ -534,7 +543,7 @@ class FixedVector(Pred):
     idx: int
 
     def eval(self, query: Query) -> bool:
-        return self.idx < len(query.types) and query.types[self.idx].is_vector
+        return _has_slot(query.types, self.idx) and query.types[self.idx].is_vector
 
     def __str__(self) -> str:
         return f"fixed_vector(t{self.idx})"
@@ -557,7 +566,7 @@ class SameShape(Pred):
     j: int
 
     def eval(self, query: Query) -> bool:
-        if self.i >= len(query.types) or self.j >= len(query.types):
+        if not _has_slot(query.types, self.i) or not _has_slot(query.types, self.j):
             return False
         a = query.types[self.i]
         b = query.types[self.j]
@@ -591,7 +600,7 @@ class ConcatShape(Pred):
     j: int
 
     def eval(self, query: Query) -> bool:
-        if self.i >= len(query.types) or self.j >= len(query.types):
+        if not _has_slot(query.types, self.i) or not _has_slot(query.types, self.j):
             return False
         dst = query.types[self.i]
         src = query.types[self.j]
@@ -630,7 +639,7 @@ class ConcatShapeAny(Pred):
     j: int
 
     def eval(self, query: Query) -> bool:
-        if self.i >= len(query.types) or self.j >= len(query.types):
+        if not _has_slot(query.types, self.i) or not _has_slot(query.types, self.j):
             return False
         dst = query.types[self.i]
         src = query.types[self.j]
@@ -652,7 +661,7 @@ class Pointer(Pred):
     idx: int
 
     def eval(self, query: Query) -> bool:
-        return self.idx < len(query.types) and query.types[self.idx].is_pointer
+        return _has_slot(query.types, self.idx) and query.types[self.idx].is_pointer
 
     def __str__(self) -> str:
         return f"pointer(t{self.idx})"
@@ -665,7 +674,7 @@ class PointerVector(Pred):
     idx: int
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         ty = query.types[self.idx]
         return ty.is_vector and ty.elem is not None and ty.elem.is_pointer
@@ -687,7 +696,7 @@ class ElemTypesEq(Pred):
     j: int
 
     def eval(self, query: Query) -> bool:
-        if self.i >= len(query.types) or self.j >= len(query.types):
+        if not _has_slot(query.types, self.i) or not _has_slot(query.types, self.j):
             return False
         return query.types[self.i].element_type().eq_llvm(
             query.types[self.j].element_type()
@@ -710,7 +719,7 @@ class EltSizeNotPow2(Pred):
     idx: int
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         bits = query.types[self.idx].get_scalar_size_in_bits()
         return bits > 0 and (bits & (bits - 1)) != 0
@@ -727,7 +736,7 @@ class FloatIs(Pred):
     semantics: str
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         scalar = query.types[self.idx].element_type()
         return scalar.is_float and scalar.fp == self.semantics
@@ -750,7 +759,7 @@ class FloatValue(Pred):
     idx: int
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         ty = query.types[self.idx]
         if ty.is_float:
@@ -768,7 +777,7 @@ class BitsCmp(Pred):
     value: int
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         return _cmp(self.op, query.types[self.idx].get_size_in_bits(), self.value)
 
@@ -789,7 +798,7 @@ class ScalarBitsCmp(Pred):
     op: str
 
     def eval(self, query: Query) -> bool:
-        if self.lhs >= len(query.types) or self.rhs >= len(query.types):
+        if not _has_slot(query.types, self.lhs) or not _has_slot(query.types, self.rhs):
             return False
         return _cmp(
             self.op,
@@ -816,7 +825,7 @@ class ScalarSizeVsSizeCmp(Pred):
     op: str
 
     def eval(self, query: Query) -> bool:
-        if self.scalar_idx >= len(query.types) or self.size_idx >= len(query.types):
+        if not _has_slot(query.types, self.scalar_idx) or not _has_slot(query.types, self.size_idx):
             return False
         return _cmp(
             self.op,
@@ -835,7 +844,7 @@ class ElemBitsCmp(Pred):
     value: int
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         return _cmp(
             self.op, query.types[self.idx].get_scalar_size_in_bits(), self.value
@@ -852,7 +861,7 @@ class LanesCmp(Pred):
     value: int
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         return _cmp(self.op, query.types[self.idx].num_elements, self.value)
 
@@ -871,7 +880,7 @@ class NumElementsNotPow2(Pred):
     idx: int
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         ty = query.types[self.idx]
         if not ty.is_vector:
@@ -889,7 +898,7 @@ class SameSize(Pred):
     j: int
 
     def eval(self, query: Query) -> bool:
-        if self.i >= len(query.types) or self.j >= len(query.types):
+        if not _has_slot(query.types, self.i) or not _has_slot(query.types, self.j):
             return False
         return (
             query.types[self.i].get_size_in_bits()
@@ -908,7 +917,7 @@ class NotPow2OrSmaller(Pred):
     min_bits: int
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         bits = query.types[self.idx].get_scalar_size_in_bits()
         return bits < self.min_bits or (bits & (bits - 1)) != 0
@@ -925,7 +934,7 @@ class IsPow2Bits(Pred):
     idx: int
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         n = query.types[self.idx].get_size_in_bits()
         return n > 0 and (n & (n - 1)) == 0
@@ -946,7 +955,7 @@ class IsPow2ElemBits(Pred):
     idx: int
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         n = query.types[self.idx].get_scalar_size_in_bits()
         return n > 0 and (n & (n - 1)) == 0
@@ -960,8 +969,15 @@ class IsMultipleBits(Pred):
     idx: int
     divisor: int
 
+    def __post_init__(self) -> None:
+        if self.divisor <= 0:
+            raise DslError(
+                f"is_multiple divisor must be positive, got {self.divisor}",
+                code="T018",
+            )
+
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             return False
         return query.types[self.idx].get_size_in_bits() % self.divisor == 0
 
@@ -975,7 +991,7 @@ class MemTypeIn(Pred):
     types: tuple[LLT, ...]
 
     def eval(self, query: Query) -> bool:
-        if self.mem_idx >= len(query.mems):
+        if not _has_slot(query.mems, self.mem_idx):
             return False
         mem_ty = query.mems[self.mem_idx].memory_ty
         return any(mem_ty.eq_llvm(ty) for ty in self.types)
@@ -991,7 +1007,7 @@ class MemAlignCmp(Pred):
     value: int
 
     def eval(self, query: Query) -> bool:
-        if self.mem_idx >= len(query.mems):
+        if not _has_slot(query.mems, self.mem_idx):
             return False
         return _cmp(self.op, query.mems[self.mem_idx].align_bits, self.value)
 
@@ -1014,9 +1030,9 @@ class MemCompatInSet(Pred):
     entries: tuple[tuple[LLT, LLT, LLT, int], ...]
 
     def eval(self, query: Query) -> bool:
-        if self.i >= len(query.types) or self.j >= len(query.types):
+        if not _has_slot(query.types, self.i) or not _has_slot(query.types, self.j):
             return False
-        if self.mem_idx >= len(query.mems):
+        if not _has_slot(query.mems, self.mem_idx):
             return False
         mem = query.mems[self.mem_idx]
         for type0, type1, mem_ty, align in self.entries:
@@ -1043,7 +1059,7 @@ class ImmCmp(Pred):
     value: int
 
     def eval(self, query: Query) -> bool:
-        if self.idx >= len(query.imms):
+        if not _has_slot(query.imms, self.idx):
             return False
         return _cmp(self.op, query.imms[self.idx], self.value)
 
@@ -1108,7 +1124,7 @@ class SetElementSize(TypeExpr):
     text: str
 
     def eval(self, query: Query) -> LLT:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             raise DslError(f"type index t{self.idx} is out of range", code="T010")
         return query.types[self.idx].change_element_size(self.bits)
 
@@ -1123,7 +1139,7 @@ class SetElementCount(TypeExpr):
     text: str
 
     def eval(self, query: Query) -> LLT:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             raise DslError(f"type index t{self.idx} is out of range", code="T010")
         return query.types[self.idx].change_element_count(self.lanes)
 
@@ -1136,7 +1152,7 @@ class ElementOf(TypeExpr):
     idx: int
 
     def eval(self, query: Query) -> LLT:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             raise DslError(f"type index t{self.idx} is out of range", code="T010")
         return query.types[self.idx].element_type()
 
@@ -1156,9 +1172,9 @@ class SameSizeAs(TypeExpr):
     src_idx: int
 
     def eval(self, query: Query) -> LLT:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             raise DslError(f"type index t{self.idx} is out of range", code="T010")
-        if self.src_idx >= len(query.types):
+        if not _has_slot(query.types, self.src_idx):
             raise DslError(f"type index t{self.src_idx} is out of range", code="T010")
         return query.types[self.idx].change_element_size(
             query.types[self.src_idx].get_scalar_size_in_bits()
@@ -1189,9 +1205,9 @@ class ConcatBitcast(TypeExpr):
     src_idx: int
 
     def eval(self, query: Query) -> LLT:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             raise DslError(f"type index t{self.idx} is out of range", code="T010")
-        if self.src_idx >= len(query.types):
+        if not _has_slot(query.types, self.src_idx):
             raise DslError(f"type index t{self.src_idx} is out of range", code="T010")
         dst = query.types[self.idx]
         src = query.types[self.src_idx]
@@ -1221,7 +1237,7 @@ class SetElementType(TypeExpr):
     new_elem: LLT
 
     def eval(self, query: Query) -> LLT:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             raise DslError(f"type index t{self.idx} is out of range", code="T010")
         return query.types[self.idx].change_element_type(self.new_elem)
 
@@ -1243,7 +1259,7 @@ class CopyType(TypeExpr):
     src_idx: int
 
     def eval(self, query: Query) -> LLT:
-        if self.src_idx >= len(query.types):
+        if not _has_slot(query.types, self.src_idx):
             raise DslError(f"type index t{self.src_idx} is out of range", code="T010")
         return query.types[self.src_idx]
 
@@ -1259,7 +1275,7 @@ class NextPow2(TypeExpr):
     min_bits: int
 
     def eval(self, query: Query) -> LLT:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             raise DslError(f"type index t{self.idx} is out of range", code="T010")
         ty = query.types[self.idx]
         cur = ty.get_scalar_size_in_bits()
@@ -1280,7 +1296,7 @@ class NextPow2Lanes(TypeExpr):
     min_lanes: int = 0
 
     def eval(self, query: Query) -> LLT:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             raise DslError(f"type index t{self.idx} is out of range", code="T010")
         ty = query.types[self.idx]
         if not ty.is_vector:
@@ -1305,8 +1321,15 @@ class NextMultiple(TypeExpr):
     idx: int
     size: int
 
+    def __post_init__(self) -> None:
+        if self.size <= 0:
+            raise DslError(
+                f"next_multiple size must be positive, got {self.size}",
+                code="T019",
+            )
+
     def eval(self, query: Query) -> LLT:
-        if self.idx >= len(query.types):
+        if not _has_slot(query.types, self.idx):
             raise DslError(f"type index t{self.idx} is out of range", code="T010")
         ty = query.types[self.idx]
         cur = ty.get_scalar_size_in_bits()

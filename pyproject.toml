@@ -32,5 +32,12 @@ package-dir = { "" = "src" }
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.data-files]
+"share/legalizer-dsl/rules" = ["rules/*.ldsl"]
+"share/legalizer-dsl/witness" = ["witness/*.witness"]
+"share/legalizer-dsl/capabilities" = ["capabilities/*.json"]
+"share/legalizer-dsl/claims" = ["claims/*.json", "claims/*.md", "claims/*.txt"]
+"share/legalizer-dsl/docs" = ["docs/CLOSURE.md"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

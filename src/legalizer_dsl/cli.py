@@ -30,9 +30,10 @@ import argparse
 import sys
 from pathlib import Path
 
-from .diagnostics import Severity
+from .diagnostics import Diagnostic, Severity
 from .model import DslError, MemDesc, Query, parse_llt
 from .checker import errors, run_checks, unknowns, warnings
+from .checker.capability import CapabilityManifestError
 from .coverage import run_coverage
 from .interp import legalize
 from .parser import parse_defines, parse_file
@@ -137,6 +138,73 @@ def _build_parser() -> argparse.ArgumentParser:
 
     witness = sub.add_parser("witness", help="replay an executable witness corpus")
     witness.add_argument("witness_file", help="path to a .witness file")
+    witness.add_argument(
+        "--strict",
+        action="store_true",
+        help="fail unless every rule and ruleset has positive and negative cover",
+    )
+
+    codegen_cmd = sub.add_parser(
+        "codegen", help="generate C++ builder calls from the rule file"
+    )
+    codegen_cmd.add_argument(
+        "--out-dir", default="out/codegen", help="generated output directory"
+    )
+    codegen_cmd.add_argument(
+        "--namespace",
+        default="ToyCPU",
+        help="C++ namespace for the generated entry point (default: ToyCPU)",
+    )
+    codegen_cmd.add_argument(
+        "--capabilities",
+        default=None,
+        metavar="PATH",
+        help="capability manifest to check before generating",
+    )
+    codegen_cmd.add_argument(
+        "--custom-source",
+        default=None,
+        metavar="PATH",
+        help="ToyCPULegalizerInfo.cpp used to verify Custom opcode cases",
+    )
+    codegen_cmd.add_argument(
+        "--output-stem",
+        default=None,
+        metavar="STEM",
+        help="generated file stem (default: <rules-stem>_rules_gen)",
+    )
+
+    conform = sub.add_parser(
+        "conform", help="diff the interpreter against the C++ oracle"
+    )
+    conform.add_argument(
+        "--oracle",
+        default="out/oracle/legalizer-oracle.exe",
+        help="oracle executable",
+    )
+    conform.add_argument(
+        "--out", default="out/conformance-cli.json", help="JSON report path"
+    )
+    conform.add_argument(
+        "--llvm-build",
+        default=None,
+        help="LLVM build directory recorded in the report metadata",
+    )
+    conform.add_argument(
+        "--limit", type=int, default=0, help="limit queries for smoke runs"
+    )
+    conform.add_argument(
+        "--domain",
+        default="D",
+        choices=["D"],
+        help="query domain; D is the finite declared domain",
+    )
+    conform.add_argument(
+        "--closure",
+        default="R",
+        choices=["R", "none"],
+        help="include closure(Q0) under legalize",
+    )
 
     return parser
 
@@ -183,6 +251,7 @@ def _cmd_check(
     witness_path: str | None,
     capabilities_path: str | None = None,
     custom_source_path: str | None = None,
+    rules_stem: str = "",
 ) -> int:
     counts = info.check()
     print(
@@ -193,6 +262,19 @@ def _cmd_check(
     if strict:
         witnesses = parse_witness_file(witness_path) if witness_path else None
         diagnostics = run_checks(info, strict=True, witnesses=witnesses)
+        from .checker.capability import required_capabilities
+
+        required = required_capabilities(info)
+        if capabilities_path is None and any(required.values()):
+            diagnostics.append(
+                Diagnostic(
+                    "C008",
+                    Severity.ERROR,
+                    "strict: rules require a capability manifest but none was "
+                    f"found for {rules_stem}",
+                    span=None,
+                )
+            )
         if info.domain is not None:
             from .interp import fixpoint_diagnostics
 
@@ -208,7 +290,12 @@ def _cmd_check(
                 else None
             )
             diagnostics.extend(
-                run_capabilities(info, manifest, custom_source=source_text)
+                run_capabilities(
+                    info,
+                    manifest,
+                    custom_source=source_text,
+                    custom_source_name=custom_source_path,
+                )
             )
         for diagnostic in diagnostics:
             if diagnostic.severity is Severity.INFO:
@@ -220,7 +307,7 @@ def _cmd_check(
         print(
             f"checks: errors={error_count} warnings={warning_count} unknown={unknown_count}"
         )
-        return 1 if error_count else 0
+        return 1 if error_count or unknown_count else 0
     for ruleset in info.rulesets:
         if not ruleset.rules:
             span = f"{ruleset.span}: " if ruleset.span is not None else ""
@@ -269,19 +356,22 @@ def _cmd_opcodes(info) -> int:
     return 0
 
 
-def _cmd_witness(info, path: str) -> int:
+def _cmd_witness(info, path: str, strict: bool = False) -> int:
     witnesses = parse_witness_file(path)
     report = run_witnesses(info, witnesses)
     print(report.summary())
     for failure in report.failures:
         print(f"FAIL: {failure}", file=sys.stderr)
-    for opcodes in report.rulesets_without_positive:
-        print(f"WARN: no positive witness for {opcodes}", file=sys.stderr)
-    for opcodes in report.rulesets_without_negative:
-        print(f"WARN: no negative witness for {opcodes}", file=sys.stderr)
-    for rule in report.uncovered_rules:
-        print(f"WARN: no witness for {rule}", file=sys.stderr)
-    return 0 if report.ok else 1
+    if strict:
+        for opcodes in report.rulesets_without_positive:
+            print(f"WARN: no positive witness for {opcodes}", file=sys.stderr)
+        for opcodes in report.rulesets_without_negative:
+            print(f"WARN: no negative witness for {opcodes}", file=sys.stderr)
+        for rule in report.uncovered_rules:
+            print(f"WARN: no witness for {rule}", file=sys.stderr)
+    if not report.ok:
+        return 1
+    return 1 if strict and not report.complete else 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -289,6 +379,48 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         config = parse_defines(args.define)
+        if args.command == "codegen":
+            from . import codegen as codegen_module
+
+            codegen_argv = [
+                "--rules",
+                args.rules,
+                "--out-dir",
+                args.out_dir,
+                "--namespace",
+                args.namespace,
+            ]
+            for define in args.define:
+                codegen_argv.extend(["--define", define])
+            if args.capabilities is not None:
+                codegen_argv.extend(["--capabilities", args.capabilities])
+            if args.custom_source is not None:
+                codegen_argv.extend(["--custom-source", args.custom_source])
+            if args.output_stem is not None:
+                codegen_argv.extend(["--output-stem", args.output_stem])
+            return codegen_module.main(codegen_argv)
+        if args.command == "conform":
+            from . import conformance
+
+            conform_argv = [
+                "--rules",
+                args.rules,
+                "--oracle",
+                args.oracle,
+                "--out",
+                args.out,
+                "--limit",
+                str(args.limit),
+                "--domain",
+                args.domain,
+                "--closure",
+                args.closure,
+            ]
+            for define in args.define:
+                conform_argv.extend(["--define", define])
+            if args.llvm_build is not None:
+                conform_argv.extend(["--llvm-build", args.llvm_build])
+            return conformance.main(conform_argv)
         info = parse_file(args.rules, config=config)
         if args.command == "explain":
             return _cmd_explain(info, args.opcode)
@@ -308,15 +440,22 @@ def main(argv: list[str] | None = None) -> int:
             capabilities_path = args.capabilities
             if args.strict and capabilities_path is None:
                 root = rules_path.parent.parent
-                candidates = (
-                    root / "capabilities" / f"{rules_path.stem}-capabilities.json",
-                    root / f"{rules_path.stem}-capabilities.json",
-                    root / "capabilities" / "toycpu-capabilities.json",
-                    root / "capabilities.json",
-                )
-                for candidate in candidates:
-                    if candidate.exists():
-                        capabilities_path = str(candidate)
+                stem = rules_path.stem
+                names = [f"{stem}-capabilities.json"]
+                is64bit = config.get("is64bit")
+                if is64bit is True:
+                    names.append(f"{stem}-rv64-capabilities.json")
+                elif is64bit is False:
+                    names.append(f"{stem}-rv32-capabilities.json")
+                for name in names:
+                    for candidate in (
+                        root / "capabilities" / name,
+                        root / name,
+                    ):
+                        if candidate.exists():
+                            capabilities_path = str(candidate)
+                            break
+                    if capabilities_path is not None:
                         break
             return _cmd_check(
                 info,
@@ -325,15 +464,26 @@ def main(argv: list[str] | None = None) -> int:
                 witness_path,
                 capabilities_path,
                 args.custom_source,
+                rules_path.stem,
             )
         if args.command == "coverage":
             return _cmd_coverage(info)
         if args.command == "opcodes":
             return _cmd_opcodes(info)
         if args.command == "witness":
-            return _cmd_witness(info, args.witness_file)
+            return _cmd_witness(info, args.witness_file, args.strict)
         parser.error(f"unknown command {args.command!r}")
     except DslError as exc:
         print(f"{args.rules}:{exc}", file=sys.stderr)
         return 2
+    except CapabilityManifestError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    except OSError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
     return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

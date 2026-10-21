@@ -8,13 +8,24 @@ __pycache__/
 build/
 dist/
 .venv/
+.venv*/
 venv/
 
 # CI scratch
 .ci/
+out-smoke/
 
 # Editors / OS
 .vscode/
 .idea/
 Thumbs.db
 Desktop.ini
+.omx/
+.codex/*
+!.codex/agents/
+!.codex/agents/**
+!.codex/skills/
+!.codex/skills/**
+.codex/skills/.system/**
+!.codex/prompts/
+!.codex/prompts/**
