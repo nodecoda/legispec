@@ -16,6 +16,26 @@ on:
         required: false
         default: "self-hosted"
         type: string
+      integration_runner:
+        description: "Runner label for the LLVM integration smoke (default: hosted, which reports SKIP without LLVM)"
+        required: false
+        default: "ubuntu-latest"
+        type: string
+      llvm_dir:
+        description: "LLVM_DIR passed to the integration smoke (empty => SKIP: environment)"
+        required: false
+        default: ""
+        type: string
+      cxx:
+        description: "CXX passed to the integration smoke"
+        required: false
+        default: ""
+        type: string
+      vcvars:
+        description: "Windows vcvars64.bat passed to the integration smoke"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -48,6 +68,76 @@ jobs:
         run: ldsl-constructs check
       - name: Closure (structure and pinned numbers only)
         run: ldsl-closure check --skip-evidence
+
+  codegen-contract:
+    name: codegen contract (determinism + provenance)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -e .
+      - name: Generate twice and validate every rule/config
+        run: python scripts/check_codegen_contract.py
+
+  mutation-controls:
+    name: mutation controls
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -e .
+      - name: Negative controls must fail loudly
+        run: python -m unittest discover -s tests -p "test_mutation_controls.py" -v
+
+  coverage-report:
+    name: corpus coverage ratchet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -e .
+      - name: Measure D/boundary/rules coverage
+        run: python scripts/coverage_report.py --corpus examples --out out/coverage-report.json
+
+  integration-smoke:
+    name: integration smoke (LLVM build)
+    runs-on: ${{ inputs.integration_runner || 'ubuntu-latest' }}
+    env:
+      LLVM_DIR: ${{ inputs.llvm_dir }}
+      CXX: ${{ inputs.cxx }}
+      LEGALIZER_DSL_VCVARS: ${{ inputs.vcvars }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -e .
+      - name: Build and run the generated ToyCPU consumer
+        run: python scripts/integration_smoke.py --target toycpu --limit 2000 --out out/integration-toycpu-report.json
+      - name: Build and run the generated AArch64 vector consumer
+        run: python scripts/integration_smoke.py --target aarch64-vector --limit 2000 --out out/integration-aarch64-report.json
+      - name: Check integration status is honest
+        if: always()
+        run: python scripts/check_integration_status.py --require-pass-if-env LLVM_DIR out/integration-toycpu-report.json out/integration-aarch64-report.json
+      - name: Upload integration reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-reports
+          path: |
+            out/integration-toycpu-report.json
+            out/integration-aarch64-report.json
+          if-no-files-found: warn
 
   stage-evidence:
     name: stage evidence artifact (self-hosted runner with evidence_dir)

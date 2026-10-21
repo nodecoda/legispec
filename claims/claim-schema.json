@@ -1,0 +1,110 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://legalizer-dsl.invalid/claim-schema.json",
+  "title": "Legalizer DSL claim ledger contract",
+  "description": "Machine-readable shape of claims/claims.json. The executable checker is legalizer_dsl.claims.validate_contract.",
+  "type": "object",
+  "required": [
+    "schema",
+    "claim_contract_version",
+    "llvm_commit",
+    "boundary",
+    "evaluator_sha256",
+    "contract",
+    "claims"
+  ],
+  "properties": {
+    "schema": { "const": "legalizer-dsl-claims-v1" },
+    "claim_contract_version": { "const": 1 },
+    "llvm_commit": { "$ref": "#/$defs/commit" },
+    "boundary": { "type": "string", "minLength": 1 },
+    "evaluator_sha256": { "$ref": "#/$defs/sha256" },
+    "contract": { "$ref": "#/$defs/contract" },
+    "claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/claim" }
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+    "unknown": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["reason"],
+        "properties": {
+          "query": { "type": "string" },
+          "reason": { "type": "string", "minLength": 1 },
+          "owner": { "type": "string" },
+          "reviewed_at": { "type": "string" }
+        },
+        "additionalProperties": true
+      }
+    },
+    "contract": {
+      "type": "object",
+      "required": ["observation", "equivalence", "domain", "closure", "unknown", "evidence"],
+      "properties": {
+        "observation": { "const": ["action", "type_idx", "new_type"] },
+        "equivalence": { "const": "componentwise; LLT::operator==" },
+        "domain": { "type": "string", "minLength": 1 },
+        "closure": { "type": "string", "minLength": 1 },
+        "unknown": { "$ref": "#/$defs/unknown" },
+        "evidence": {
+          "type": "array",
+          "items": { "enum": ["rules_sha256", "report_sha256", "corpus_sha256", "oracle_sha256", "witness_sha256", "evaluator_sha256"] },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": true
+    },
+    "claim": {
+      "type": "object",
+      "required": [
+        "id", "rules", "report", "oracle", "scope", "config",
+        "queries", "rules_total", "rules_matched", "status", "unknown",
+        "llvm_commit", "rules_sha256", "report_sha256", "corpus_sha256", "oracle_sha256"
+      ],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "rules": { "type": "string", "minLength": 1 },
+        "report": { "type": "string", "minLength": 1 },
+        "oracle": { "type": "string", "minLength": 1 },
+        "scope": { "type": "string", "minLength": 1 },
+        "config": { "type": "object" },
+        "queries": { "type": "integer", "minimum": 0 },
+        "rules_total": { "type": "integer", "minimum": 0 },
+        "rules_matched": { "type": "integer", "minimum": 0 },
+        "declared_unreachable": { "type": "integer", "minimum": 0 },
+        "declared_shadowed": { "type": "integer", "minimum": 0 },
+        "status": { "enum": ["PROVEN", "FAIL", "UNKNOWN"] },
+        "ok": { "type": "boolean" },
+        "unknown": { "$ref": "#/$defs/unknown" },
+        "excludes": { "type": "array", "items": { "type": "string" } },
+        "llvm_commit": { "$ref": "#/$defs/commit" },
+        "rules_sha256": { "$ref": "#/$defs/sha256" },
+        "report_sha256": { "$ref": "#/$defs/sha256" },
+        "corpus_sha256": { "$ref": "#/$defs/sha256" },
+        "oracle_sha256": { "$ref": "#/$defs/sha256" },
+        "witness_sha256": { "$ref": "#/$defs/sha256" },
+        "evaluator_sha256": { "$ref": "#/$defs/sha256" },
+        "unmatched": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["rule", "ruleset"],
+            "properties": {
+              "rule": { "type": "string", "minLength": 1 },
+              "ruleset": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

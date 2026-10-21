@@ -1,0 +1,392 @@
+# Real-MIR shape corpus for the fixed-vector AArch64 legality slice.
+# Types use the MIR spelling; scripts/coverage_report.py normalizes them
+# to the DSL slot vocabulary (i8 -> s8, <4 x i8> -> v4s8).
+---
+name:            g_smin_0
+body:             |
+  bb.0:
+    %0:_(<4 x i8>) = G_SMIN %1:_(<4 x i8>), %2:_(<4 x i8>)
+
+---
+name:            g_smin_1
+body:             |
+  bb.0:
+    %0:_(<8 x i8>) = G_SMIN %1:_(<8 x i8>), %2:_(<8 x i8>)
+
+---
+name:            g_smin_2
+body:             |
+  bb.0:
+    %0:_(<32 x i8>) = G_SMIN %1:_(<32 x i8>), %2:_(<32 x i8>)
+
+---
+name:            g_smin_3
+body:             |
+  bb.0:
+    %0:_(<3 x i8>) = G_SMIN %1:_(<3 x i8>), %2:_(<3 x i8>)
+
+---
+name:            g_smin_4
+body:             |
+  bb.0:
+    %0:_(<64 x i8>) = G_SMIN %1:_(<64 x i8>), %2:_(<64 x i8>)
+
+---
+name:            g_smin_5
+body:             |
+  bb.0:
+    %0:_(<2 x i16>) = G_SMIN %1:_(<2 x i16>), %2:_(<2 x i16>)
+
+---
+name:            g_smin_6
+body:             |
+  bb.0:
+    %0:_(<4 x i16>) = G_SMIN %1:_(<4 x i16>), %2:_(<4 x i16>)
+
+---
+name:            g_smin_7
+body:             |
+  bb.0:
+    %0:_(<16 x i16>) = G_SMIN %1:_(<16 x i16>), %2:_(<16 x i16>)
+
+---
+name:            g_smin_8
+body:             |
+  bb.0:
+    %0:_(<2 x i32>) = G_SMIN %1:_(<2 x i32>), %2:_(<2 x i32>)
+
+---
+name:            g_smin_9
+body:             |
+  bb.0:
+    %0:_(<8 x i32>) = G_SMIN %1:_(<8 x i32>), %2:_(<8 x i32>)
+
+---
+name:            g_smin_10
+body:             |
+  bb.0:
+    %0:_(<2 x i64>) = G_SMIN %1:_(<2 x i64>), %2:_(<2 x i64>)
+
+---
+name:            g_smax_0
+body:             |
+  bb.0:
+    %0:_(<4 x i8>) = G_SMAX %1:_(<4 x i8>), %2:_(<4 x i8>)
+
+---
+name:            g_smax_1
+body:             |
+  bb.0:
+    %0:_(<8 x i8>) = G_SMAX %1:_(<8 x i8>), %2:_(<8 x i8>)
+
+---
+name:            g_smax_2
+body:             |
+  bb.0:
+    %0:_(<32 x i8>) = G_SMAX %1:_(<32 x i8>), %2:_(<32 x i8>)
+
+---
+name:            g_smax_3
+body:             |
+  bb.0:
+    %0:_(<2 x i16>) = G_SMAX %1:_(<2 x i16>), %2:_(<2 x i16>)
+
+---
+name:            g_smax_4
+body:             |
+  bb.0:
+    %0:_(<4 x i16>) = G_SMAX %1:_(<4 x i16>), %2:_(<4 x i16>)
+
+---
+name:            g_smax_5
+body:             |
+  bb.0:
+    %0:_(<16 x i16>) = G_SMAX %1:_(<16 x i16>), %2:_(<16 x i16>)
+
+---
+name:            g_smax_6
+body:             |
+  bb.0:
+    %0:_(<2 x i32>) = G_SMAX %1:_(<2 x i32>), %2:_(<2 x i32>)
+
+---
+name:            g_smax_7
+body:             |
+  bb.0:
+    %0:_(<8 x i32>) = G_SMAX %1:_(<8 x i32>), %2:_(<8 x i32>)
+
+---
+name:            g_smax_8
+body:             |
+  bb.0:
+    %0:_(<2 x i64>) = G_SMAX %1:_(<2 x i64>), %2:_(<2 x i64>)
+
+---
+name:            g_umin_0
+body:             |
+  bb.0:
+    %0:_(<4 x i8>) = G_UMIN %1:_(<4 x i8>), %2:_(<4 x i8>)
+
+---
+name:            g_umin_1
+body:             |
+  bb.0:
+    %0:_(<8 x i8>) = G_UMIN %1:_(<8 x i8>), %2:_(<8 x i8>)
+
+---
+name:            g_umin_2
+body:             |
+  bb.0:
+    %0:_(<32 x i8>) = G_UMIN %1:_(<32 x i8>), %2:_(<32 x i8>)
+
+---
+name:            g_umin_3
+body:             |
+  bb.0:
+    %0:_(<2 x i16>) = G_UMIN %1:_(<2 x i16>), %2:_(<2 x i16>)
+
+---
+name:            g_umin_4
+body:             |
+  bb.0:
+    %0:_(<4 x i16>) = G_UMIN %1:_(<4 x i16>), %2:_(<4 x i16>)
+
+---
+name:            g_umin_5
+body:             |
+  bb.0:
+    %0:_(<16 x i16>) = G_UMIN %1:_(<16 x i16>), %2:_(<16 x i16>)
+
+---
+name:            g_umin_6
+body:             |
+  bb.0:
+    %0:_(<2 x i32>) = G_UMIN %1:_(<2 x i32>), %2:_(<2 x i32>)
+
+---
+name:            g_umin_7
+body:             |
+  bb.0:
+    %0:_(<8 x i32>) = G_UMIN %1:_(<8 x i32>), %2:_(<8 x i32>)
+
+---
+name:            g_umin_8
+body:             |
+  bb.0:
+    %0:_(<2 x i64>) = G_UMIN %1:_(<2 x i64>), %2:_(<2 x i64>)
+
+---
+name:            g_umax_0
+body:             |
+  bb.0:
+    %0:_(<4 x i8>) = G_UMAX %1:_(<4 x i8>), %2:_(<4 x i8>)
+
+---
+name:            g_umax_1
+body:             |
+  bb.0:
+    %0:_(<8 x i8>) = G_UMAX %1:_(<8 x i8>), %2:_(<8 x i8>)
+
+---
+name:            g_umax_2
+body:             |
+  bb.0:
+    %0:_(<32 x i8>) = G_UMAX %1:_(<32 x i8>), %2:_(<32 x i8>)
+
+---
+name:            g_umax_3
+body:             |
+  bb.0:
+    %0:_(<2 x i16>) = G_UMAX %1:_(<2 x i16>), %2:_(<2 x i16>)
+
+---
+name:            g_umax_4
+body:             |
+  bb.0:
+    %0:_(<4 x i16>) = G_UMAX %1:_(<4 x i16>), %2:_(<4 x i16>)
+
+---
+name:            g_umax_5
+body:             |
+  bb.0:
+    %0:_(<16 x i16>) = G_UMAX %1:_(<16 x i16>), %2:_(<16 x i16>)
+
+---
+name:            g_umax_6
+body:             |
+  bb.0:
+    %0:_(<2 x i32>) = G_UMAX %1:_(<2 x i32>), %2:_(<2 x i32>)
+
+---
+name:            g_umax_7
+body:             |
+  bb.0:
+    %0:_(<8 x i32>) = G_UMAX %1:_(<8 x i32>), %2:_(<8 x i32>)
+
+---
+name:            g_umax_8
+body:             |
+  bb.0:
+    %0:_(<2 x i64>) = G_UMAX %1:_(<2 x i64>), %2:_(<2 x i64>)
+
+---
+name:            g_abds_0
+body:             |
+  bb.0:
+    %0:_(<8 x i8>) = G_ABDS %1:_(<8 x i8>), %2:_(<8 x i8>)
+
+---
+name:            g_abds_1
+body:             |
+  bb.0:
+    %0:_(<32 x i8>) = G_ABDS %1:_(<32 x i8>), %2:_(<32 x i8>)
+
+---
+name:            g_abds_2
+body:             |
+  bb.0:
+    %0:_(<3 x i8>) = G_ABDS %1:_(<3 x i8>), %2:_(<3 x i8>)
+
+---
+name:            g_abds_3
+body:             |
+  bb.0:
+    %0:_(<4 x i16>) = G_ABDS %1:_(<4 x i16>), %2:_(<4 x i16>)
+
+---
+name:            g_abds_4
+body:             |
+  bb.0:
+    %0:_(<2 x i32>) = G_ABDS %1:_(<2 x i32>), %2:_(<2 x i32>)
+
+---
+name:            g_abdu_0
+body:             |
+  bb.0:
+    %0:_(<8 x i8>) = G_ABDU %1:_(<8 x i8>), %2:_(<8 x i8>)
+
+---
+name:            g_abdu_1
+body:             |
+  bb.0:
+    %0:_(<32 x i8>) = G_ABDU %1:_(<32 x i8>), %2:_(<32 x i8>)
+
+---
+name:            g_abdu_2
+body:             |
+  bb.0:
+    %0:_(<4 x i16>) = G_ABDU %1:_(<4 x i16>), %2:_(<4 x i16>)
+
+---
+name:            g_abdu_3
+body:             |
+  bb.0:
+    %0:_(<2 x i32>) = G_ABDU %1:_(<2 x i32>), %2:_(<2 x i32>)
+
+---
+name:            g_uavgfloor_0
+body:             |
+  bb.0:
+    %0:_(<8 x i8>) = G_UAVGFLOOR %1:_(<8 x i8>), %2:_(<8 x i8>)
+
+---
+name:            g_uavgfloor_1
+body:             |
+  bb.0:
+    %0:_(<32 x i8>) = G_UAVGFLOOR %1:_(<32 x i8>), %2:_(<32 x i8>)
+
+---
+name:            g_uavgfloor_2
+body:             |
+  bb.0:
+    %0:_(<4 x i16>) = G_UAVGFLOOR %1:_(<4 x i16>), %2:_(<4 x i16>)
+
+---
+name:            g_uavgfloor_3
+body:             |
+  bb.0:
+    %0:_(<2 x i32>) = G_UAVGFLOOR %1:_(<2 x i32>), %2:_(<2 x i32>)
+
+---
+name:            g_uavgceil_0
+body:             |
+  bb.0:
+    %0:_(<8 x i8>) = G_UAVGCEIL %1:_(<8 x i8>), %2:_(<8 x i8>)
+
+---
+name:            g_uavgceil_1
+body:             |
+  bb.0:
+    %0:_(<32 x i8>) = G_UAVGCEIL %1:_(<32 x i8>), %2:_(<32 x i8>)
+
+---
+name:            g_uavgceil_2
+body:             |
+  bb.0:
+    %0:_(<4 x i16>) = G_UAVGCEIL %1:_(<4 x i16>), %2:_(<4 x i16>)
+
+---
+name:            g_uavgceil_3
+body:             |
+  bb.0:
+    %0:_(<2 x i32>) = G_UAVGCEIL %1:_(<2 x i32>), %2:_(<2 x i32>)
+
+---
+name:            g_savgfloor_0
+body:             |
+  bb.0:
+    %0:_(<8 x i8>) = G_SAVGFLOOR %1:_(<8 x i8>), %2:_(<8 x i8>)
+
+---
+name:            g_savgfloor_1
+body:             |
+  bb.0:
+    %0:_(<32 x i8>) = G_SAVGFLOOR %1:_(<32 x i8>), %2:_(<32 x i8>)
+
+---
+name:            g_savgfloor_2
+body:             |
+  bb.0:
+    %0:_(<4 x i16>) = G_SAVGFLOOR %1:_(<4 x i16>), %2:_(<4 x i16>)
+
+---
+name:            g_savgfloor_3
+body:             |
+  bb.0:
+    %0:_(<2 x i32>) = G_SAVGFLOOR %1:_(<2 x i32>), %2:_(<2 x i32>)
+
+---
+name:            g_savgceil_0
+body:             |
+  bb.0:
+    %0:_(<8 x i8>) = G_SAVGCEIL %1:_(<8 x i8>), %2:_(<8 x i8>)
+
+---
+name:            g_savgceil_1
+body:             |
+  bb.0:
+    %0:_(<32 x i8>) = G_SAVGCEIL %1:_(<32 x i8>), %2:_(<32 x i8>)
+
+---
+name:            g_savgceil_2
+body:             |
+  bb.0:
+    %0:_(<4 x i16>) = G_SAVGCEIL %1:_(<4 x i16>), %2:_(<4 x i16>)
+
+---
+name:            g_savgceil_3
+body:             |
+  bb.0:
+    %0:_(<2 x i32>) = G_SAVGCEIL %1:_(<2 x i32>), %2:_(<2 x i32>)
+
+---
+name:            g_clmul_0
+body:             |
+  bb.0:
+    %0:_(<8 x i8>) = G_CLMUL %1:_(<8 x i8>), %2:_(<8 x i8>)
+
+---
+name:            g_clmul_1
+body:             |
+  bb.0:
+    %0:_(<16 x i8>) = G_CLMUL %1:_(<16 x i8>), %2:_(<16 x i8>)

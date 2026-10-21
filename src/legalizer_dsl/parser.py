@@ -88,6 +88,7 @@ from .model import (
     Pred,
     Query,
     Rule,
+    RuleExpansion,
     RuleSet,
     SameShape,
     SameSize,
@@ -245,6 +246,7 @@ class Parser:
         self.tokens = tokens
         self.pos = 0
         self.config = dict(config or {})
+        self.last_macro_guard: Optional[bool] = None
         # LLT-valued configuration entries participate in type parsing.
         self.aliases: dict[str, LLT] = {
             name: value
@@ -538,10 +540,13 @@ class Parser:
             )
         name = token.value
         before = len(ruleset.rules)
+        guard: Optional[bool] = None
         if name in CORE_ACTIONS:
             ruleset.add(self.parse_core_rule())
         elif name in MACROS:
+            self.last_macro_guard = None
             self.parse_macro(ruleset)
+            guard = self.last_macro_guard
         else:
             raise _err("P004", token, f"unknown rule or macro {name!r}")
         end = self.tokens[self.pos - 1]
@@ -550,6 +555,15 @@ class Parser:
         )
         for rule in ruleset.rules[before:]:
             rule.span = span
+        ruleset.expansions.append(
+            RuleExpansion(
+                name=name,
+                guard=guard,
+                first_rule=before,
+                rule_count=len(ruleset.rules) - before,
+                span=span,
+            )
+        )
 
     def parse_core_rule(self) -> Rule:
         name = self.expect_ident()
@@ -576,6 +590,7 @@ class Parser:
 
         def add(rules: list[Rule]) -> None:
             guard = self.parse_guard_if_present()
+            self.last_macro_guard = guard
             self.expect(";")
             if not guard:
                 return

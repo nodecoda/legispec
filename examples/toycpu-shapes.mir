@@ -1,0 +1,74 @@
+# Real-MIR shape corpus for the ToyCPU policy slice.
+# Boundary rows (s3, align 7, v3s32) are deliberate: they must be
+# reported as outside D, never silently counted as coverage.
+---
+name:            toy_add_s32
+body:             |
+  bb.0:
+    %0:_(s32) = G_ADD %1:_(s32), %2:_(s32)
+
+---
+name:            toy_add_s3_boundary
+body:             |
+  bb.0:
+    %0:_(s3) = G_ADD %1:_(s3), %2:_(s3)
+
+---
+name:            toy_shl_s32
+body:             |
+  bb.0:
+    %0:_(s32) = G_SHL %1:_(s32), %2:_(s32)
+
+---
+name:            toy_constant_s32
+body:             |
+  bb.0:
+    %0:_(s32) = G_CONSTANT i32 7
+
+---
+name:            toy_load_s32
+body:             |
+  bb.0:
+    %0:_(s32) = G_LOAD %1:_(p0) :: (load (s32) from %ir.p, align 4)
+
+---
+name:            toy_load_bad_align
+body:             |
+  bb.0:
+    %0:_(s32) = G_LOAD %1:_(p0) :: (load (s32) from %ir.p, align 7)
+
+---
+name:            toy_store_s32
+body:             |
+  bb.0:
+    G_STORE %0:_(s32), %1:_(p0) :: (store (s32) into %ir.p, align 4)
+
+---
+name:            toy_concat_v4s32
+body:             |
+  bb.0:
+    %0:_(<4 x i32>) = G_CONCAT_VECTORS %1:_(<2 x i32>), %2:_(<2 x i32>)
+
+---
+name:            toy_concat_v3s32_boundary
+body:             |
+  bb.0:
+    %0:_(<3 x i32>) = G_CONCAT_VECTORS %1:_(<2 x i32>), %2:_(<2 x i32>)
+
+---
+name:            toy_phi_s32
+body:             |
+  bb.0:
+    %0:_(s32) = G_PHI %1:_(s32), %bb.0, %2:_(s32), %bb.1
+
+---
+name:            toy_merge_s64
+body:             |
+  bb.0:
+    %0:_(s64) = G_MERGE_VALUES %1:_(s32), %2:_(s32)
+
+---
+name:            toy_unmerge_s32
+body:             |
+  bb.0:
+    %0:_(s32) = G_UNMERGE_VALUES %1:_(s64)

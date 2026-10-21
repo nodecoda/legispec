@@ -43,10 +43,25 @@ python -m unittest discover -s tests
 `check --strict` 会做语法、语义、capability 契约、可达性/遮蔽全套检查；
 `--strict` 缺 `capabilities/<rules>-capabilities.json` 即失败，不允许“静默放行 custom”。
 
-回生成 C++：
+生成 C++：
 
 ```powershell
 legalizer-dsl --rules rules/aarch64-vector.ldsl codegen --out-dir out/codegen
+```
+
+生成器契约检查（22 份规则、所有 config 变体、双次生成确定性、manifest provenance）：
+
+```powershell
+python scripts/check_codegen_contract.py
+```
+
+集成与覆盖率检查：
+
+```powershell
+python scripts/integration_smoke.py --target toycpu --limit 0
+python scripts/integration_smoke.py --target aarch64-vector --limit 2000 --out out/integration-aarch64-report.json
+python scripts/check_integration_status.py --require-pass out/integration-report.json out/integration-aarch64-report.json
+python scripts/coverage_report.py --corpus examples --out out/coverage-report.json
 ```
 
 ## 4. 仓库结构
@@ -58,9 +73,9 @@ rules/                    22 份 .ldsl 规则转写（ToyCPU、X86-64、AArch64�
 witness/                  9 份 witness：固定顺序依赖与边界
 capabilities/             22 份 provider 契约（custom / libcall / lower 谁能接）
 claims/                   claims.json（43 条断言与哈希钉）、claim-ledger.md、构造覆盖
-docs/                     命题、语法、模式、配置、决策记录
+docs/                     命题、语法、模式、配置、决策记录；兼容性见 COMPATIBILITY.md
 examples/                 真实 MIR / LLVM IR 语料
-tests/                    305 个单元测试
+tests/                    357 个单元测试
 scripts/                  证据收集与批处理
 out/                      本地证据缓存（不入库，见第 6 节）
 ```
@@ -74,11 +89,21 @@ generated-claims=16
 rules-files=22
 hand-queries=321627
 constructs=63/63     # LLVM builder 方法 → DSL 原语，全部归类
-tests=305
+tests=357
 ```
 
 这些数字由 `python -m legalizer_dsl.closure check` 从产物重新计算并比对；
 文档数字漂移会让门禁直接失败，避免“文档比代码乐观”。
+
+证据状态必须分清：
+
+- `STRUCTURAL_ONLY`：`ldsl-closure check --skip-evidence`，只检查结构、契约和 pinned 数字，不证明报告/oracle 字节；
+- `EVIDENCE_VERIFIED`：`ldsl-claims verify --verify-corpus` 加完整 `ldsl-closure check`，43/43 claim 逐份审计；
+- `INTEGRATION_VERIFIED`：`integration_smoke.py` 状态为 `PASS`，生成 C++ 真实编译、链接、运行并与可用 oracle 对齐；
+- `UNKNOWN` / boundary 永远不算通过。
+
+版本矩阵、产物失效规则和 LLVM 升级 playbook 见
+[`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md)。
 
 ## 6. 证据是外置的
 
@@ -86,7 +111,10 @@ tests=305
 
 ```powershell
 python scripts/collect_evidence.py --from <evidence-dir>   # 按 claims.json 的钉取回并校验 sha256
-python -m legalizer_dsl.claims verify                      # 43/43 PROVEN
+python -m legalizer_dsl.claims verify --verify-corpus      # 43/43 PROVEN，并重新枚举 D∪R
+python scripts/refresh_evidence.py --all --require-all     # 规则/评估器变化后重跑全部报告
+python scripts/refresh_evidence.py --all --write-ledger    # 接受刚重跑出的新钉号
+python -m legalizer_dsl.closure check                      # 完整收口
 ```
 
 没有证据目录时，`claims verify` 会明确报 `report missing` / `oracle missing`，

@@ -8,6 +8,8 @@
 
 """A small, executable DSL for LLVM GlobalISel legality rules."""
 
+__version__ = "0.2.0"
+
 from .diagnostics import DslError
 from .model import (
     Action,
@@ -24,6 +26,7 @@ from .parser import parse, parse_defines, parse_file
 from .witness import Witness, WitnessReport, parse_witness_file, run_witnesses
 
 __all__ = [
+    "__version__",
     "Action",
     "DslError",
     "LegalizerInfo",

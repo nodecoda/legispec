@@ -58,7 +58,7 @@ R = closure(Q0) 在 D 内的一步 legalize 后继
 | `closure.py` | 收口审计：pinned 数字 vs 产物 | 文档数字或资产清单漂移时 |
 | `cli.py` / `legalizer-dsl` | `check` / `codegen` / `conform` / `witness` | 日常入口 |
 | `rules/*.ldsl` | 22 份规则转写 | 证明对象 |
-| `tests/` | 305 个单元测试 | 改任何实现前先跑 |
+| `tests/` | 357 个单元测试 | 改任何实现前先跑 |
 | `witness/` | 每片的固定证据 | 回归 |
 | `*capabilities.json` | custom/libcall/lower 的 provider 契约 | strict check |
 
@@ -71,7 +71,7 @@ generated-claims=16
 rules-files=22
 hand-queries=321627
 constructs=63
-tests=305
+tests=357
 <!-- /closure:pinned -->
 
 这些数字由 `closure.py check` 从 `claims.json`、`rules/`、`construct-coverage.json`、
@@ -178,30 +178,34 @@ rules/*.ldsl
 ## 9. 命令手册
 
 ```powershell
-# 全量门禁（11 gates + 账本 + closure）
-powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-legalizer-suite.ps1
+# 在仓库根目录执行。全量单元测试与结构门禁
+python -X utf8 -m unittest discover -s tests -v
+python scripts/check_all_rules.py
+python -X utf8 -m legalizer_dsl.closure check --skip-evidence
 
-# 单切片
-powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-concat-vectors.ps1
+# 生成器契约（22 份规则、所有 config 变体、双次确定性）
+python scripts/check_codegen_contract.py
 
-# 单元测试 / 构造覆盖 / 账本
-cd F:\llvm-study\toycpu\tools\legalizer_dsl
-python -X utf8 -m unittest discover -s tests
-python -X utf8 constructs.py check
-python -X utf8 claims.py verify
+# 集成烟测（需要 LLVM 构建；没有环境会明确 SKIP: environment）
+python scripts/integration_smoke.py --target toycpu --limit 0
+python scripts/integration_smoke.py --target aarch64-vector --limit 2000 --out out/integration-aarch64-report.json
+python scripts/check_integration_status.py --require-pass out/integration-report.json out/integration-aarch64-report.json
 
-# 收口审计
-python -m legalizer_dsl.closure check
+# 语料覆盖率棘轮
+python scripts/coverage_report.py --corpus examples --out out/coverage-report.json
 
-# 真实 MIR 形状审计
-python -X utf8 measure_concat_shapes.py
+# 证据：完整审计、重跑、写回账本、收口
+python -X utf8 -m legalizer_dsl.claims verify --verify-corpus
+python scripts/refresh_evidence.py --all --require-all
+python scripts/refresh_evidence.py --all --write-ledger
+python -X utf8 -m legalizer_dsl.closure check
 
-# 语法/静态检查与代码生成
-python -X utf8 -m legalizer_dsl --rules rules\aarch64-concat-vectors.ldsl check --strict
-python -X utf8 -m legalizer_dsl --rules rules\aarch64-concat-vectors.ldsl codegen --out-dir out\codegen
+# 单切片语法/静态检查与代码生成
+python -X utf8 -m legalizer_dsl --rules rules/aarch64-concat-vectors.ldsl check --strict
+python -X utf8 -m legalizer_dsl --rules rules/aarch64-concat-vectors.ldsl codegen --out-dir out/codegen
 ```
+
+版本矩阵和 LLVM 升级顺序见 [`COMPATIBILITY.md`](COMPATIBILITY.md)。
 
 ## 10. 阅读顺序（新人 2 小时）
 
@@ -237,10 +241,13 @@ python -X utf8 -m legalizer_dsl --rules rules\aarch64-concat-vectors.ldsl codege
 
 ```text
 claims=43 proven=43 failed=0
-11 gates PASS
-305 tests OK
+357 tests OK（1 个环境相关 skip）
+strict rules sweep 22/22
+codegen contract PASS（22 份规则、24 个 config 变体）
+integration smoke PASS（ToyCPU 全 D、AArch64 vector；SKIP 不算通过）
+coverage ratchet PASS（不低于 coverage/coverage-baseline.json）
 constructs 63/63 classified
-closure.py check PASS（pinned 数字与产物一致）
+closure.py check PASS（0 problems；pinned 数字与产物一致）
 ```
 
 停止规则：

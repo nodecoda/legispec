@@ -38,12 +38,13 @@ if __package__ in (None, ""):
 import argparse
 import hashlib
 import json
+import os
 import re
 import sys
 from pathlib import Path
 from typing import Optional
 
-from . import model, paths
+from . import __version__, model, paths
 from .checker.capability import CapabilityManifestError
 from .diagnostics import DslError
 from .model import (
@@ -100,6 +101,12 @@ GENERATED_HEADER = "toycpu_rules_gen.h"
 GENERATED_SOURCE = "toycpu_rules_gen.cpp"
 GENERATED_MANIFEST = "codegen-manifest.json"
 
+# Bump this when the surface syntax or its elaboration contract changes.  It is
+# independent of the packaging version and is pinned into every manifest.
+DSL_SPEC_VERSION = "1.0"
+STRUCTURE_CONTRACT_VERSION = 1
+DEFAULT_LLVM_COMMIT = "unknown"
+
 _CPP_IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 
 # C++20 keywords plus the alternative tokens.  ``str.isidentifier()`` alone
@@ -153,6 +160,63 @@ def _derive_output_stem(rules_path: Path) -> str:
     if not stem or stem[0].isdigit():
         stem = f"_{stem}"
     return f"{stem}_rules_gen"
+
+
+_NAMESPACE_FAMILIES = {
+    "toycpu": "ToyCPU",
+    "aarch64": "AArch64",
+    "riscv": "RISCV",
+    "riscv32": "RISCV32",
+    "riscv64": "RISCV64",
+    "x86": "X86",
+}
+
+
+def _namespace_from_rules_stem(stem: str) -> str:
+    """Derive a stable C++ namespace from a known target-family file stem.
+
+    Unknown families are rejected rather than silently falling back to a
+    shared namespace: two unrelated rule slices must never collide merely
+    because the generator could not classify them.
+    """
+
+    parts = [
+        part
+        for part in re.split(r"[^A-Za-z0-9]+", stem.lower())
+        if part
+    ]
+    if not parts or parts[0] not in _NAMESPACE_FAMILIES:
+        raise DslError(
+            "cannot derive a namespace from rules file stem "
+            f"{stem!r}; pass --namespace explicitly",
+            code="G004",
+        )
+    family = _NAMESPACE_FAMILIES[parts[0]]
+    suffix = "".join(part[:1].upper() + part[1:] for part in parts[1:])
+    return family + suffix
+
+
+def _header_guard(namespace: str, output_stem: str) -> str:
+    # ``output_stem`` already ends in ``_rules_gen`` (see
+    # ``_derive_output_stem``), so do not append it a second time.  The stem is
+    # what makes two slices in the same namespace coexist in one TU.
+    return re.sub(
+        r"[^A-Za-z0-9]", "_", f"{namespace}_{output_stem}_h"
+    ).upper()
+
+
+def _wiring_guard(output_stem: str) -> str:
+    return re.sub(
+        r"[^A-Za-z0-9]", "_", f"LEGALIZER_DSL_WIRING_{output_stem}_INC"
+    ).upper()
+
+
+def _resolve_namespace(
+    namespace: Optional[str], rules_stem: str
+) -> tuple[str, str]:
+    if namespace is None:
+        return _namespace_from_rules_stem(rules_stem), "derived"
+    return namespace, "explicit"
 
 
 # Public builder helpers for "type set / type pair" predicates.  The generic
@@ -694,8 +758,9 @@ def _generated_header(
     rules_rel: str,
     rules_sha: str,
     header_name: str = GENERATED_HEADER,
+    header_guard: Optional[str] = None,
 ) -> str:
-    guard = f"{namespace.upper()}_RULES_GEN_H"
+    guard = header_guard or _header_guard(namespace, Path(header_name).stem)
     return f"""//===-- {header_name} - Generated Legalizer rules -*- C++ -*-===//
 //
 // GENERATED FILE. DO NOT EDIT.
@@ -815,6 +880,385 @@ def _config_record(config: Optional[dict[str, object]]) -> dict[str, object]:
     }
 
 
+def _render_artifacts(
+    info: model.LegalizerInfo,
+    *,
+    rules_rel: str,
+    rules_sha: str,
+    config: Optional[dict[str, object]],
+    namespace: str,
+    namespace_source: str,
+    output_stem: str,
+    llvm_commit: str,
+    dsl_spec_version: str,
+) -> tuple[str, str, dict]:
+    _require_valid_namespace(namespace)
+    _require_valid_output_stem(output_stem)
+    if namespace_source not in ("derived", "explicit"):
+        raise DslError(
+            f"invalid namespace_source: {namespace_source!r}",
+            code="G005",
+        )
+    if not llvm_commit:
+        raise DslError("llvm_commit must not be empty", code="G006")
+    if not dsl_spec_version:
+        raise DslError("dsl_spec_version must not be empty", code="G007")
+
+    header_name = f"{output_stem}.h"
+    source_name = f"{output_stem}.cpp"
+    header_guard = _header_guard(namespace, output_stem)
+    header_text = _generated_header(
+        namespace,
+        rules_rel,
+        rules_sha,
+        header_name,
+        header_guard=header_guard,
+    )
+    source_text = _generated_source(
+        info, namespace, rules_rel, rules_sha, header_name, source_name
+    )
+    header_sha = _sha256_text(header_text)
+    source_sha = _sha256_text(source_text)
+
+    manifest = {
+        "version": 1,
+        "generator_version": __version__,
+        "dsl_spec_version": dsl_spec_version,
+        "llvm_commit": llvm_commit,
+        "source": rules_rel,
+        "rules_sha256": rules_sha,
+        "config": _config_record(config),
+        "namespace": namespace,
+        "namespace_source": namespace_source,
+        "output_stem": output_stem,
+        "header_guard": header_guard,
+        "header_sha256": header_sha,
+        "source_sha256": source_sha,
+        "rulesets": len(info.rulesets),
+        "opcodes": len(info.by_opcode),
+        "rules": sum(len(rs.rules) for rs in info.rulesets),
+        "generated": {
+            "header": header_name,
+            "header_sha256": header_sha,
+            "source": source_name,
+            "source_sha256": source_sha,
+        },
+        "capabilities_required": _required_capabilities(info),
+        "structure": _structure_manifest(info),
+    }
+    return header_text, source_text, manifest
+
+
+def _manifest_text(manifest: dict) -> str:
+    return json.dumps(manifest, indent=2, sort_keys=True) + "\n"
+
+
+def _wiring_relative_dir(out_dir: Path, wiring_dir: Path) -> str:
+    try:
+        relative = os.path.relpath(out_dir, wiring_dir)
+    except ValueError as exc:
+        raise DslError(
+            "cannot emit wiring across filesystem drives; place --emit-wiring "
+            "on the same drive as --out-dir",
+            code="G008",
+        ) from exc
+    return Path(relative).as_posix()
+
+
+def _render_wiring(
+    info: model.LegalizerInfo,
+    *,
+    out_dir: Path,
+    wiring_dir: Path,
+    namespace: str,
+    output_stem: str,
+    llvm_commit: str,
+) -> dict[str, str]:
+    header_name = f"{output_stem}.h"
+    source_name = f"{output_stem}.cpp"
+    generated_dir = _wiring_relative_dir(out_dir, wiring_dir)
+    target_name = f"legalizer_dsl_{output_stem}"
+    wiring_guard = _wiring_guard(output_stem)
+    wiring_function = f"applyGeneratedLegalizerRulesForConsumer_{output_stem}"
+    lookup_function = f"lookupGeneratedOpcode_{output_stem}"
+
+    # An explicit if-chain is intentional.  ``StringSwitch`` with an
+    # assignment expression as its value argument is legal C++ but makes the
+    # side effect look like a value and is easy to misread.  The chain is also
+    # self-contained: it only names opcodes that the generated rules actually
+    # use, all of which are TargetOpcode enumerators.
+    opcode_cases = []
+    for opcode in sorted(info.by_opcode):
+        opcode_cases.append(
+            f'  if (Name == "{opcode}") {{\n'
+            f"    Opcode = llvm::TargetOpcode::{opcode};\n"
+            f"    return true;\n"
+            f"  }}"
+        )
+    opcode_cases_text = "\n".join(opcode_cases)
+
+    cmake_text = f"""#===-- legalizer-rules.cmake - generated wiring -*- CMake -*-===//
+#
+# GENERATED FILE. DO NOT EDIT.
+# generator: legalizer-dsl {__version__}
+# llvm_commit: {llvm_commit}
+#
+#===----------------------------------------------------------------------===//
+
+set(LEGALIZER_DSL_GENERATED_DIR "${{CMAKE_CURRENT_LIST_DIR}}/{generated_dir}")
+set(LEGALIZER_DSL_GENERATED_HEADER "{header_name}")
+set(LEGALIZER_DSL_GENERATED_SOURCE "{source_name}")
+set(LEGALIZER_DSL_NAMESPACE "{namespace}")
+set(LEGALIZER_DSL_OUTPUT_STEM "{output_stem}")
+set(LEGALIZER_DSL_TARGET "{target_name}")
+set(LEGALIZER_DSL_HEADER_GUARD "{_header_guard(namespace, output_stem)}")
+
+if(NOT TARGET {target_name})
+  add_library({target_name} STATIC
+    "${{LEGALIZER_DSL_GENERATED_DIR}}/${{LEGALIZER_DSL_GENERATED_SOURCE}}")
+  target_include_directories({target_name} PUBLIC
+    "${{LEGALIZER_DSL_GENERATED_DIR}}"
+    "${{CMAKE_CURRENT_LIST_DIR}}")
+  target_link_libraries({target_name} PUBLIC
+    LLVMCodeGen LLVMGlobalISel LLVMCore LLVMSupport)
+endif()
+"""
+
+    wiring_text = f"""//===-- wiring.cpp.inc - generated consumer wiring -*- C++ -*-===//
+//
+// GENERATED FILE. DO NOT EDIT.
+// generator: legalizer-dsl {__version__}
+// llvm_commit: {llvm_commit}
+//
+//===----------------------------------------------------------------------===//
+
+#ifndef {wiring_guard}
+#define {wiring_guard}
+
+#include "{header_name}"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/CodeGen/GlobalISel/LegalizerInfo.h"
+#include "llvm/CodeGen/TargetOpcodes.h"
+
+[[maybe_unused]] static bool {lookup_function}(llvm::StringRef Name,
+                                               unsigned &Opcode) {{
+{opcode_cases_text}
+  return false;
+}}
+
+[[maybe_unused]] static void {wiring_function}(llvm::LegalizerInfo &LI) {{
+  llvm::{namespace}::applyGeneratedLegalizerRules(LI);
+}}
+
+#define LEGALIZER_DSL_APPLY_RULES {wiring_function}
+
+#endif // {wiring_guard}
+"""
+
+    markdown_text = f"""# Generated legalizer wiring
+
+- source: `{header_name}` / `{source_name}`
+- namespace: `llvm::{namespace}`
+- entry point: `llvm::{namespace}::applyGeneratedLegalizerRules(LegalizerInfo &)`
+- llvm commit pin: `{llvm_commit}`
+
+## CMake
+
+The consumer must provide the LLVM package exports first:
+
+```cmake
+find_package(LLVM CONFIG REQUIRED)
+include("path/to/{wiring_dir.name}/legalizer-rules.cmake")
+target_link_libraries(your_consumer PRIVATE {target_name})
+```
+
+`legalizer-rules.cmake` resolves the generated directory relative to its own
+location, so the include path may be absolute or relative to the consumer's
+CMake source directory.  The target already exposes the generated directory
+and this wiring directory on its public include path.
+
+## C++
+
+`wiring.cpp.inc` includes the generated header itself; include the wiring once
+in the translation unit that constructs the `LegalizerInfo`:
+
+```cpp
+#include "wiring.cpp.inc"
+
+llvm::LegalizerInfo LI;
+LEGALIZER_DSL_APPLY_RULES(LI);
+```
+
+Do not copy the generated source into the target's hand-written
+`LegalizerInfo` translation unit. Keep it as a separate static library so a
+regeneration cannot silently overwrite upstream files.
+"""
+    return {
+        "legalizer-rules.cmake": cmake_text,
+        "wiring.cpp.inc": wiring_text,
+        "wiring.md": markdown_text,
+    }
+
+
+def emit_wiring(
+    info: model.LegalizerInfo,
+    *,
+    out_dir: Path,
+    wiring_dir: Path,
+    namespace: str,
+    output_stem: str,
+    llvm_commit: str = DEFAULT_LLVM_COMMIT,
+) -> list[Path]:
+    texts = _render_wiring(
+        info,
+        out_dir=out_dir,
+        wiring_dir=wiring_dir,
+        namespace=namespace,
+        output_stem=output_stem,
+        llvm_commit=llvm_commit,
+    )
+    wiring_dir.mkdir(parents=True, exist_ok=True)
+    written = []
+    for name, text in texts.items():
+        path = wiring_dir / name
+        path.write_text(text, encoding="utf-8", newline="\n")
+        written.append(path)
+    return written
+
+
+def check_wiring(
+    info: model.LegalizerInfo,
+    *,
+    out_dir: Path,
+    wiring_dir: Path,
+    namespace: str,
+    output_stem: str,
+    llvm_commit: str = DEFAULT_LLVM_COMMIT,
+) -> list[str]:
+    texts = _render_wiring(
+        info,
+        out_dir=out_dir,
+        wiring_dir=wiring_dir,
+        namespace=namespace,
+        output_stem=output_stem,
+        llvm_commit=llvm_commit,
+    )
+    problems = []
+    for name, text in texts.items():
+        path = wiring_dir / name
+        try:
+            actual = path.read_bytes()
+        except FileNotFoundError:
+            problems.append(f"missing {path}")
+            continue
+        except OSError as exc:
+            problems.append(f"cannot read {path}: {exc}")
+            continue
+        if actual != text.encode("utf-8"):
+            problems.append(f"content differs: {path}")
+    return problems
+
+
+def _slots_used(node) -> list[int]:
+    slots: set[int] = set()
+    for name in _SLOT_FIELDS:
+        value = getattr(node, name, None)
+        if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+            slots.add(value)
+    return sorted(slots)
+
+
+def _mutation_record(expr) -> Optional[dict]:
+    if expr is None:
+        return None
+    record = {
+        "kind": type(expr).__name__,
+        "text": str(expr),
+        "slots": _slots_used(expr),
+    }
+    for name, value in vars(expr).items():
+        if isinstance(value, int) and not isinstance(value, bool):
+            record[name] = value
+    return record
+
+
+def _rule_structure(rule: model.Rule) -> dict:
+    return {
+        "action": rule.action.value,
+        "type_idx": rule.type_idx,
+        "predicate": {
+            "kind": type(rule.pred).__name__,
+            "text": str(rule.pred),
+            "slots": _slots_used(rule.pred),
+        },
+        "mutation": _mutation_record(rule.new_type),
+        "origin": rule.origin,
+    }
+
+
+def _structure_manifest(info: model.LegalizerInfo) -> dict:
+    rulesets: list[dict] = []
+    action_counts: dict[str, int] = {}
+    macro_counts: dict[str, int] = {}
+    macro_invocations = 0
+    guarded_off = 0
+    for index, ruleset in enumerate(info.rulesets):
+        rules = [_rule_structure(rule) for rule in ruleset.rules]
+        expansions = []
+        for expansion in getattr(ruleset, "expansions", ()):
+            expansions.append(
+                {
+                    "name": expansion.name,
+                    "guard": expansion.guard,
+                    "first_rule": expansion.first_rule,
+                    "rule_count": expansion.rule_count,
+                    "rule_indices": list(
+                        range(
+                            expansion.first_rule,
+                            expansion.first_rule + expansion.rule_count,
+                        )
+                    ),
+                }
+            )
+            macro_invocations += 1
+            macro_counts[expansion.name] = macro_counts.get(expansion.name, 0) + 1
+            if expansion.guard is False:
+                guarded_off += 1
+        for rule in ruleset.rules:
+            name = rule.action.value
+            action_counts[name] = action_counts.get(name, 0) + 1
+        rulesets.append(
+            {
+                "index": index,
+                "opcodes": list(ruleset.opcodes),
+                "rule_count": len(ruleset.rules),
+                "actions": [rule.action.value for rule in ruleset.rules],
+                "type_slots": [rule.type_idx for rule in ruleset.rules],
+                "mutation_kinds": [
+                    type(rule.new_type).__name__
+                    if rule.new_type is not None
+                    else "none"
+                    for rule in ruleset.rules
+                ],
+                "rules": rules,
+                "expansions": expansions,
+            }
+        )
+    return {
+        "contract_version": STRUCTURE_CONTRACT_VERSION,
+        "rulesets": rulesets,
+        "counts": {
+            "rulesets": len(info.rulesets),
+            "opcodes": len(info.by_opcode),
+            "rules": sum(len(rs.rules) for rs in info.rulesets),
+            "actions": dict(sorted(action_counts.items())),
+            "macro_invocations": macro_invocations,
+            "macro_counts": dict(sorted(macro_counts.items())),
+            "guarded_off": guarded_off,
+        },
+    }
+
+
 def generate(
     info: model.LegalizerInfo,
     *,
@@ -823,51 +1267,89 @@ def generate(
     rules_sha: str,
     config: Optional[dict[str, object]] = None,
     namespace: str = "ToyCPU",
+    namespace_source: str = "explicit",
     output_stem: str = "toycpu_rules_gen",
+    llvm_commit: str = DEFAULT_LLVM_COMMIT,
+    dsl_spec_version: str = DSL_SPEC_VERSION,
 ) -> dict:
     """Write the generated header/source/manifest and return the manifest."""
 
-    _require_valid_namespace(namespace)
-    _require_valid_output_stem(output_stem)
-    header_name = f"{output_stem}.h"
-    source_name = f"{output_stem}.cpp"
-
-    out_dir.mkdir(parents=True, exist_ok=True)
-    header_text = _generated_header(namespace, rules_rel, rules_sha, header_name)
-    source_text = _generated_source(
-        info, namespace, rules_rel, rules_sha, header_name, source_name
+    header_text, source_text, manifest = _render_artifacts(
+        info,
+        rules_rel=rules_rel,
+        rules_sha=rules_sha,
+        config=config,
+        namespace=namespace,
+        namespace_source=namespace_source,
+        output_stem=output_stem,
+        llvm_commit=llvm_commit,
+        dsl_spec_version=dsl_spec_version,
     )
 
-    header_path = out_dir / header_name
-    source_path = out_dir / source_name
+    out_dir.mkdir(parents=True, exist_ok=True)
+    header_path = out_dir / manifest["generated"]["header"]
+    source_path = out_dir / manifest["generated"]["source"]
     manifest_path = out_dir / GENERATED_MANIFEST
 
     header_path.write_text(header_text, encoding="utf-8", newline="\n")
     source_path.write_text(source_text, encoding="utf-8", newline="\n")
-
-    manifest = {
-        "version": 1,
-        "source": rules_rel,
-        "rules_sha256": rules_sha,
-        "config": _config_record(config),
-        "namespace": namespace,
-        "rulesets": len(info.rulesets),
-        "opcodes": len(info.by_opcode),
-        "rules": sum(len(rs.rules) for rs in info.rulesets),
-        "generated": {
-            "header": header_name,
-            "header_sha256": _sha256_text(header_text),
-            "source": source_name,
-            "source_sha256": _sha256_text(source_text),
-        },
-        "capabilities_required": _required_capabilities(info),
-    }
     manifest_path.write_text(
-        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        _manifest_text(manifest),
         encoding="utf-8",
         newline="\n",
     )
     return manifest
+
+
+def check_generated(
+    info: model.LegalizerInfo,
+    *,
+    out_dir: Path,
+    rules_rel: str,
+    rules_sha: str,
+    config: Optional[dict[str, object]] = None,
+    namespace: str = "ToyCPU",
+    namespace_source: str = "explicit",
+    output_stem: str = "toycpu_rules_gen",
+    llvm_commit: str = DEFAULT_LLVM_COMMIT,
+    dsl_spec_version: str = DSL_SPEC_VERSION,
+) -> list[str]:
+    """Return differences between ``out_dir`` and freshly rendered artifacts.
+
+    This never creates or writes ``out_dir``; callers decide whether a stale or
+    missing artifact set is a check failure.
+    """
+
+    header_text, source_text, manifest = _render_artifacts(
+        info,
+        rules_rel=rules_rel,
+        rules_sha=rules_sha,
+        config=config,
+        namespace=namespace,
+        namespace_source=namespace_source,
+        output_stem=output_stem,
+        llvm_commit=llvm_commit,
+        dsl_spec_version=dsl_spec_version,
+    )
+    expected = {
+        manifest["generated"]["header"]: header_text,
+        manifest["generated"]["source"]: source_text,
+        GENERATED_MANIFEST: _manifest_text(manifest),
+    }
+    problems: list[str] = []
+    for name, text in expected.items():
+        path = out_dir / name
+        try:
+            actual = path.read_bytes()
+        except FileNotFoundError:
+            problems.append(f"missing {path}")
+            continue
+        except OSError as exc:
+            problems.append(f"cannot read {path}: {exc}")
+            continue
+        if actual != text.encode("utf-8"):
+            problems.append(f"content differs: {path}")
+    return problems
 
 
 # ---------------------------------------------------------------------------
@@ -903,8 +1385,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     )
     parser.add_argument(
         "--namespace",
-        default="ToyCPU",
-        help="C++ namespace for the generated entry point (default: ToyCPU)",
+        default=None,
+        help="C++ namespace for the generated entry point (default: derive from rules stem)",
     )
     parser.add_argument(
         "--output-stem",
@@ -912,15 +1394,44 @@ def main(argv: Optional[list[str]] = None) -> int:
         metavar="STEM",
         help="generated file stem (default: <rules-stem>_rules_gen)",
     )
+    parser.add_argument(
+        "--llvm-commit",
+        default=DEFAULT_LLVM_COMMIT,
+        help="LLVM commit/version pinned in the manifest",
+    )
+    parser.add_argument(
+        "--dsl-spec-version",
+        default=DSL_SPEC_VERSION,
+        help="LDSL specification version pinned in the manifest",
+    )
+    parser.add_argument(
+        "--emit-wiring",
+        default=None,
+        metavar="DIR",
+        help="emit CMake/C++ wiring for the generated rules",
+    )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="verify that out-dir matches freshly generated output; never write",
+    )
     args = parser.parse_args(argv)
-    if not _is_valid_namespace(args.namespace):
-        print(f"error: not a C++ identifier: {args.namespace!r}", file=sys.stderr)
-        return 2
 
     rules_path = Path(args.rules)
     if not rules_path.is_file():
         print(f"error: rules file not found: {rules_path}", file=sys.stderr)
         return 2
+    try:
+        namespace, namespace_source = _resolve_namespace(
+            args.namespace, rules_path.stem
+        )
+    except DslError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    if not _is_valid_namespace(namespace):
+        print(f"error: not a C++ identifier: {namespace!r}", file=sys.stderr)
+        return 2
+
     data = rules_path.read_bytes()
     rules_sha = hashlib.sha256(data).hexdigest()
     resolved_rules = rules_path.resolve()
@@ -961,15 +1472,59 @@ def main(argv: Optional[list[str]] = None) -> int:
                     file=sys.stderr,
                 )
                 return 1
-        manifest = generate(
-            info,
-            out_dir=Path(args.out_dir),
+
+        render_kwargs = dict(
             rules_rel=rel,
             rules_sha=rules_sha,
             config=config,
-            namespace=args.namespace,
+            namespace=namespace,
+            namespace_source=namespace_source,
             output_stem=output_stem,
+            llvm_commit=args.llvm_commit,
+            dsl_spec_version=args.dsl_spec_version,
         )
+        if args.check:
+            problems = check_generated(
+                info,
+                out_dir=Path(args.out_dir),
+                **render_kwargs,
+            )
+            if args.emit_wiring is not None:
+                problems.extend(
+                    check_wiring(
+                        info,
+                        out_dir=Path(args.out_dir),
+                        wiring_dir=Path(args.emit_wiring),
+                        namespace=namespace,
+                        output_stem=output_stem,
+                        llvm_commit=args.llvm_commit,
+                    )
+                )
+            if problems:
+                for problem in problems:
+                    print(f"codegen-check: {problem}", file=sys.stderr)
+                print(
+                    "codegen-check: generated output is stale; rerun without --check",
+                    file=sys.stderr,
+                )
+                return 1
+            print(f"codegen-check: {Path(args.out_dir)} is up to date")
+            return 0
+
+        manifest = generate(
+            info,
+            out_dir=Path(args.out_dir),
+            **render_kwargs,
+        )
+        if args.emit_wiring is not None:
+            emit_wiring(
+                info,
+                out_dir=Path(args.out_dir),
+                wiring_dir=Path(args.emit_wiring),
+                namespace=namespace,
+                output_stem=output_stem,
+                llvm_commit=args.llvm_commit,
+            )
     except DslError as exc:
         print(f"{rules_path}:{exc}", file=sys.stderr)
         return 2

@@ -52,6 +52,18 @@ class CodegenContractTests(unittest.TestCase):
             self.assertEqual(manifest["version"], 1)
             self.assertEqual(manifest["source"], REL)
             self.assertEqual(manifest["rules_sha256"], _sha(RULES.read_bytes()))
+            self.assertEqual(manifest["generator_version"], "0.2.0")
+            self.assertEqual(
+                manifest["dsl_spec_version"], codegen.DSL_SPEC_VERSION
+            )
+            self.assertEqual(manifest["llvm_commit"], "unknown")
+            self.assertEqual(manifest["namespace"], "ToyCPU")
+            self.assertEqual(manifest["namespace_source"], "explicit")
+            self.assertEqual(manifest["output_stem"], "toycpu_rules_gen")
+            self.assertEqual(
+                manifest["header_guard"],
+                "TOYCPU_TOYCPU_RULES_GEN_H",
+            )
             self.assertEqual(manifest["rulesets"], 47)
             self.assertEqual(manifest["opcodes"], 80)
             self.assertEqual(manifest["rules"], 89)
@@ -68,6 +80,7 @@ class CodegenContractTests(unittest.TestCase):
                 self.assertEqual(
                     manifest["generated"][f"{key}_sha256"], _sha(data)
                 )
+                self.assertEqual(manifest[f"{key}_sha256"], _sha(data))
 
     def test_generation_is_deterministic_and_has_no_probe_output(self):
         with tempfile.TemporaryDirectory() as one, tempfile.TemporaryDirectory() as two:
@@ -137,7 +150,10 @@ class CodegenContractTests(unittest.TestCase):
             source = (out / codegen.GENERATED_SOURCE).read_text(encoding="utf-8")
 
         self.assertEqual(manifest["namespace"], "ProbeNs")
-        self.assertIn("#ifndef PROBENS_RULES_GEN_H", header)
+        self.assertEqual(manifest["namespace_source"], "explicit")
+        self.assertIn(
+            "#ifndef PROBENS_TOYCPU_RULES_GEN_H", header
+        )
         self.assertIn("namespace ProbeNs {", header)
         self.assertNotIn("namespace ToyCPU", header + source)
         self.assertIn("} // namespace ProbeNs", source)
@@ -197,6 +213,156 @@ class CodegenContractTests(unittest.TestCase):
             self.assertFalse((out / codegen.GENERATED_HEADER).exists())
             self.assertFalse((out / codegen.GENERATED_SOURCE).exists())
 
+    def test_namespace_is_derived_from_rules_stem(self):
+        rules = HERE / "rules" / "aarch64-vector.ldsl"
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp) / "out"
+            self.assertEqual(
+                codegen.main(["--rules", str(rules), "--out-dir", str(out)]),
+                0,
+            )
+            manifest = json.loads(
+                (out / codegen.GENERATED_MANIFEST).read_text(encoding="utf-8")
+            )
+        self.assertEqual(manifest["namespace"], "AArch64Vector")
+        self.assertEqual(manifest["namespace_source"], "derived")
+
+    def test_unknown_namespace_family_requires_explicit_namespace(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rules = pathlib.Path(tmp) / "mystery-target.ldsl"
+            rules.write_text(
+                "ruleset G_X { legal_for {s32}; }\n", encoding="utf-8"
+            )
+            out = pathlib.Path(tmp) / "out"
+            self.assertEqual(
+                codegen.main(["--rules", str(rules), "--out-dir", str(out)]),
+                2,
+            )
+            self.assertFalse(out.exists())
+            self.assertEqual(
+                codegen.main(
+                    [
+                        "--rules",
+                        str(rules),
+                        "--out-dir",
+                        str(out),
+                        "--namespace",
+                        "MysteryTarget",
+                    ]
+                ),
+                0,
+            )
+
+    def test_two_slices_in_one_namespace_have_distinct_header_guards(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp)
+            slices = (
+                HERE / "rules" / "toycpu.ldsl",
+                HERE / "rules" / "aarch64-vector.ldsl",
+            )
+            headers = []
+            for rules in slices:
+                self.assertEqual(
+                    codegen.main(
+                        [
+                            "--rules",
+                            str(rules),
+                            "--out-dir",
+                            str(out),
+                            "--namespace",
+                            "SharedNs",
+                        ]
+                    ),
+                    0,
+                )
+                stem = codegen._derive_output_stem(rules)
+                headers.append(out / f"{stem}.h")
+            guards = []
+            for header in headers:
+                text = header.read_text(encoding="utf-8")
+                match = __import__("re").search(
+                    r"#ifndef ([A-Z0-9_]+)", text
+                )
+                self.assertIsNotNone(match)
+                guards.append(match.group(1))
+            self.assertEqual(len(set(guards)), 2)
+            combined = "\n".join(f'#include "{h.name}"' for h in headers)
+            self.assertEqual(combined.count("#include"), 2)
+
+    def test_check_mode_accepts_fresh_output_and_never_rewrites(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp) / "out"
+            argv = [
+                "--rules",
+                str(RULES),
+                "--out-dir",
+                str(out),
+            ]
+            self.assertEqual(codegen.main(argv), 0)
+            before = {
+                path.name: (path.read_bytes(), path.stat().st_mtime_ns)
+                for path in out.iterdir()
+            }
+            self.assertEqual(codegen.main(argv + ["--check"]), 0)
+            after = {
+                path.name: (path.read_bytes(), path.stat().st_mtime_ns)
+                for path in out.iterdir()
+            }
+            self.assertEqual(before, after)
+
+    def test_check_mode_detects_tampering_and_does_not_repair_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp) / "out"
+            argv = [
+                "--rules",
+                str(RULES),
+                "--out-dir",
+                str(out),
+            ]
+            self.assertEqual(codegen.main(argv), 0)
+            header = out / codegen.GENERATED_HEADER
+            tampered = header.read_text(encoding="utf-8") + "// tampered\n"
+            header.write_text(tampered, encoding="utf-8", newline="\n")
+            self.assertEqual(codegen.main(argv + ["--check"]), 1)
+            self.assertEqual(
+                header.read_text(encoding="utf-8"), tampered
+            )
+
+    def test_check_mode_reports_missing_output_without_creating_it(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp) / "missing"
+            self.assertEqual(
+                codegen.main(
+                    ["--rules", str(RULES), "--out-dir", str(out), "--check"]
+                ),
+                1,
+            )
+            self.assertFalse(out.exists())
+
+    def test_cli_forwards_provenance_pins(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp) / "out"
+            self.assertEqual(
+                codegen.main(
+                    [
+                        "--rules",
+                        str(RULES),
+                        "--out-dir",
+                        str(out),
+                        "--llvm-commit",
+                        "deadbeef",
+                        "--dsl-spec-version",
+                        "9.9",
+                    ]
+                ),
+                0,
+            )
+            manifest = json.loads(
+                (out / codegen.GENERATED_MANIFEST).read_text(encoding="utf-8")
+            )
+        self.assertEqual(manifest["llvm_commit"], "deadbeef")
+        self.assertEqual(manifest["dsl_spec_version"], "9.9")
+
     def test_each_llt_is_declared_once(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = pathlib.Path(tmp)
@@ -228,6 +394,131 @@ class CodegenContractTests(unittest.TestCase):
         self.assertIn("moreElementsIf", source)
         self.assertIn("fewerElementsIf", source)
 
+
+
+class WiringContractTests(unittest.TestCase):
+    def _emit(self, out, wiring, *, namespace='ToyCPU', stem=None):
+        info = parse_file(RULES)
+        return codegen.emit_wiring(
+            info,
+            out_dir=out,
+            wiring_dir=wiring,
+            namespace=namespace,
+            output_stem=stem or codegen._derive_output_stem(RULES),
+            llvm_commit='deadbeef',
+        )
+
+    def test_wiring_is_self_contained_and_deterministic(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            out = root / 'generated'
+            wiring = root / 'wiring'
+            self._emit(out, wiring)
+            first = {
+                p.name: p.read_bytes()
+                for p in sorted(wiring.iterdir())
+                if p.is_file()
+            }
+            self.assertEqual(
+                sorted(first),
+                ['legalizer-rules.cmake', 'wiring.cpp.inc', 'wiring.md'],
+            )
+
+            cmake = first['legalizer-rules.cmake'].decode('utf-8')
+            inc = first['wiring.cpp.inc'].decode('utf-8')
+            self.assertIn('legalizer_dsl_toycpu_rules_gen', cmake)
+            self.assertIn('LEGALIZER_DSL_GENERATED_DIR', cmake)
+            self.assertIn('LEGALIZER_DSL_HEADER_GUARD', cmake)
+            self.assertIn('TOYCPU_TOYCPU_RULES_GEN_H', cmake)
+            self.assertIn('#include "toycpu_rules_gen.h"', inc)
+            self.assertIn('LEGALIZER_DSL_APPLY_RULES', inc)
+            self.assertIn(
+                'applyGeneratedLegalizerRulesForConsumer_toycpu_rules_gen', inc
+            )
+            self.assertIn('lookupGeneratedOpcode_toycpu_rules_gen', inc)
+            self.assertIn('llvm::TargetOpcode::G_ADD', inc)
+            self.assertNotIn('Opcode = llvm::TargetOpcode::G_ADD, true', inc)
+
+            self._emit(out, wiring)
+            second = {
+                p.name: p.read_bytes()
+                for p in sorted(wiring.iterdir())
+                if p.is_file()
+            }
+            self.assertEqual(first, second)
+
+    def test_check_wiring_detects_tamper_and_missing_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            out = root / 'generated'
+            wiring = root / 'wiring'
+            info = parse_file(RULES)
+            self._emit(out, wiring)
+            kwargs = dict(
+                out_dir=out,
+                wiring_dir=wiring,
+                namespace='ToyCPU',
+                output_stem=codegen._derive_output_stem(RULES),
+                llvm_commit='deadbeef',
+            )
+            self.assertEqual(codegen.check_wiring(info, **kwargs), [])
+
+            inc = wiring / 'wiring.cpp.inc'
+            inc.write_text(inc.read_text(encoding='utf-8') + '// edited\n', encoding='utf-8')
+            problems = codegen.check_wiring(info, **kwargs)
+            self.assertTrue(any('content differs' in p for p in problems), problems)
+
+            (wiring / 'legalizer-rules.cmake').unlink()
+            problems = codegen.check_wiring(info, **kwargs)
+            self.assertTrue(any('missing' in p for p in problems), problems)
+
+    def test_two_slices_have_distinct_wiring_symbols(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            out = root / 'generated'
+            texts = []
+            for rules in (
+                RULES,
+                HERE / 'rules' / 'aarch64-vector.ldsl',
+            ):
+                info = parse_file(rules)
+                stem = codegen._derive_output_stem(rules)
+                wiring = root / f'wiring-{stem}'
+                codegen.emit_wiring(
+                    info,
+                    out_dir=out,
+                    wiring_dir=wiring,
+                    namespace='SharedNs',
+                    output_stem=stem,
+                    llvm_commit='deadbeef',
+                )
+                texts.append((wiring / 'wiring.cpp.inc').read_text(encoding='utf-8'))
+            self.assertNotEqual(
+                texts[0].split('LEGALIZER_DSL_APPLY_RULES')[-1],
+                texts[1].split('LEGALIZER_DSL_APPLY_RULES')[-1],
+            )
+            self.assertIn('applyGeneratedLegalizerRulesForConsumer_toycpu_rules_gen', texts[0])
+            self.assertIn(
+                'applyGeneratedLegalizerRulesForConsumer_aarch64_vector_rules_gen',
+                texts[1],
+            )
+
+    def test_cli_check_mode_covers_wiring(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            out = root / 'generated'
+            wiring = root / 'wiring'
+            argv = [
+                '--rules', str(RULES),
+                '--out-dir', str(out),
+                '--emit-wiring', str(wiring),
+                '--llvm-commit', 'deadbeef',
+            ]
+            self.assertEqual(codegen.main(argv), 0)
+            self.assertEqual(codegen.main(argv + ['--check']), 0)
+            inc = wiring / 'wiring.cpp.inc'
+            inc.write_text(inc.read_text(encoding='utf-8') + '// edited\n', encoding='utf-8')
+            self.assertEqual(codegen.main(argv + ['--check']), 1)
 
 
 class OutputStemSafetyTests(unittest.TestCase):

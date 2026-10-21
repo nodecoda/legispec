@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "legalizer-dsl"
-version = "0.1.0"
+version = "0.2.0"
 description = "External DSL, checker and C++ generator for LLVM GlobalISel LegalizerInfo rule tables"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -37,7 +37,7 @@ where = ["src"]
 "share/legalizer-dsl/witness" = ["witness/*.witness"]
 "share/legalizer-dsl/capabilities" = ["capabilities/*.json"]
 "share/legalizer-dsl/claims" = ["claims/*.json", "claims/*.md", "claims/*.txt"]
-"share/legalizer-dsl/docs" = ["docs/CLOSURE.md"]
+"share/legalizer-dsl/docs" = ["docs/CLOSURE.md", "docs/COMPATIBILITY.md", "docs/CORRECTNESS.md", "docs/COVERAGE.md", "docs/EVIDENCE.md", "docs/INTEGRATION.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

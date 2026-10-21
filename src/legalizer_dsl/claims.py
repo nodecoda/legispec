@@ -43,6 +43,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import sys
 import tempfile
 from dataclasses import dataclass, field, fields as dataclass_fields
@@ -58,6 +59,26 @@ LEDGER = paths.LEDGER
 REPORT_MD = paths.CLAIM_LEDGER_MD
 CLAIMS_DIR = paths.CLAIMS_DIR
 WITNESS_DIR = paths.WITNESS
+
+CLAIM_CONTRACT_VERSION = 1
+CLAIM_OBSERVATION = ("action", "type_idx", "new_type")
+CLAIM_EQUIVALENCE = "componentwise; LLT::operator=="
+CLAIM_EVIDENCE_PINS = (
+    "rules_sha256",
+    "report_sha256",
+    "corpus_sha256",
+    "oracle_sha256",
+)
+CLAIM_CONTRACT = {
+    "observation": list(CLAIM_OBSERVATION),
+    "equivalence": CLAIM_EQUIVALENCE,
+    "domain": "declared domain block; D union R enumerated by conformance",
+    "closure": "Q0 closure inside D; successors outside D are boundaries",
+    "unknown": [],
+    "evidence": list(CLAIM_EVIDENCE_PINS) + ["witness_sha256", "evaluator_sha256"],
+}
+_HEX64 = re.compile(r"^[0-9a-f]{64}$")
+_HEX40 = re.compile(r"^[0-9a-f]{40}$")
 
 BOUNDARY = (
     "one step: LegalizerInfo::getAction(LegalityQuery); "
@@ -87,6 +108,7 @@ class Claim:
     declared_shadowed: int = 0
     llvm_build: str = _TOYCPU_BUILD
     witness: str = ""
+    unknown: tuple[dict[str, Any], ...] = ()
 
 
 def _config_key(config: dict[str, Any]) -> tuple[tuple[str, str], ...]:
@@ -166,7 +188,7 @@ def _load_claims(path: pathlib.Path | None = None) -> tuple[Claim, ...]:
             if name not in record:
                 continue
             value = record[name]
-            if name == "excludes":
+            if name in ("excludes", "unknown"):
                 value = tuple(value or ())
             values[name] = value
         try:
@@ -376,6 +398,206 @@ def _reachability_problems(
     return problems
 
 
+def _is_nonempty_text(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _is_sha(value: Any, pattern: re.Pattern[str]) -> bool:
+    return isinstance(value, str) and pattern.fullmatch(value) is not None
+
+
+def _validate_unknown(items: Any, label: str, problems: list[str]) -> None:
+    if not isinstance(items, list):
+        problems.append(f"{label}: unknown must be a list")
+        return
+    for index, item in enumerate(items):
+        if not isinstance(item, dict):
+            problems.append(f"{label}: unknown[{index}] must be an object")
+            continue
+        if not _is_nonempty_text(item.get("reason")):
+            problems.append(
+                f"{label}: unknown[{index}] needs a non-empty reason"
+            )
+
+
+def validate_contract(
+    payload: Any, *, require_evidence: bool = False
+) -> list[str]:
+    """Validate the machine-checkable part of a claim ledger.
+
+    This is intentionally dependency-free: the JSON schema in
+    ``claims/claim-schema.json`` is the readable contract, while this function
+    is the executable checker used by closure and tests.  It validates shape
+    and provenance fields, not whether the evidence is true; that is
+    ``audit()``'s job.
+    """
+    problems: list[str] = []
+    if not isinstance(payload, dict):
+        return [f"ledger root must be an object, got {type(payload).__name__}"]
+
+    if payload.get("schema") != "legalizer-dsl-claims-v1":
+        problems.append(
+            f"schema must be 'legalizer-dsl-claims-v1', "
+            f"got {payload.get('schema')!r}"
+        )
+    if payload.get("claim_contract_version") != CLAIM_CONTRACT_VERSION:
+        problems.append(
+            "claim_contract_version must be "
+            f"{CLAIM_CONTRACT_VERSION}, got "
+            f"{payload.get('claim_contract_version')!r}"
+        )
+    if not _is_sha(payload.get("llvm_commit"), _HEX40):
+        problems.append("llvm_commit must be a 40-character lowercase hex commit")
+    if not _is_nonempty_text(payload.get("boundary")):
+        problems.append("boundary must be a non-empty string")
+    if not _is_sha(payload.get("evaluator_sha256"), _HEX64):
+        problems.append("evaluator_sha256 must be a 64-character lowercase hex hash")
+
+    contract = payload.get("contract")
+    if not isinstance(contract, dict):
+        problems.append("contract must be an object")
+    else:
+        if contract.get("observation") != list(CLAIM_OBSERVATION):
+            problems.append(
+                f"contract.observation must be {list(CLAIM_OBSERVATION)!r}"
+            )
+        if contract.get("equivalence") != CLAIM_EQUIVALENCE:
+            problems.append(
+                f"contract.equivalence must be {CLAIM_EQUIVALENCE!r}"
+            )
+        for key in ("domain", "closure"):
+            if not _is_nonempty_text(contract.get(key)):
+                problems.append(f"contract.{key} must be a non-empty string")
+        _validate_unknown(contract.get("unknown"), "contract", problems)
+        evidence = contract.get("evidence")
+        if not isinstance(evidence, list) or not all(
+            isinstance(item, str) for item in evidence
+        ):
+            problems.append("contract.evidence must be a list of field names")
+        else:
+            missing = [pin for pin in CLAIM_EVIDENCE_PINS if pin not in evidence]
+            if missing:
+                problems.append(
+                    "contract.evidence is missing pins: " + ", ".join(missing)
+                )
+
+    claims = payload.get("claims")
+    if not isinstance(claims, list) or not claims:
+        problems.append("claims must be a non-empty list")
+        return problems
+
+    seen: set[str] = set()
+    for index, claim in enumerate(claims):
+        label = f"claims[{index}]"
+        if not isinstance(claim, dict):
+            problems.append(f"{label}: must be an object")
+            continue
+        claim_id = claim.get("id")
+        if not _is_nonempty_text(claim_id):
+            problems.append(f"{label}: id must be a non-empty string")
+        else:
+            label = f"claim {claim_id}"
+            if claim_id in seen:
+                problems.append(f"{label}: duplicate id")
+            seen.add(claim_id)
+
+        for name in ("rules", "report", "oracle", "scope"):
+            if not _is_nonempty_text(claim.get(name)):
+                problems.append(f"{label}: {name} must be a non-empty string")
+        if not isinstance(claim.get("config"), dict):
+            problems.append(f"{label}: config must be an object")
+
+        for name in ("queries", "rules_total", "rules_matched"):
+            value = claim.get(name)
+            if (
+                isinstance(value, bool)
+                or not isinstance(value, int)
+                or value < 0
+            ):
+                problems.append(f"{label}: {name} must be a non-negative integer")
+        for name in ("declared_unreachable", "declared_shadowed"):
+            if name in claim:
+                value = claim.get(name)
+                if (
+                    isinstance(value, bool)
+                    or not isinstance(value, int)
+                    or value < 0
+                ):
+                    problems.append(
+                        f"{label}: {name} must be a non-negative integer"
+                    )
+        total = claim.get("rules_total")
+        matched = claim.get("rules_matched")
+        if isinstance(total, int) and isinstance(matched, int) and matched > total:
+            problems.append(f"{label}: rules_matched exceeds rules_total")
+
+        status = claim.get("status")
+        if status not in ("PROVEN", "FAIL", "UNKNOWN"):
+            problems.append(
+                f"{label}: status must be PROVEN, FAIL or UNKNOWN"
+            )
+        ok = claim.get("ok")
+        if status == "PROVEN" and ok is not True:
+            problems.append(f"{label}: PROVEN requires ok=true")
+        elif status in ("FAIL", "UNKNOWN") and ok is not False:
+            problems.append(f"{label}: {status} requires ok=false")
+        unknown = claim.get("unknown")
+        if unknown is None:
+            problems.append(f"{label}: missing unknown list")
+        else:
+            _validate_unknown(unknown, label, problems)
+            if status == "UNKNOWN" and not unknown:
+                problems.append(f"{label}: UNKNOWN requires at least one reason")
+
+        excludes = claim.get("excludes", [])
+        if not isinstance(excludes, list) or not all(
+            isinstance(item, str) for item in excludes
+        ):
+            problems.append(f"{label}: excludes must be a list of strings")
+        unmatched = claim.get("unmatched", [])
+        if not isinstance(unmatched, list):
+            problems.append(f"{label}: unmatched must be a list")
+        else:
+            for offset, item in enumerate(unmatched):
+                if not isinstance(item, dict):
+                    problems.append(
+                        f"{label}: unmatched[{offset}] must be an object"
+                    )
+                elif not _is_nonempty_text(item.get("rule")) or not _is_nonempty_text(
+                    item.get("ruleset")
+                ):
+                    problems.append(
+                        f"{label}: unmatched[{offset}] needs rule and ruleset"
+                    )
+
+        for pin in CLAIM_EVIDENCE_PINS:
+            value = claim.get(pin)
+            if value is None:
+                if require_evidence:
+                    problems.append(f"{label}: missing evidence pin {pin}")
+            elif not _is_sha(value, _HEX64):
+                problems.append(
+                    f"{label}: {pin} must be a 64-character lowercase hex hash"
+                )
+        commit = claim.get("llvm_commit")
+        if commit is None:
+            if require_evidence:
+                problems.append(f"{label}: missing llvm_commit")
+        elif not _is_sha(commit, _HEX40):
+            problems.append(
+                f"{label}: llvm_commit must be a 40-character lowercase hex commit"
+            )
+        elif commit != payload.get("llvm_commit"):
+            problems.append(f"{label}: llvm_commit differs from ledger")
+
+    return problems
+
+
+def _finish(result: dict[str, Any]) -> dict[str, Any]:
+    result["status"] = "PROVEN" if result.get("ok") is True else "FAIL"
+    return result
+
+
 def audit(claim: Claim) -> dict[str, Any]:
     result: dict[str, Any] = {
         "id": claim.id,
@@ -387,6 +609,7 @@ def audit(claim: Claim) -> dict[str, Any]:
         "evaluator_sha256": hand_evaluator_sha256(),
         "codegen_sha256": codegen_sha256(),
         "problems": [],
+        "unknown": list(claim.unknown),
         "ok": False,
     }
     rules = RULES / claim.rules
@@ -415,13 +638,13 @@ def audit(claim: Claim) -> dict[str, Any]:
     if not rules.is_file():
         result["problems"].append(f"rules file missing: {rules}")
         result["ok"] = not result["problems"]
-        return result
+        return _finish(result)
     result["rules_sha256"] = _sha256(rules)
 
     if not report.is_file():
         result["problems"].append(f"report missing: {report}")
         result["ok"] = not result["problems"]
-        return result
+        return _finish(result)
 
     if not oracle.exists():
         result["problems"].append(f"oracle missing: {oracle}")
@@ -433,13 +656,13 @@ def audit(claim: Claim) -> dict[str, Any]:
     except (OSError, json.JSONDecodeError) as exc:
         result["problems"].append(f"report is not readable JSON: {exc}")
         result["ok"] = not result["problems"]
-        return result
+        return _finish(result)
     if not isinstance(data, dict):
         result["problems"].append(
             f"report root is {type(data).__name__}, expected an object"
         )
         result["ok"] = not result["problems"]
-        return result
+        return _finish(result)
 
     generated = claim.id.endswith("-generated")
     result["report_sha256"] = canonical_report_sha256(
@@ -624,7 +847,7 @@ def audit(claim: Claim) -> dict[str, Any]:
             "ok": not result["problems"],
         }
     )
-    return result
+    return _finish(result)
 
 
 def _recomputed_corpus_sha256(claim: Claim) -> str:
@@ -883,9 +1106,11 @@ def write_ledger(entries: list[dict[str, Any]]) -> None:
         entry["evaluator_sha256"] = evaluator
     payload = {
         "schema": "legalizer-dsl-claims-v1",
+        "claim_contract_version": CLAIM_CONTRACT_VERSION,
         "llvm_commit": llvm_commit,
         "evaluator_sha256": evaluator,
         "boundary": BOUNDARY,
+        "contract": dict(CLAIM_CONTRACT),
         "claims": entries,
     }
     LEDGER.write_text(

@@ -1370,12 +1370,29 @@ class TraceEntry:
     matched: bool
 
 
+@dataclass(frozen=True)
+class RuleExpansion:
+    """One source-level rule or macro invocation and its emitted rules.
+
+    ``guard`` is ``None`` for a core rule, otherwise the evaluated compile-time
+    guard.  A false guard produces ``rule_count == 0`` and therefore makes
+    config-dependent erasure visible in the structure manifest.
+    """
+
+    name: str
+    guard: Optional[bool]
+    first_rule: int
+    rule_count: int
+    span: Optional[Span] = None
+
+
 class RuleSet:
     def __init__(self, opcodes: Sequence[str], span: Optional[Span] = None):
         if not opcodes:
             raise DslError("a rule set needs at least one opcode", code="W005")
         self.opcodes = tuple(opcodes)
         self.rules: list[Rule] = []
+        self.expansions: list[RuleExpansion] = []
         self.span = span
 
     def add(self, rule: Rule) -> None:

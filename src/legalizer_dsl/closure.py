@@ -115,6 +115,14 @@ def audit(write: bool, skip_evidence: bool = False, skip_tests: bool = False) ->
 
         entries = claims_module.audit_all()
     problems: list[str] = []
+    from .claims import validate_contract
+
+    problems.extend(
+        f"contract: {problem}"
+        for problem in validate_contract(
+            ledger, require_evidence=not skip_evidence
+        )
+    )
 
     for claim in entries:
         cid = claim["id"]

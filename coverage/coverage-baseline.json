@@ -1,0 +1,7 @@
+{
+  "schema": "legalizer-dsl-coverage-v1",
+  "targets": {
+    "aarch64-vector": 0.9538461538461539,
+    "toycpu": 0.9787234042553191
+  }
+}

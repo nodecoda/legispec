@@ -152,8 +152,8 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     codegen_cmd.add_argument(
         "--namespace",
-        default="ToyCPU",
-        help="C++ namespace for the generated entry point (default: ToyCPU)",
+        default=None,
+        help="C++ namespace for the generated entry point (default: derive from rules stem)",
     )
     codegen_cmd.add_argument(
         "--capabilities",
@@ -172,6 +172,27 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         metavar="STEM",
         help="generated file stem (default: <rules-stem>_rules_gen)",
+    )
+    codegen_cmd.add_argument(
+        "--llvm-commit",
+        default=None,
+        help="LLVM commit/version pinned in the manifest",
+    )
+    codegen_cmd.add_argument(
+        "--dsl-spec-version",
+        default=None,
+        help="LDSL specification version pinned in the manifest",
+    )
+    codegen_cmd.add_argument(
+        "--emit-wiring",
+        default=None,
+        metavar="DIR",
+        help="emit CMake/C++ wiring for the generated rules",
+    )
+    codegen_cmd.add_argument(
+        "--check",
+        action="store_true",
+        help="verify that out-dir matches freshly generated output; never write",
     )
 
     conform = sub.add_parser(
@@ -387,9 +408,9 @@ def main(argv: list[str] | None = None) -> int:
                 args.rules,
                 "--out-dir",
                 args.out_dir,
-                "--namespace",
-                args.namespace,
             ]
+            if args.namespace is not None:
+                codegen_argv.extend(["--namespace", args.namespace])
             for define in args.define:
                 codegen_argv.extend(["--define", define])
             if args.capabilities is not None:
@@ -398,6 +419,16 @@ def main(argv: list[str] | None = None) -> int:
                 codegen_argv.extend(["--custom-source", args.custom_source])
             if args.output_stem is not None:
                 codegen_argv.extend(["--output-stem", args.output_stem])
+            if args.llvm_commit is not None:
+                codegen_argv.extend(["--llvm-commit", args.llvm_commit])
+            if args.dsl_spec_version is not None:
+                codegen_argv.extend(
+                    ["--dsl-spec-version", args.dsl_spec_version]
+                )
+            if args.emit_wiring is not None:
+                codegen_argv.extend(["--emit-wiring", args.emit_wiring])
+            if args.check:
+                codegen_argv.append("--check")
             return codegen_module.main(codegen_argv)
         if args.command == "conform":
             from . import conformance

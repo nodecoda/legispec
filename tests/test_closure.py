@@ -49,18 +49,44 @@ class SkipEvidenceTamperTests(unittest.TestCase):
             closure.LEDGER.write_text(
                 json.dumps(
                     {
-                        "llvm_commit": "abc",
+                        "schema": "legalizer-dsl-claims-v1",
+                        "claim_contract_version": 1,
+                        "llvm_commit": "a" * 40,
                         "boundary": "test",
+                        "evaluator_sha256": "a" * 64,
+                        "contract": {
+                            "observation": ["action", "type_idx", "new_type"],
+                            "equivalence": "componentwise; LLT::operator==",
+                            "domain": "test domain",
+                            "closure": "test closure",
+                            "unknown": [],
+                            "evidence": [
+                                "rules_sha256",
+                                "report_sha256",
+                                "corpus_sha256",
+                                "oracle_sha256",
+                            ],
+                        },
                         "claims": [
                             {
                                 "id": "x",
                                 "rules": "x.ldsl",
+                                "report": "x.json",
+                                "oracle": "oracle/x.exe",
+                                "scope": "test",
+                                "config": {},
                                 "queries": 0,
+                                "rules_total": 1,
+                                "rules_matched": 0,
+                                "status": "FAIL",
+                                "unknown": [],
+                                "llvm_commit": "a" * 40,
                                 "ok": False,
                                 "divergences": 7,
                                 "rules_sha256": closure.sha256(rules / "x.ldsl"),
-                                "report": "x.json",
-                                "oracle": "oracle/x.exe",
+                                "report_sha256": "a" * 64,
+                                "corpus_sha256": "a" * 64,
+                                "oracle_sha256": "a" * 64,
                             }
                         ],
                     }

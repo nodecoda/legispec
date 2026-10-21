@@ -98,7 +98,7 @@ class PyprojectDataFilesTests(unittest.TestCase):
             '"share/legalizer-dsl/witness" = ["witness/*.witness"]',
             '"share/legalizer-dsl/capabilities" = ["capabilities/*.json"]',
             '"share/legalizer-dsl/claims" = ["claims/*.json", "claims/*.md", "claims/*.txt"]',
-            '"share/legalizer-dsl/docs" = ["docs/CLOSURE.md"]',
+            '"share/legalizer-dsl/docs" = ["docs/CLOSURE.md", "docs/COMPATIBILITY.md", "docs/CORRECTNESS.md", "docs/COVERAGE.md", "docs/EVIDENCE.md", "docs/INTEGRATION.md"]',
         ):
             with self.subTest(key=key):
                 self.assertIn(key, text)
