@@ -1,0 +1,112 @@
+# AArch64 GlobalISel legality rules -- G_CONCAT_VECTORS custom slice.
+#
+# Transcribed from llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp
+# (LLVM d855d9e48067026317998cbff734004f328f833d), lines 1333-1357:
+#
+#   getActionDefinitionsBuilder(G_CONCAT_VECTORS)
+#       .legalFor({{v16s8, v8s8}, {v8s16, v4s16}, {v4s32, v2s32}})
+#       .customIf([=](const LegalityQuery &Query) {
+#         return Query.Types[0].isFixedVector() &&
+#                Query.Types[0].getScalarSizeInBits() < 8;
+#       })
+#       .bitcastIf(
+#           [=](const LegalityQuery &Query) {
+#             return Query.Types[0].isFixedVector() &&
+#                    Query.Types[1].isFixedVector() &&
+#                    Query.Types[0].getScalarSizeInBits() >= 8 &&
+#                    isPowerOf2_64(Query.Types[0].getScalarSizeInBits()) &&
+#                    Query.Types[0].getSizeInBits() <= 128 &&
+#                    Query.Types[1].getSizeInBits() <= 64;
+#           },
+#           [=](const LegalityQuery &Query) {
+#             const LLT DstTy = Query.Types[0];
+#             const LLT SrcTy = Query.Types[1];
+#             return std::pair(
+#                 0, DstTy.changeElementSize(SrcTy.getSizeInBits())
+#                        .changeElementCount(
+#                            DstTy.getElementCount().divideCoefficientBy(
+#                                SrcTy.getNumElements())));
+#           });
+#
+# Configuration observed:
+#   triple      = aarch64-unknown-linux-gnu
+#   cpu         = generic
+#   features    = none
+#   pointer     = LLT::pointer(0, 64), written p0:64
+#   extended    = LLT::setUseExtended(true)   (AArch64TargetMachine.cpp:417)
+#
+# Rule order (3 rules in this configuration)
+# ------------------------------------------
+#   0  legalFor({(v16s8, v8s8), (v8s16, v4s16), (v4s32, v2s32)})
+#   1  customIf(t0 fixed vector && t0 scalar size < 8)
+#   2  bitcastIf(t0/t1 fixed vectors && t0 elem >= 8 && pow2 &&
+#                bits(t0) <= 128 && bits(t1) <= 64,
+#                concat_bitcast(t1))
+#
+# Rule 1 is the custom escape hatch.  This slice proves the *policy* that
+# hands G_CONCAT_VECTORS to AArch64LegalizerInfo::legalizeCustom; it does not
+# model the MIR that the handler emits.  The capability manifest declares the
+# provider symbol, and the gate checks that the case exists in the C++ source.
+#
+# Domain boundary
+# ---------------
+#   * t0 is the result vector, t1 is src0.  G_CONCAT_VECTORS has a variable
+#     number of source operands; all sources have the same type, so the
+#     legality query projects the opcode contract to two slots.
+#     GenericOpcodes.td declares exactly two generic type slots
+#     (type0 = dst, type1 = src0, plus variable_ops), and
+#     LegalizerInfo::getAction records each distinct type index once, so the
+#     query really is (dst, src0).
+#   * concat_shape_any(t0, t1) enforces the verifier contract
+#     (MachineVerifier.cpp, G_CONCAT_VECTORS): both fixed vectors, homogeneous
+#     sources, equal element types, and
+#         lanes(t0) == k * lanes(t1),   k = number of sources >= 2.
+#     k is recovered from the two slots as lanes(t0) / lanes(t1).  This
+#     excludes probe shapes that no well-formed G_CONCAT_VECTORS can have,
+#     while keeping the k=3, k=4, ... forms in the declared domain.
+#   * no pointers, no memory descriptors, no immediates, no scalable vectors.
+#   * s1/s2/s4 elements exercise the custom rule; s8/s16/s32 exercise the
+#     legal and bitcast rules; s64 exercises the size-limit fallback.
+#
+# LLT equality
+# ------------
+# AArch64 spells its constants with LLT::scalar, i.e. Kind::ANY_SCALAR.  Every
+# predicate that mirrors a C++ LLT equality uses LLT.eq_llvm(), so a v8s8 /
+# v4s8 pair matches even though one side is a rule constant and the other is
+# a query type.  The domain's concat_shape_any uses the same equality for the
+# element-type test.
+
+domain {
+    types {
+        v16s1, v8s1, v4s1, v2s1,
+        v8s4, v4s4, v2s4,
+        v16s8, v8s8, v4s8, v2s8,
+        v16s16, v8s16, v4s16, v2s16,
+        v16s32, v8s32, v4s32, v2s32,
+        v4s64, v2s64
+    };
+    imms {};
+    mems {};
+    filter concat_shape_any(t0, t1);
+    q0 {
+        (G_CONCAT_VECTORS, [v16s8, v8s8]);
+        (G_CONCAT_VECTORS, [v8s16, v4s16]);
+        (G_CONCAT_VECTORS, [v4s32, v2s32]);
+        (G_CONCAT_VECTORS, [v8s8, v4s8]);
+        (G_CONCAT_VECTORS, [v4s16, v2s16]);
+        (G_CONCAT_VECTORS, [v16s1, v8s1]);
+        (G_CONCAT_VECTORS, [v8s1, v4s1]);
+        (G_CONCAT_VECTORS, [v4s1, v2s1]);
+        (G_CONCAT_VECTORS, [v8s32, v4s32]);
+    }
+}
+
+# [C++:1333-1357]
+ruleset G_CONCAT_VECTORS {
+    legal_for_pairs {(v16s8, v8s8), (v8s16, v4s16), (v4s32, v2s32)};
+    custom when fixed_vector(t0) and elem_bits(t0) < 8;
+    bitcast t0 to concat_bitcast(t1)
+        when fixed_vector(t0) and fixed_vector(t1)
+             and elem_bits(t0) >= 8 and is_pow2(elem_bits(t0))
+             and bits(t0) <= 128 and bits(t1) <= 64;
+}

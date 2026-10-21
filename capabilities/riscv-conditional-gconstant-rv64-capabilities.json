@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "description": "RISC-V RV64 G_CONSTANT guard experiment: 64-bit constants are Custom.",
+  "custom": {
+    "opcodes": ["G_CONSTANT"]
+  },
+  "libcall": {
+    "opcodes": []
+  },
+  "lower": {
+    "opcodes": []
+  }
+}

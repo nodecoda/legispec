@@ -1,0 +1,148 @@
+(* Legalizer rule DSL -- EBNF
+ *
+ * The implementation is a hand-written recursive-descent parser in parser.py.
+ * LLT spellings are single lexical tokens: v4s32, p0:64, s16.
+ *
+ * Two different "when" positions exist and must not be confused:
+ *
+ *   core_rule  "when" predicate     query-time predicate, evaluated per query
+ *   macro_stmt "when" config_expr   parse-time guard, erased when false
+ *
+ * A macro guard is the DSL spelling of a construction-time conditional in the
+ * C++ builder, e.g. `legalFor(!ST.is64Bit(), {s32})` or a `!Pred -> return`
+ * early exit.  A false guard emits no rule at all, so the rule table, rule
+ * indices, coverage analysis and dead-rule analysis see exactly the table the
+ * C++ builds.
+ *
+ * A type-valued configuration entry (--define sXLen=s64) is usable anywhere a
+ * type is expected, and as the right-hand side of a bit-count comparison:
+ * `bits(t0) < sXLen` folds to `bits(t0) < 64`.
+ *)
+
+program      = { top_level } EOF ;
+top_level    = type_alias | domain | ruleset ;
+
+type_alias   = "type" IDENT "=" type ";" ;
+
+domain       = "domain" "{" { domain_item } "}" ;
+domain_item  = types_decl | imms_decl | mems_decl | q0_decl
+             | "filter" predicate ";" ;
+types_decl   = "types" "{" [ type { "," type } ] "}" ";" ;
+imms_decl    = "imms" "{" [ INT { "," INT } ] "}" ";" ;
+mems_decl    = "mems" "{" [ mem_desc { "," mem_desc } ] "}" ";" ;
+q0_decl      = "q0" "{" { query_decl } "}" ;
+query_decl   = "(" opcode "," "[" [ type { "," type } ] "]"
+               [ "," "mem" "=" "[" [ mem_desc { "," mem_desc } ] "]" ]
+               [ "," "imm" "=" "[" [ INT { "," INT } ] "]" ] ")" ";" ;
+mem_desc     = type ":" INT ;
+
+ruleset      = "ruleset" opcode { "," opcode } "{" { statement } "}" ;
+opcode       = IDENT ;
+
+statement    = core_rule | macro_stmt ;
+
+core_rule    = action [ type_idx "to" mutation ] [ "when" predicate ] ";" ;
+
+macro_stmt   = macro [ "when" config_expr ] ";" ;
+
+action       = "legal" | "custom" | "unsupported" | "libcall" | "lower"
+             | "narrow" | "widen" | "bitcast" | "more" | "fewer" ;
+
+macro        = "legal_for" type_set
+             | "legal_for_pairs" pair_set
+             | "libcall_for_pairs" pair_set
+             | "custom_for" type_set
+             | "custom_for_pairs" pair_set
+             | "lower_for" type_set
+             | "unsupported_for" type_set
+             | "libcall_for" type_set
+             | "clamp_scalar" type_idx "," type "," type
+             | "min_scalar_or_elt" type_idx "," type
+             | "min_scalar_or_elt_if" predicate "," type_idx "," type
+             | "min_scalar_or_elt_if" type_idx "," "lanes" cmp INT "," type
+             | "widen_scalar_or_elt_to_next_pow2" type_idx [ "," INT ]
+             | "min_scalar_same_as" type_idx "," type_idx
+             | "min_scalar_elt_same_as_if" type_idx "," type_idx "when" predicate
+             | "max_scalar_elt_same_as_if" type_idx "," type_idx "when" predicate
+             | "more_elements_to_next_pow2" type_idx
+             | "widen_to_next_pow2" type_idx "," INT
+             | "widen_to_next_pow2_or_min" type_idx "," INT
+             | "widen_to_next_multiple" type_idx "," INT
+             | "legal_for_mem" mem_set
+             | "always_legal" ;
+
+type_idx     = "t" INT | INT ;
+INT          = "-"? [0-9]+ ;
+
+type         = LLT | IDENT ;          (* IDENT is a type alias, including a
+                                       * type-valued --define *)
+LLT          = "s" INT                (* scalar: s1, s32, s64 *)
+             | "f" INT                (* float: f16, f32, f64, f128 *)
+             | "bf16"                 (* bfloat16 *)
+             | "p" INT [ ":" INT ]    (* pointer: p0, p0:64 *)
+             | "v" INT type ;         (* fixed vector: v4s32, v2p0 *)
+
+mutation     = type
+             | "same_size_as" "(" type_idx ")"
+             | "type_of" "(" type_idx ")"
+             | "next_pow2" "(" "bits" "(" type_idx ")" "," INT ")"
+             | "next_multiple" "(" "bits" "(" type_idx ")" "," INT ")"
+             | "element_of" "(" type_idx ")"
+             | "change_element_to" "(" type ")"
+             | "concat_bitcast" "(" type_idx ")" ;
+
+type_set     = "{" [ type { "," type } ] "}" ;
+pair_set     = "{" [ pair { "," pair } ] "}" ;
+pair         = "(" type "," type ")" ;
+mem_set      = "{" [ mem_entry { "," mem_entry } ] "}" ;
+mem_entry    = "(" type "," type "," type "," INT ")" ;
+
+(* Query-time predicate.  Operands come from the query, never from --define. *)
+predicate    = or_expr ;
+or_expr      = and_expr { "or" and_expr } ;
+and_expr     = not_expr { "and" not_expr } ;
+not_expr     = "not" not_expr
+             | "(" predicate ")"
+             | atom ;
+
+atom         = "always" | "true"
+             | "scalar" "(" type_idx ")"
+             | "vector" "(" type_idx ")"
+             | "fixed_vector" "(" type_idx ")"
+             | "pointer" "(" type_idx ")"
+             | "is_pointer_vector" "(" type_idx ")"
+             | "elem_types_eq" "(" type_idx "," type_idx ")"
+             | "scalar_is_float" "(" type_idx "," type ")"
+             | "is_float" "(" type_idx ")"
+             | "same_size" "(" type_idx "," type_idx ")"
+             | "same_shape" "(" type_idx "," type_idx ")"
+             | "concat_shape" "(" type_idx "," type_idx ")"
+             | "concat_shape_any" "(" type_idx "," type_idx ")"
+             | "scalar_bits" "(" type_idx ")" cmp "scalar_bits" "(" type_idx ")"
+             | "scalar_bits" "(" type_idx ")" cmp "bits" "(" type_idx ")"
+             | "is_pow2" "(" ( "bits" | "elem_bits" ) "(" type_idx ")" ")"
+             | "is_multiple" "(" "bits" "(" type_idx ")" "," INT ")"
+             | ( "bits" | "elem_bits" | "size" ) "(" type_idx ")" cmp bit_count
+             | "lanes" "(" type_idx ")" cmp INT
+             | "mem" INT "." "type" ( "in" type_set | cmp type )
+             | "mem" INT "." "align" cmp INT
+             | "imm" INT cmp INT
+             | "pair" "(" type_idx "," type_idx ")" "in" pair_set
+             | type_idx ( "in" type_set | ( "==" | "!=" ) type ) ;
+
+(* Right-hand side of a size comparison.  An IDENT must name a type-valued
+ * configuration entry; its scalar size is substituted while parsing. *)
+bit_count    = INT | IDENT ;
+
+(* Parse-time configuration guard.  Evaluated before the macro adds rules;
+ * false erases the whole macro.  Unknown names are P025, non-boolean atoms
+ * used as conditions are P026. *)
+config_expr  = config_and { "or" config_and } ;
+config_and   = config_not { "and" config_not } ;
+config_not   = "not" config_not
+             | "(" config_expr ")"
+             | config_atom ;
+config_atom  = IDENT                  (* boolean --define *)
+             | IDENT cmp INT ;        (* ordered --define *)
+
+cmp          = "==" | "!=" | "<" | "<=" | ">" | ">=" ;

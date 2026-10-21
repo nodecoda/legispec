@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "description": "AArch64 pointer subset experiment.  Custom: G_GLOBAL_VALUE in the small code model.  No libcall or lower rules are modeled in this subset.",
+  "custom": {
+    "opcodes": ["G_GLOBAL_VALUE"]
+  },
+  "libcall": {
+    "opcodes": []
+  },
+  "lower": {
+    "opcodes": []
+  }
+}

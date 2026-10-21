@@ -1,0 +1,131 @@
+# AArch64 GlobalISel legality rules -- G_SHL/G_ASHR/G_LSHR, two-slot slice.
+#
+# Transcribed from llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp
+# (LLVM d855d9e48067026317998cbff734004f328f833d), lines 234-265:
+#
+#   getActionDefinitionsBuilder({G_SHL, G_ASHR, G_LSHR})
+#
+# Configuration observed:
+#   triple      = aarch64-unknown-linux-gnu
+#   cpu         = generic
+#
+# This is the first slice whose rules constrain the relationship between two
+# type slots.  The first-match order is load-bearing:
+#
+#   0  customIf(!vector(t0) && bits(t0)==32 && bits(t1)==32)
+#   1  legalFor(10 explicit pairs)
+#   2  widenScalarToNextPow2(1)
+#   3  widenScalarToNextPow2(0)
+#   4  clampScalar(1, s32, s64) step 1/2 (min)
+#   5  clampScalar(1, s32, s64) step 2/2 (max)
+#   6  clampScalar(0, s32, s64) step 1/2 (min)
+#   7  clampScalar(0, s32, s64) step 2/2 (max)
+#   8  clampNumElements(0, v8s8, v16s8) min
+#   9  clampNumElements(0, v8s8, v16s8) max
+#   10 clampNumElements(0, v4s16, v8s16) min
+#   11 clampNumElements(0, v4s16, v8s16) max
+#   12 clampNumElements(0, v2s32, v4s32) min
+#   13 clampNumElements(0, v2s32, v4s32) max
+#   14 clampNumElements(0, v2s64, v2s64) min
+#   15 clampNumElements(0, v2s64, v2s64) max
+#   16 moreElementsToNextPow2(0)
+#   17 minScalarSameAs(1, 0)
+#   18 scalarizeIf(scalarOrEltWiderThan(0, 64), 0)
+#   19 minScalarEltSameAsIf(isVector(0), 1, 0)
+#   20 maxScalarEltSameAsIf(isVector(0), 1, 0)
+#
+# The custom rule comes first, so (s32, s32) is Custom even though the
+# legalFor set also contains {i32, i32}.  That shadowing is deliberate and is
+# pinned by a negative witness.
+#
+# minScalarSameAs compares Types[0].getScalarSizeInBits() with
+# Types[1].getSizeInBits() -- a scalar size against a *total* size.  This is
+# not a scalar-vs-scalar comparison, and the difference is observable when
+# slot 1 is a vector; rule 19 exists precisely to handle that case.
+#
+# maxScalarEltSameAsIf assigns the whole source type to slot 1
+# (``T = Types[SmallTypeIdx]``), so a scalar amount can become a vector.
+# The DSL models that as ``type_of(t0)``, not as ``same_size_as(t0)``.
+#
+# Rules 12 and 14 are structurally unreachable: their min halves require a
+# fixed vector with fewer than 2 lanes, and LLVM represents v1 as a scalar.
+# They are declared in the witness file, not silently dropped.
+#
+# The domain is restricted to shape-consistent queries:
+#
+#     filter same_shape(t0, t1);
+#
+# G_SHL's MIR contract is scalar source with scalar amount, or vector source
+# with vector amount of the same lane count.  Element sizes may differ inside
+# a vector pair; that is what the min/maxScalarEltSameAsIf rules handle.  The
+# upstream rules do not defend against other shapes,
+# and two oracle findings pin why the restriction is necessary rather than
+# convenient:
+#
+#   1. (v2s128, s64) -> WidenScalar t1:s128;
+#      (v2s128, s128) -> NarrowScalar t1:s64.
+#      A real two-cycle: minScalarSameAs (17) widens the amount to the source
+#      element size, then clampScalar(1) max (5) narrows it back.
+#
+#   2. (v8s8, s32) aborts an assertions build inside
+#      LegalizeRuleSet::apply: maxScalarEltSameAsIf (20) assigns the whole
+#      vector source type to a scalar amount, and mutationIsSane rejects a
+#      NarrowScalar that turns a scalar into a vector.
+#
+#   3. (v8s8, v3s16) also aborts: maxScalarEltSameAsIf copies the source
+#      lanes as well as the element type, and mutationIsSane rejects a
+#      NarrowScalar that changes the lane count.
+#
+# All three queries violate the shape contract, so the filter removes them.
+# Every query in the claimed domain is a shape the opcode actually permits.
+#
+# Domain boundary:
+#   * fixed vectors plus scalar shapes needed by the clamps
+#   * both slots range over the same 24-type lattice
+#   * filter same_shape(t0, t1): equal scalar/vector kind and equal lanes
+#   * no scalable vectors, memory descriptors, FP, calls or atomics
+#   * no custom-handler bodies
+
+domain {
+    types {
+        s8, s16, s24, s32, s64, s128,
+        v2s8, v4s8, v6s8, v8s8, v16s8, v32s8,
+        v3s16, v4s16, v6s16, v8s16, v16s16,
+        v2s32, v3s32, v4s32, v8s32,
+        v2s64, v4s64,
+        v2s128
+    };
+    imms {};
+    mems {};
+    filter same_shape(t0, t1);
+    q0 {
+        (G_SHL, [v2s32, v2s32]);
+        (G_ASHR, [v8s8, v8s8]);
+        (G_LSHR, [s32, s32]);
+    }
+}
+
+# [C++:234-265]
+ruleset G_SHL, G_ASHR, G_LSHR {
+    custom when not vector(t0) and bits(t0) == 32 and bits(t1) == 32;
+    legal_for_pairs {
+        (s32, s32), (s32, s64), (s64, s64),
+        (v8s8, v8s8), (v16s8, v16s8),
+        (v4s16, v4s16), (v8s16, v8s16),
+        (v2s32, v2s32), (v4s32, v4s32),
+        (v2s64, v2s64)
+    };
+    widen_to_next_pow2 1, 0;
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 1, s32, s64;
+    clamp_scalar 0, s32, s64;
+    clamp_num_elements 0, v8s8, v16s8;
+    clamp_num_elements 0, v4s16, v8s16;
+    clamp_num_elements 0, v2s32, v4s32;
+    clamp_num_elements 0, v2s64, v2s64;
+    more_elements_to_next_pow2 0;
+    min_scalar_same_as 1, 0;
+    fewer t0 to element_of(t0) when vector(t0) and elem_bits(t0) > 64;
+    min_scalar_elt_same_as_if 1, 0 when vector(t0);
+    max_scalar_elt_same_as_if 1, 0 when vector(t0);
+}

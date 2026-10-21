@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "description": "RISC-V RV32 pointer subset experiment (generic-rv32, p0 = 32-bit). Only G_BRJT has a Custom rule; the remaining pointer opcodes are legalFor-based. G_CONSTANT is Legal for both p0 and s32 on RV32 (the s64 Custom is RV64-only).",
+  "custom": {
+    "opcodes": ["G_BRJT"]
+  },
+  "libcall": {
+    "opcodes": []
+  },
+  "lower": {
+    "opcodes": []
+  }
+}

@@ -1,0 +1,391 @@
+{
+  "counts": {
+    "core": 27,
+    "guard": 5,
+    "macro": 15,
+    "none": 11,
+    "partial": 5
+  },
+  "methods": [
+    {
+      "dsl": "<action> [tN to <mutation>] when <predicate>",
+      "method": "actionFor",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "pair(...) predicates",
+      "method": "actionForCartesianProduct",
+      "note": "two type slots only; no 3+ products",
+      "status": "partial"
+    },
+    {
+      "dsl": "-",
+      "method": "actionForTypeWithAnyImm",
+      "note": "imm wildcard predicate",
+      "status": "none"
+    },
+    {
+      "dsl": "<action> [tN to <mutation>] when <predicate>",
+      "method": "actionIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "-",
+      "method": "alignNumElementsTo",
+      "note": "vector lane-count policy",
+      "status": "none"
+    },
+    {
+      "dsl": "always_legal",
+      "method": "alwaysLegal",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "bitcast tN to <type> when <predicate>",
+      "method": "bitcastIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "clamp_max_num_elements N, elt, count",
+      "method": "clampMaxNumElements",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "-",
+      "method": "clampMaxNumElementsStrict",
+      "note": "vector lane-count policy",
+      "status": "none"
+    },
+    {
+      "dsl": "clamp_min_num_elements N, elt, count",
+      "method": "clampMinNumElements",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "clamp_num_elements N, min_vec, max_vec",
+      "method": "clampNumElements",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "clamp_scalar N, min, max",
+      "method": "clampScalar",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "-",
+      "method": "clampScalarOrElt",
+      "note": "element-wise variant not modelled",
+      "status": "none"
+    },
+    {
+      "dsl": "custom when <predicate>",
+      "method": "custom",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "custom_for {..} when <config-expr>; custom_for_pairs",
+      "method": "customFor",
+      "note": "",
+      "status": "guard"
+    },
+    {
+      "dsl": "custom_for_pairs",
+      "method": "customForCartesianProduct",
+      "note": "two type slots only; no 3+ products",
+      "status": "partial"
+    },
+    {
+      "dsl": "custom when <predicate>",
+      "method": "customIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "fewer tN to <vector> when <predicate>",
+      "method": "fewerElementsIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "legal_for {..} when <config-expr>; legal_for_pairs",
+      "method": "legalFor",
+      "note": "",
+      "status": "guard"
+    },
+    {
+      "dsl": "legal_for_pairs",
+      "method": "legalForCartesianProduct",
+      "note": "two type slots only; no 3+ products",
+      "status": "partial"
+    },
+    {
+      "dsl": "-",
+      "method": "legalForTypeWithAnyImm",
+      "note": "imm wildcard predicate",
+      "status": "none"
+    },
+    {
+      "dsl": "legal_for_mem",
+      "method": "legalForTypesWithMemDesc",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "legal when <predicate>",
+      "method": "legalIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "libcall when <predicate>",
+      "method": "libcall",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "libcall_for {..} when <config-expr>",
+      "method": "libcallFor",
+      "note": "",
+      "status": "guard"
+    },
+    {
+      "dsl": "libcall_for",
+      "method": "libcallForCartesianProduct",
+      "note": "two type slots only; no 3+ products",
+      "status": "partial"
+    },
+    {
+      "dsl": "libcall when <predicate>",
+      "method": "libcallIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "lower when <predicate>",
+      "method": "lower",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "lower_for {..} when <config-expr>",
+      "method": "lowerFor",
+      "note": "",
+      "status": "guard"
+    },
+    {
+      "dsl": "lower_for",
+      "method": "lowerForCartesianProduct",
+      "note": "two type slots only; no 3+ products",
+      "status": "partial"
+    },
+    {
+      "dsl": "lower when <predicate>",
+      "method": "lowerIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "-",
+      "method": "lowerIfMemSizeNotByteSizePow2",
+      "note": "mem size predicate",
+      "status": "none"
+    },
+    {
+      "dsl": "-",
+      "method": "lowerIfMemSizeNotPow2",
+      "note": "mem size predicate",
+      "status": "none"
+    },
+    {
+      "dsl": "narrow tN to <ty> when scalar(tN) and bits(tN) > <bits>",
+      "method": "maxScalar",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "max_scalar_elt_same_as_if N, small when <predicate>",
+      "method": "maxScalarEltSameAsIf",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "narrow ... when <predicate> and <size test>",
+      "method": "maxScalarIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "-",
+      "method": "maxScalarOrElt",
+      "note": "element-wise variant not modelled",
+      "status": "none"
+    },
+    {
+      "dsl": "narrow tN to same_size_as(tK)",
+      "method": "maxScalarSameAs",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "widen tN to <ty> when scalar(tN) and bits(tN) < <bits>",
+      "method": "minScalar",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "min_scalar_elt_same_as_if N, large when <predicate>",
+      "method": "minScalarEltSameAsIf",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "widen ... when <predicate> and <size test>",
+      "method": "minScalarIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "min_scalar_or_elt N, elt_ty",
+      "method": "minScalarOrElt",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "min_scalar_or_elt_if <predicate>, N, elt_ty; min_scalar_or_elt_if N, lanes <cmp> K, elt_ty",
+      "method": "minScalarOrEltIf",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "min_scalar_same_as N, large",
+      "method": "minScalarSameAs",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "more tN to <vector> when <predicate>",
+      "method": "moreElementsIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "more_elements_to_next_pow2 N",
+      "method": "moreElementsToNextPow2",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "narrow tN to <type>",
+      "method": "narrowScalar",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "narrow tN to <type> when tN in {..}",
+      "method": "narrowScalarFor",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "narrow tN to <type> when <predicate>",
+      "method": "narrowScalarIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "widen/narrow tN to same_size_as(tK) when scalar_bits differ",
+      "method": "scalarSameSizeAs",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "fewer tN to element_of(tN) when vector(tN)",
+      "method": "scalarize",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "fewer tN to element_of(tN) when vector(tN) and <predicate>",
+      "method": "scalarizeIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "unsupported",
+      "method": "unsupported",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "unsupported_for {..} when <config-expr>",
+      "method": "unsupportedFor",
+      "note": "",
+      "status": "guard"
+    },
+    {
+      "dsl": "unsupported when <predicate>",
+      "method": "unsupportedIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "-",
+      "method": "unsupportedIfMemSizeNotPow2",
+      "note": "mem size predicate",
+      "status": "none"
+    },
+    {
+      "dsl": "widen tN to <type> when tN in {..}",
+      "method": "widenScalarFor",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "widen tN to <type> when <predicate>",
+      "method": "widenScalarIf",
+      "note": "",
+      "status": "core"
+    },
+    {
+      "dsl": "widen_scalar_or_elt_to_next_pow2 N[, min]",
+      "method": "widenScalarOrEltToNextPow2",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "-",
+      "method": "widenScalarOrEltToNextPow2OrMinSize",
+      "note": "element-wise variant",
+      "status": "none"
+    },
+    {
+      "dsl": "widen_to_next_multiple N, size",
+      "method": "widenScalarToNextMultipleOf",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "widen_to_next_pow2 N, min",
+      "method": "widenScalarToNextPow2",
+      "note": "",
+      "status": "macro"
+    },
+    {
+      "dsl": "-",
+      "method": "widenVectorEltsToVectorMinSize",
+      "note": "vector-only",
+      "status": "none"
+    }
+  ],
+  "schema": "legalizer-dsl-construct-coverage-v1",
+  "source": "F:/llvm/llvm-project/llvm/include/llvm/CodeGen/GlobalISel/LegalizerInfo.h"
+}

@@ -1,0 +1,88 @@
+# AArch64 GlobalISel legality rules -- atomic subset.
+#
+# Transcribed from llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp
+# (LLVM d855d9e48067026317998cbff734004f328f833d), lines 1148-1174.
+#
+# Configuration observed:
+#   triple      = aarch64-unknown-linux-gnu
+#   cpu         = generic
+#   code model  = small
+#   pointer     = LLT::pointer(0, 64), written p0:64
+#   outlineAtomics = false
+#   HasLSE         = false
+#   HasCSSC        = false
+#   HasSVE         = false
+#
+# `UseOutlineAtomics = ST.outlineAtomics() && !ST.hasLSE()` is therefore
+# false.  The two construction-time branches in the C++ collapse to:
+#
+#   G_ATOMIC_CMPXCHG          legalFor {s32,s64}, customFor {s128}
+#   G_ATOMICRMW_{XCHG,ADD,...} legalFor {s32,s64}
+#
+# The `libcallFor(UseOutlineAtomics, ...)` branch emits no rule in this
+# configuration, exactly as a false macro guard would.  It is deliberately
+# not modeled here; a +outline-atomics point must be a separate frozen file,
+# just like the +cssc point.
+#
+# This is NOT a model of all AArch64 atomics.  Omitted on purpose:
+#   * the +outline-atomics and +lse configurations
+#   * memory descriptors (the atomic child pass attaches them separately)
+#   * ordering / volatility / alignment predicates
+#   * custom and libcall rewriting bodies
+#
+# p0:64 is required: AArch64's `const LLT p0` is LLT::pointer(0, 64), while
+# the oracle spelling `p0` means a 32-bit pointer.  The latter is not the
+# AArch64 pointer shape and makes every atomic rule fall through.
+#
+# LLVM LegalizeRuleSet::apply() returns the first matching rule and only
+# falls back to Unsupported after every rule has been tried.
+
+domain {
+    types {s8, s16, s32, s64, s128, p0:64};
+    imms {};
+    mems {};
+    q0 {
+        (G_ATOMIC_CMPXCHG_WITH_SUCCESS, [s32, s32, p0:64]);
+        (G_ATOMIC_CMPXCHG_WITH_SUCCESS, [s128, s128, p0:64]);
+        (G_ATOMIC_CMPXCHG, [s8, p0:64]);
+        (G_ATOMIC_CMPXCHG, [s32, p0:64]);
+        (G_ATOMIC_CMPXCHG, [s128, p0:64]);
+        (G_ATOMICRMW_XCHG, [s8, p0:64]);
+        (G_ATOMICRMW_XCHG, [s64, p0:64]);
+        (G_ATOMICRMW_ADD, [s32, p0:64]);
+        (G_ATOMICRMW_SUB, [s64, p0:64]);
+        (G_ATOMICRMW_AND, [s8, p0:64]);
+        (G_ATOMICRMW_OR, [s16, p0:64]);
+        (G_ATOMICRMW_XOR, [s128, p0:64]);
+        (G_ATOMICRMW_MIN, [s32, p0:64]);
+        (G_ATOMICRMW_MAX, [s64, p0:64]);
+        (G_ATOMICRMW_UMIN, [s8, p0:64]);
+        (G_ATOMICRMW_UMAX, [s128, p0:64]);
+    }
+}
+
+# [C++:1148-1150]
+ruleset G_ATOMIC_CMPXCHG_WITH_SUCCESS {
+    lower when t0 in {s8, s16, s32, s64, s128} and t2 == p0:64;
+}
+
+# [C++:1154-1159]
+ruleset G_ATOMIC_CMPXCHG {
+    legal_for_pairs {(s32, p0:64), (s64, p0:64)};
+    custom_for_pairs {(s128, p0:64)};
+    clamp_scalar 0, s32, s64;
+}
+
+# [C++:1161-1167]
+ruleset G_ATOMICRMW_XCHG, G_ATOMICRMW_ADD, G_ATOMICRMW_SUB,
+        G_ATOMICRMW_AND, G_ATOMICRMW_OR, G_ATOMICRMW_XOR {
+    legal_for_pairs {(s32, p0:64), (s64, p0:64)};
+    clamp_scalar 0, s32, s64;
+}
+
+# [C++:1171-1174]
+ruleset G_ATOMICRMW_MIN, G_ATOMICRMW_MAX,
+        G_ATOMICRMW_UMIN, G_ATOMICRMW_UMAX {
+    legal when t0 in {s32, s64} and t1 == p0:64;
+    clamp_scalar 0, s32, s64;
+}

@@ -1,0 +1,123 @@
+# AArch64 GlobalISel legality rules -- G_ICMP, result/operand slice.
+#
+# Transcribed from llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp
+# (LLVM d855d9e48067026317998cbff734004f328f833d), lines 740-769:
+#
+#   getActionDefinitionsBuilder(G_ICMP)
+#
+# Configuration observed:
+#   triple      = aarch64-unknown-linux-gnu
+#   cpu         = generic
+#   HasSVE      = false
+#   pointer     = LLT::pointer(0, 64), written p0:64
+#
+# This slice is the first one where Types[0] is not the operand type:
+#
+#   Types[0] = comparison result (i1 / vNi1, later widened to s32 / vNs32)
+#   Types[1] = operand type (LHS and RHS share one type)
+#
+# The rules therefore relate the *result* slot to the *operand* slot, not two
+# operands to each other.  Rule order, with both halves of each clamp:
+#
+#   0  legalFor({(s32,s32), (s32,s64), (s32,p0:64)})
+#   1  widenScalarOrEltToNextPow2(1)
+#   2  minScalarOrElt(1, s8)
+#   3  clampScalar(1, s32, s64) step 1/2 (min)
+#   4  clampScalar(1, s32, s64) step 2/2 (max)
+#   5  clampScalar(0, s32, s32) step 1/2 (min)
+#   6  clampScalar(0, s32, s32) step 2/2 (max)
+#   7  scalarizeIf(scalarOrEltWiderThan(1, 64), 1)
+#   8  minScalarEltSameAsIf(pred, 0, 1)
+#   9  minScalarOrEltIf(t1 == v2s16, 1, s32)
+#   10 minScalarOrEltIf(isPointerVector(t1), 0, s64)
+#   11 moreElementsToNextPow2(1)
+#   12/13 clampNumElements(1, v8s8, v16s8)
+#   14/15 clampNumElements(1, v4s16, v8s16)
+#   16/17 clampNumElements(1, v2s32, v4s32)
+#   18/19 clampNumElements(1, v2s64, v2s64)
+#   20/21 clampNumElements(1, v2p0, v2p0)
+#   22 customIf(isVector(0))
+#
+# Note that the result clamp is clampScalar(0, s32, s32), not a range: the
+# min half widens s1 -> s32 and the max half narrows s64 -> s32.  The max half
+# is reachable for non-mask result types, which is why s64 stays in the domain.
+#
+# Rule 8's predicate is three conditions:
+#
+#   Types[0].isVector() &&
+#   !Types[1].isPointerVector() &&
+#   Types[0].getElementType() != Types[1].getElementType()
+#
+# The last one is element *type* equality.  ``elem_types_eq`` is used instead
+# of comparing bit widths, because v2p0:64 and v2s64 have equal element width
+# but different element types.
+#
+# Rule 8 widens the *result* element to the operand element size while keeping
+# the result's lane count.  This is why ``min_scalar_elt_same_as_if 0, 1`` has
+# the result as the mutated slot -- the opposite direction from the shift
+# slice, where the amount was the mutated slot.
+#
+# Rules 14-min, 16-min, 18-min and 20-min are unreachable, but for two
+# different reasons:
+#
+#   * 16/18/20 require a fixed vector with fewer than 2 lanes; LLVM represents
+#     v1 as a scalar, so the shapes do not exist.
+#   * 14-min requires a v2s16 operand, but rule 9 matches every v2s16 operand
+#     first and widens it to v2s32.  The clamp's min half is shadowed by an
+#     earlier rule, not by a missing shape.
+#
+# All four are declared in the witness file, not silently dropped.
+#
+# Domain boundary:
+#   * fixed vectors plus scalar shapes needed by the clamps
+#   * both slots range over the same lattice, filtered by same_shape(t0, t1)
+#   * result and operand must be scalar/scalar or vector/vector with equal
+#     lane count; element widths may differ (that is what rule 8 is for)
+#   * the result slot is never a pointer or pointer vector: a comparison
+#     result is an integer mask, while the operand may still be a pointer
+#   * no scalable vectors, memory descriptors, FP or atomics
+#   * no custom-handler bodies
+
+domain {
+    types {
+        s1, s8, s16, s24, s32, s64, s128,
+        p0:64,
+        v2s1, v2s8, v2s16, v2s24, v2s32, v2s64, v2s128, v2p0:64,
+        v3s16, v3s32,
+        v4s1, v4s8, v4s16, v4s32, v4s64, v4p0:64,
+        v6s8,
+        v8s1, v8s8, v8s16, v8s32,
+        v16s1, v16s8, v16s16,
+        v32s8
+    };
+    imms {};
+    mems {};
+    filter same_shape(t0, t1) and not pointer(t0) and not is_pointer_vector(t0);
+    q0 {
+        (G_ICMP, [s1, s32]);
+        (G_ICMP, [v4s1, v4s32]);
+        (G_ICMP, [v2s1, v2p0:64]);
+    }
+}
+
+# [C++:740-769]
+ruleset G_ICMP {
+    legal_for_pairs {(s32, s32), (s32, s64), (s32, p0:64)};
+    widen_scalar_or_elt_to_next_pow2 1;
+    min_scalar_or_elt 1, s8;
+    clamp_scalar 1, s32, s64;
+    clamp_scalar 0, s32, s32;
+    fewer t1 to element_of(t1) when vector(t1) and elem_bits(t1) > 64;
+    min_scalar_elt_same_as_if 0, 1
+        when vector(t0) and not is_pointer_vector(t1)
+             and not elem_types_eq(t0, t1);
+    min_scalar_or_elt_if t1 == v2s16, 1, s32;
+    min_scalar_or_elt_if is_pointer_vector(t1), 0, s64;
+    more_elements_to_next_pow2 1;
+    clamp_num_elements 1, v8s8, v16s8;
+    clamp_num_elements 1, v4s16, v8s16;
+    clamp_num_elements 1, v2s32, v4s32;
+    clamp_num_elements 1, v2s64, v2s64;
+    clamp_num_elements 1, v2p0:64, v2p0:64;
+    custom when vector(t0);
+}

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "description": "AArch64 G_FCMP float subset (generic CPU, HasFP16=false).  No custom and no lower handler; the only non-table action is the s128 libcall.  Rule 9 (v2s32 lane-clamp min) is unreachable because LLVM cannot represent v1.",
+  "custom": {
+    "opcodes": []
+  },
+  "libcall": {
+    "opcodes": [
+      "G_FCMP"
+    ]
+  },
+  "lower": {
+    "opcodes": []
+  }
+}

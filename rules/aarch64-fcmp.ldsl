@@ -1,0 +1,167 @@
+# AArch64 GlobalISel legality rules -- G_FCMP float slice.
+#
+# Transcribed from llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp
+# (LLVM d855d9e48067026317998cbff734004f328f833d), lines 771-799:
+#
+#   getActionDefinitionsBuilder(G_FCMP)
+#
+# Configuration observed:
+#   triple      = aarch64-unknown-linux-gnu
+#   cpu         = generic
+#   features    = none (no +fullfp16, no +sve)
+#   HasFP16     = false
+#   pointer     = LLT::pointer(0, 64), written p0:64
+#   extended    = LLT::setUseExtended(true)   (AArch64TargetMachine.cpp:417)
+#
+# Frozen configuration, not modeled here
+# --------------------------------------
+# The second legalFor is guarded by HasFP16:
+#
+#   .legalFor(HasFP16, {{i32, f16}, {v4i16, v4f16}, {v8i16, v8f16}})
+#
+# With HasFP16 = false that macro emits no rule at all, exactly like the
+# UseOutlineAtomics branch in rules/aarch64-atomic.ldsl.  It is deliberately
+# omitted rather than guarded, because a guard would force every consumer
+# (codegen.py, CMake, the gate script) to supply --define HasFP16=false for a
+# single file.  A +fullfp16 product point must be a separate frozen file, the
+# same way +cssc is separate from the baseline scalar slice.
+#
+# HasFP16 also appears inside rule 5's predicate:
+#
+#   (!HasFP16 && Types[1].getScalarType().isFloat16()) ||
+#   Types[1].getScalarType().isBFloat16()
+#
+# With the configuration frozen to false this is exactly
+#
+#   isFloat16(t1) || isBFloat16(t1)
+#
+# which is what the `widen` rule below spells.
+#
+# LLT equality: sN is ANY_SCALAR, not an integer
+# ----------------------------------------------
+# AArch64 spells its constants `LLT::scalar(8)`, `LLT::scalar(32)`, ... rather
+# than `LLT::integer(...)`.  `LLT::scalar(N)` is Kind::ANY_SCALAR, and LLVM's
+# operator== compares an ANY_SCALAR against *any* scalar of the same size:
+#
+#   LLT::scalar(32) == LLT::float32()        // true
+#   LLT::scalar(16) == LLT::bfloat16()       // true
+#   LLT::float16()  == LLT::bfloat16()       // false (semantics differ)
+#
+# This is observable in this slice.  clampNumElements(1, v2s32, v4s32) is
+# keyed on s32, yet it fires on a v6f32 operand and produces v4f32:
+#
+#   (G_FCMP, [v6s32, v6f32]) -> FewerElements t1 -> v4f32
+#
+# The Python model therefore has LLT.eq_llvm() and every predicate that
+# mirrors a C++ `==` on LLT uses it.  Plain dataclass equality stays
+# spelling-exact and is only used for dedup and domain membership.
+#
+# Rule order (14 rules in this configuration)
+# -------------------------------------------
+#   0  legalFor({(s32,f32), (s32,f64), (v4s32,v4f32),
+#                (v2s32,v2f32), (v2s64,v2f64)})
+#   1  widenScalarOrEltToNextPow2(1)
+#   2  clampScalar(0, s32, s32) step 1/2 (min)
+#   3  clampScalar(0, s32, s32) step 2/2 (max)
+#   4  widenScalarIf(f16 || bf16, changeElementTo(1, f32))
+#   5  scalarizeIf(scalarOrEltWiderThan(1, 64), 1)
+#   6  minScalarEltSameAsIf(result <- operand element size, 0, 1)
+#   7  clampNumElements(1, v4s16, v8s16) step 1/2 (min)
+#   8  clampNumElements(1, v4s16, v8s16) step 2/2 (max)
+#   9  clampNumElements(1, v2s32, v4s32) step 1/2 (min)
+#  10  clampNumElements(1, v2s32, v4s32) step 2/2 (max)
+#  11  clampMaxNumElements(1, s64, 2)
+#  12  moreElementsToNextPow2(1)
+#  13  libcallFor({(s32, s128)})
+#
+# Rule 9 needs a fixed vector with fewer than two s32 lanes.  LLVM represents
+# v1 as a scalar and LLT::vector asserts !EC.isScalar(), so the shape does not
+# exist: rule 9 is declared unreachable in the witness file.
+#
+# Rules 5 and 13 interact in a way worth naming.  scalarizeIf is guarded by
+# isVector(), so it does not intercept a scalar s128 operand; the libcall pair
+# (s32, s128) is therefore reachable.  Because s128 is ANY_SCALAR, the pair
+# also matches a 128-bit float: (s32, f128) returns Libcall, not Unsupported.
+# It is a policy answer only: what the libcall call actually looks like
+# belongs to LegalizerHelper, not here.
+#
+# Domain boundary
+# ---------------
+#   * no pointers, no memory descriptors, no immediates
+#   * result slot (Types[0]) is an integer mask shape: sN or vNsM
+#   * operand slot (Types[1]) is the compared value: fN / bf16 or an integer
+#     shape used as a probe for the lane clamps and for the libcall pair
+#   * same_shape(t0, t1): both scalar or both a fixed vector with equal lane
+#     count; element widths may differ, which is what rule 6 exists for
+#   * not is_float(t0): Type[0] is a comparison mask, so the result slot is
+#     never a float.  This is also where LLT::integer differs from
+#     LLT::scalar: the C++ legalFor pairs spell the result as i32/i64
+#     (LLT::integer), and INTEGER != FLOAT, so a float result is Unsupported
+#     rather than Legal.  Queries with a float result are outside the opcode
+#     contract, and the filter makes that exclusion explicit instead of
+#     letting them become probe noise.
+#   * no scalable vectors: HasSVE = false
+#   * no custom handler: every vector result is either legal, a legalFor pair,
+#     or ends at Unsupported
+#
+# q0 seeds are shapes the IRTranslator can actually emit (i1/vNi1 mask result,
+# float operand).  A v8f32 fcmp is not one of them: AArch64 only legalizes 64-bit
+# and 128-bit vector compares, and a 256-bit compare is split before the
+# Legalizer runs.  v8f32 is still in D as a probe for clampNumElements, but it
+# is not a closure seed, because its clamp chain leaves the same-shape domain
+# (the operand shrinks to v4f32 while the mask stays v8s32).
+#
+# Integer vectors such as v3s16 and v6s16 are not shapes the IRTranslator can
+# produce for G_FCMP.  They are in the domain because the s16 lane clamps are
+# keyed on element width and the ANY_SCALAR equality above makes them match
+# 16-bit integers as well as 16-bit floats.  They are probes for the rule
+# table, and their status as probes is explicit rather than implied.
+
+domain {
+    types {
+        s1, s8, s16, s24, s32, s64, s128,
+        f16, bf16, f32, f64, f128,
+        v2s1, v2s16, v2s32, v2s64, v2s128,
+        v2f16, v2f32, v2f64, v2f128,
+        v3s16, v3s32,
+        v3f16, v3f32,
+        v4s1, v4s16, v4s32, v4s64,
+        v4f16, v4f32, v4f64,
+        v6s16, v6s32,
+        v8s1, v8s16, v8s32,
+        v8f16, v8f32,
+        v16s16
+    };
+    imms {};
+    mems {};
+    filter same_shape(t0, t1) and not is_float(t0);
+    q0 {
+        (G_FCMP, [s1, f32]);
+        (G_FCMP, [s1, f64]);
+        (G_FCMP, [s1, f16]);
+        (G_FCMP, [s1, bf16]);
+        (G_FCMP, [v2s1, v2f32]);
+        (G_FCMP, [v2s1, v2f64]);
+        (G_FCMP, [v4s1, v4f32]);
+        (G_FCMP, [v4s1, v4f16]);
+    }
+}
+
+# [C++:771-799]
+ruleset G_FCMP {
+    legal_for_pairs {(s32, f32), (s32, f64), (v4s32, v4f32),
+                     (v2s32, v2f32), (v2s64, v2f64)};
+    widen_scalar_or_elt_to_next_pow2 1;
+    clamp_scalar 0, s32, s32;
+    widen t1 to change_element_to(f32)
+        when scalar_is_float(t1, f16) or scalar_is_float(t1, bf16);
+    fewer t1 to element_of(t1) when vector(t1) and elem_bits(t1) > 64;
+    min_scalar_elt_same_as_if 0, 1
+        when vector(t0) and not is_pointer_vector(t1)
+             and not elem_types_eq(t0, t1);
+    clamp_num_elements 1, v4s16, v8s16;
+    clamp_num_elements 1, v2s32, v4s32;
+    clamp_max_num_elements 1, s64, 2;
+    more_elements_to_next_pow2 1;
+    libcall_for_pairs {(s32, s128)};
+}

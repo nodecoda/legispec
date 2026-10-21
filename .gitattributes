@@ -1,0 +1,10 @@
+# Default: text, LF in the repository and in the working tree.
+* text=auto eol=lf
+
+# Prose and Windows-only scripts keep CRLF in the working tree.
+*.md  text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary-ish evidence never gets line-ending conversion.
+*.exe binary
+*.png binary

@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "description": "AArch64 G_CONCAT_VECTORS custom slice. The policy hands sub-byte fixed vectors to AArch64LegalizerInfo::legalizeCustom; the custom body itself is outside this DSL's proof boundary. No libcall or generic lower rules are active.",
+  "custom": {
+    "symbol": "AArch64LegalizerInfo::legalizeCustom",
+    "opcodes": [
+      "G_CONCAT_VECTORS"
+    ]
+  },
+  "libcall": {
+    "opcodes": []
+  },
+  "lower": {
+    "opcodes": []
+  }
+}

@@ -1,0 +1,358 @@
+# RISC-V GlobalISel legality rules -- scalar subset.
+#
+# Transcribed from llvm/lib/Target/RISCV/GISel/RISCVLegalizerInfo.cpp
+# (LLVM d855d9e48067026317998cbff734004f328f833d).
+#
+# Configuration observed:
+#   triple      = riscv64-unknown-linux-gnu
+#   cpu         = generic-rv64
+#   code model  = small
+#   features    = +64bit, +i   (LLVM RISCVProcessors.td generic-rv64)
+#
+# That feature set is deliberately minimal.  generic-rv64 has NO M, A, F, D,
+# C, V, Zbb, Zbc, Zbkc, Zmmul or P.  Consequences, all exercised here:
+#   * G_MUL is a libcall, not a native multiply.
+#   * division / remainder are libcalls.
+#   * count-zeros and bit-manipulation opcodes lower.
+#   * CLMUL/CLMULH/CLMULR are unsupported.
+#   * every typeIsLegalIntOrFPVec / typeIsLegalBoolVec predicate is false
+#     because hasVInstructions() is false.
+#
+# XLen is a constructor parameter.  This file fixes RV64:
+#   XLen = 64, sXLen = s64, sDoubleXLen = s128, p0 = p0:64.
+# The RV32 file would need sXLen = s32 and flips several branches.
+#
+# This is NOT a model of all of RISC-V.  Omitted on purpose:
+#   * vector / scalable-vector rules (every legalIf/customIf with V)
+#   * pointer rulesets (G_PTR_ADD ... G_BRJT): separate experiment
+#   * G_MERGE_VALUES / G_UNMERGE_VALUES (per-opcode type-index selection)
+#   * G_BITCAST (scalar domain is Unsupported; vector-only rule)
+#   * memory descriptors (G_LOAD/G_STORE/...), atomics, FP (F/D), calls.
+#   * G_SEXT_INREG's Zbb widths: Zbb is off, so only imm 32 is legal.
+#
+# Arity note: Q0 declares a probe shape, not necessarily the MIR arity.  For
+# type-agnostic rules (`.lower()`, `.unsupported()`) any shape selects the
+# same rule.  Binary shapes keep the finite domain small.  G_SEXT_INREG is
+# the only ruleset that reads an immediate.
+#
+# LLVM LegalizeRuleSet::apply() returns the first matching rule and falls
+# back to Unsupported only after every rule has been tried.
+
+domain {
+    types {
+        s1, s2, s3, s4, s8, s12, s16, s24,
+        s32, s48, s64, s80, s96, s128, s256
+    };
+    imms {0, 8, 16, 32, 64};
+    mems {};
+    q0 {
+        (G_ADD, [s32]);
+        (G_AND, [s8]);
+        (G_UADDE, [s8, s8]);
+        (G_SADDE, [s32, s32]);
+        (G_UADDSAT, [s24]);
+        (G_SHL, [s32, s32]);
+        (G_SHL, [s64, s32]);
+        (G_ZEXT, [s64, s8]);
+        (G_TRUNC, [s8, s64]);
+        (G_SEXT_INREG, [s64, s64], imm = [32]);
+        (G_FSHL, [s32, s32]);
+        (G_BSWAP, [s96]);
+        (G_ROTR, [s64, s64]);
+        (G_BITREVERSE, [s128]);
+        (G_CLMUL, [s64]);
+        (G_CLMULH, [s64]);
+        (G_CLMULR, [s64]);
+        (G_CTLZ, [s96, s32]);
+        (G_CTLZ_ZERO_POISON, [s64, s128]);
+        (G_CTLS, [s64, s32]);
+        (G_CTPOP, [s1, s32]);
+        (G_CONSTANT, [s32]);
+        (G_FREEZE, [s8]);
+        (G_IMPLICIT_DEF, [s8]);
+        (G_ICMP, [s1, s1]);
+        (G_SELECT, [s8, s8]);
+        (G_PHI, [s1]);
+        (G_MUL, [s96]);
+        (G_SMULH, [s64]);
+        (G_SMULO, [s96]);
+        (G_SDIV, [s96]);
+        (G_SDIVREM, [s128]);
+        (G_ABS, [s64]);
+        (G_ABDS, [s32]);
+        (G_UMAX, [s64]);
+        (G_SCMP, [s32]);
+        (G_BR, []);
+        (G_BRCOND, [s1]);
+        (G_READCYCLECOUNTER, [s32]);
+    }
+}
+
+# [C++:141-146]
+# legalFor({sXLen}); legalIf(V-only, false); customFor(RV64, {s32});
+# widenScalarToNextPow2(0); clampScalar(0, sXLen, sXLen).
+ruleset G_ADD, G_SUB {
+    legal_for {s64};
+    custom when t0 == s32;
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s64, s64;
+}
+
+# [C++:148-152]
+ruleset G_AND, G_OR, G_XOR {
+    legal_for {s64};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s64, s64;
+}
+
+# [C++:154-156]
+# G_READ_REGISTER / G_WRITE_REGISTER share this builder in C++.  They are
+# omitted here because their operands are target-specific register types.
+ruleset G_UADDE, G_UADDO, G_USUBE, G_USUBO {
+    lower;
+}
+
+# [C++:158-160]
+ruleset G_SADDE, G_SADDO, G_SSUBE, G_SSUBO {
+    widen t0 to s64 when scalar(t0) and bits(t0) < 64;
+    lower;
+}
+
+# [C++:163-165]
+ruleset G_UADDSAT, G_SADDSAT, G_USUBSAT, G_SSUBSAT, G_SSHLSAT, G_USHLSAT {
+    lower;
+}
+
+# [C++:167-172]
+ruleset G_SHL, G_ASHR, G_LSHR {
+    legal_for_pairs {(s64, s64)};
+    custom when t0 == s32 and t1 == s32;
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 1, s64, s64;
+    clamp_scalar 0, s64, s64;
+}
+
+# [C++:174-180]
+# ExtLegalFunc-style vector clauses are all V-gated and therefore false here.
+# maxScalar(0, sXLen) stays reachable: a wider scalar is narrowed to s64, and
+# everything else that is not one of the legal pairs is Unsupported.  In
+# particular (s64, s8) is Unsupported -- there is no widen rule for s8.
+ruleset G_ZEXT, G_SEXT, G_ANYEXT {
+    legal_for_pairs {(s32, s16), (s64, s16), (s64, s32)};
+    narrow t0 to s64 when scalar(t0) and bits(t0) > 64;
+}
+
+# [C++:182]
+ruleset G_TRUNC {
+    always_legal;
+}
+
+# [C++:191-194]
+# ValidSextInRegWidth = sizeIs(0,64) && immIs(0,32); the Zbb extension
+# (imm 8/16) is disabled.  clampScalar then lower.
+ruleset G_SEXT_INREG {
+    legal when t0 == s64 and imm 0 == 32;
+    widen t0 to s64 when scalar(t0) and bits(t0) < 64;
+    narrow t0 to s64 when scalar(t0) and bits(t0) > 64;
+    lower;
+}
+
+# [C++:212]
+ruleset G_FSHL, G_FSHR {
+    lower;
+}
+
+# [C++:214-218]
+# legalFor/customFor are gated on Zbb or Zbkb; both are off, so .lower()
+# matches every type.
+ruleset G_ROTR, G_ROTL {
+    lower;
+}
+
+# [C++:220-223]
+# customFor(Zbkb, {s8}) is off; maxScalar(0, sXLen) then lower.
+ruleset G_BITREVERSE {
+    narrow t0 to s64 when scalar(t0) and bits(t0) > 64;
+    lower;
+}
+
+# [C++:231-235]
+# Zbb/Zbkb branch is off; maxScalar(0, sXLen) then lower.
+ruleset G_BSWAP {
+    narrow t0 to s64 when scalar(t0) and bits(t0) > 64;
+    lower;
+}
+
+# [C++:237-241]
+# legalFor(Zbkc, {sXLen}) is off, so only .unsupported() remains.
+ruleset G_CLMUL {
+    unsupported;
+}
+
+# [C++:243-246]
+ruleset G_CLMULH {
+    unsupported;
+}
+
+# [C++:248-250]
+ruleset G_CLMULR {
+    unsupported;
+}
+
+# [C++:252-259]
+# No Zbb: maxScalar(0, sXLen), scalarSameSizeAs(1, 0), lower.
+ruleset G_CTLZ, G_CTTZ {
+    narrow t0 to s64 when scalar(t0) and bits(t0) > 64;
+    widen t1 to same_size_as(t0) when scalar_bits(t1) < scalar_bits(t0);
+    narrow t1 to same_size_as(t0) when scalar_bits(t1) > scalar_bits(t0);
+    lower;
+}
+
+# [C++:260-265]
+# Same three rules as CountZerosActions, then the unconditional .lower().
+ruleset G_CTLZ_ZERO_POISON, G_CTTZ_ZERO_POISON {
+    narrow t0 to s64 when scalar(t0) and bits(t0) > 64;
+    widen t1 to same_size_as(t0) when scalar_bits(t1) < scalar_bits(t0);
+    narrow t1 to same_size_as(t0) when scalar_bits(t1) > scalar_bits(t0);
+    lower;
+}
+
+# [C++:267-276]
+# No P extension.
+ruleset G_CTLS {
+    narrow t0 to s64 when scalar(t0) and bits(t0) > 64;
+    widen t1 to same_size_as(t0) when scalar_bits(t1) < scalar_bits(t0);
+    narrow t1 to same_size_as(t0) when scalar_bits(t1) > scalar_bits(t0);
+    lower;
+}
+
+# [C++:278-288]
+# No Zbb.  Note the Min=8 applies only to non-power-of-two sizes; s1/s2/s4
+# fall through to clampScalar's minimum s8.
+ruleset G_CTPOP {
+    widen_to_next_pow2 0, 8;
+    clamp_scalar 0, s8, s64;
+    widen t1 to same_size_as(t0) when scalar_bits(t1) < scalar_bits(t0);
+    narrow t1 to same_size_as(t0) when scalar_bits(t1) > scalar_bits(t0);
+    lower;
+}
+
+# [C++:290-295]
+# legalFor({p0}) and legalFor(!is64Bit(), {s32}) are both inactive here;
+# the p0 rule belongs to the pointer experiment.
+ruleset G_CONSTANT {
+    custom when t0 == s64;
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s64, s64;
+}
+
+# [C++:298-304]
+ruleset G_FREEZE {
+    legal_for {s16, s32, s64};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s16, s64;
+}
+
+# [C++:308-314]
+ruleset G_IMPLICIT_DEF, G_CONSTANT_FOLD_BARRIER {
+    legal_for {s32, s64};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s32, s64;
+}
+
+# [C++:316-322]
+# The p0 legal pair is omitted.  t1 uses the "next pow2 or min size" variant:
+# s1/s2/s4 widen to s8 even though they are powers of two.
+ruleset G_ICMP {
+    legal_for_pairs {(s64, s64)};
+    widen_to_next_pow2_or_min 1, 8;
+    clamp_scalar 1, s64, s64;
+    clamp_scalar 0, s64, s64;
+}
+
+# [C++:324-331]
+# The p0 condition pair is omitted.  RV64 has XLen == 64, so {s64, sXLen} is
+# legal and the clamp maximum is s64.
+ruleset G_SELECT {
+    legal_for_pairs {(s32, s64), (s64, s64)};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s32, s64;
+    clamp_scalar 1, s64, s64;
+}
+
+# [C++:475-478]
+ruleset G_PHI {
+    legal_for {s32, s64};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s32, s64;
+}
+
+# [C++:497-503] (hasStdExtZmmul() == false)
+ruleset G_MUL {
+    libcall_for {s64, s128};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s64, s128;
+}
+
+# [C++:505-506]
+# lowerFor({sXLen}): only s64 lowers; every other type is Unsupported.
+ruleset G_SMULH, G_UMULH {
+    lower when t0 == s64;
+}
+
+# [C++:507-511]
+# minScalar(0, sXLen), then widen sXLen to sDoubleXLen, then lower.
+ruleset G_SMULO, G_UMULO {
+    widen t0 to s64 when scalar(t0) and bits(t0) < 64;
+    widen t0 to s128 when bits(t0) == 64;
+    lower;
+}
+
+# [C++:519-523] (hasStdExtM() == false)
+# All four take the libcall path.  clampScalar comes before the pow2 widening.
+ruleset G_SDIV, G_UDIV, G_UREM, G_SREM {
+    libcall_for {s64, s128};
+    clamp_scalar 0, s64, s128;
+    widen_to_next_pow2 0, 0;
+}
+
+# [C++:534]
+ruleset G_SDIVREM, G_UDIVREM {
+    lower;
+}
+
+# [C++:536-543]
+# Zbb-gated rules are all inactive; only .lower() remains.
+ruleset G_ABS {
+    lower;
+}
+ruleset G_ABDS, G_ABDU {
+    lower;
+}
+
+# [C++:545-548]
+ruleset G_UMAX, G_UMIN, G_SMAX, G_SMIN {
+    lower;
+}
+
+# [C++:550]
+ruleset G_SCMP, G_UCMP {
+    lower;
+}
+
+# [C++:467]
+ruleset G_BR {
+    always_legal;
+}
+
+# [C++:469]
+ruleset G_BRCOND {
+    legal_for {s64};
+    widen t0 to s64 when scalar(t0) and bits(t0) < 64;
+}
+
+# [C++:564-566]
+# RV64: legalFor(is64Bit, {s64}).  No custom rule; other types Unsupported.
+ruleset G_READCYCLECOUNTER, G_READSTEADYCOUNTER {
+    legal_for {s64};
+}

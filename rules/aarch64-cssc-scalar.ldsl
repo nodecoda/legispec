@@ -1,0 +1,290 @@
+# AArch64 GlobalISel legality rules -- scalar subset.
+#
+# Transcribed from llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp.
+# Configuration observed:
+#   triple      = aarch64-unknown-linux-gnu
+#   cpu         = generic
+#   code model  = small
+#   NEON/FPARMv8 enabled (the constructor otherwise returns an empty rule set)
+#   HasCSSC     = true (+cssc)
+#   HasSVE      = false
+#
+# This is the +cssc point.  It differs from aarch64-scalar.ldsl only in
+# four rulesets: G_SMIN/G_SMAX/G_UMIN/G_UMAX, G_ABS, G_CTPOP, G_CTTZ.
+#
+# This is NOT a model of all of AArch64.  Omitted on purpose:
+#   * every vector / scalable-vector legalFor and legality clause
+#   * clampNumElements / clampMaxNumElements / clampMinNumElements
+#   * moreElementsToNextPow2 / scalarize / widenVectorEltsToVectorMinSize
+#   * pointer operands and pointer-specific rulesets (separate experiment)
+#   * memory descriptors, FP and atomics.
+#
+# The domain is scalar-only.  This is a correctness requirement, not a
+# convenience: several AArch64 rulesets call Query.Types[0].getNumElements()
+# in predicates without first checking isVector(), and LLT::getNumElements()
+# asserts on a scalar/pointer.  Feeding a pointer to G_ADD/G_MUL would abort
+# the real oracle before it could answer.
+#
+# LLVM LegalizeRuleSet::apply() returns the first matching rule and only
+# falls back to Unsupported after every rule has been tried.
+
+domain {
+    types {
+        s1, s2, s3, s4, s5, s6, s7, s8, s12, s16, s20, s24,
+        s32, s40, s48, s64, s80, s96, s128, s256
+    };
+    imms {};
+    mems {};
+    q0 {
+        (G_CONSTANT, [s32]);
+        (G_CONSTANT, [s128]);
+        (G_IMPLICIT_DEF, [s32]);
+        (G_IMPLICIT_DEF, [s128]);
+        (G_PHI, [s32]);
+        (G_PHI, [s8]);
+        (G_ADD, [s32]);
+        (G_ADD, [s16]);
+        (G_SUB, [s96]);
+        (G_MUL, [s24]);
+        (G_SHL, [s32, s32]);
+        (G_ASHR, [s64, s32]);
+        (G_LSHR, [s96, s96]);
+        (G_SDIV, [s48]);
+        (G_UDIV, [s128]);
+        (G_SREM, [s32]);
+        (G_UREM, [s3]);
+        (G_SDIVREM, [s128]);
+        (G_UDIVREM, [s48]);
+        (G_SMULO, [s24]);
+        (G_UMULO, [s128]);
+        (G_SMULH, [s32]);
+        (G_UMULH, [s64]);
+        (G_UADDO, [s16, s16]);
+        (G_SADDE, [s64, s64]);
+        (G_USUBO, [s48, s48]);
+        (G_BSWAP, [s24]);
+        (G_BSWAP, [s8]);
+        (G_ICMP, [s32, s8]);
+        (G_ICMP, [s64, s32]);
+        (G_ICMP, [s32, s3]);
+        (G_ZEXT, [s32, s8]);
+        (G_SEXT, [s3, s8]);
+        (G_ANYEXT, [s32, s64]);
+        (G_TRUNC, [s8, s32]);
+        (G_TRUNC, [s128, s256]);
+        (G_SELECT, [s32, s64]);
+        (G_SELECT, [s1, s32]);
+        (G_SMIN, [s32]);
+        (G_SMAX, [s64]);
+        (G_UMIN, [s8]);
+        (G_UMAX, [s128]);
+        (G_ABS, [s32]);
+        (G_ABS, [s8]);
+        (G_ABS, [s128]);
+        (G_CTPOP, [s32, s32]);
+        (G_CTPOP, [s64, s64]);
+        (G_CTPOP, [s128, s128]);
+        (G_CTPOP, [s16, s16]);
+        (G_CTPOP, [s32, s64]);
+        (G_CTTZ, [s32, s32]);
+        (G_CTTZ, [s64, s64]);
+        (G_CTTZ, [s16, s16]);
+        (G_CTTZ, [s128, s128]);
+        (G_CTTZ, [s32, s64]);
+        (G_BR, []);
+        (G_BRCOND, [s1]);
+    }
+}
+
+# [C++:732-735]
+ruleset G_CONSTANT {
+    legal_for {s8, s16, s32, s64};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s8, s64;
+}
+
+# [C++:130-144]
+# Vector legalFor / moreElements / clampNumElements / scalarize omitted.
+ruleset G_IMPLICIT_DEF, G_FREEZE, G_CONSTANT_FOLD_BARRIER {
+    legal_for {s8, s16, s32, s64, s128};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s8, s64;
+}
+
+# [C++:146-158]
+# The final widenScalarOrEltToNextPow2OrMinSize(0, 8) is scalar-shadowed by
+# clampScalar(0, s16, s64): every scalar below s16 is widened there first.
+ruleset G_PHI {
+    legal_for {s16, s32, s64};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s16, s64;
+}
+
+# [C++:181-206]
+# Scalar minimum is s32; SVE and vector clauses are omitted.
+ruleset G_ADD, G_SUB, G_AND, G_OR, G_XOR {
+    legal_for {s32, s64};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s32, s64;
+}
+
+# [C++:208-232]
+ruleset G_MUL {
+    legal_for {s32, s64};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s32, s64;
+}
+
+# [C++:234-265]
+# customIf comes first, so scalar (s32, s32) is Custom even though the
+# following legalFor also lists {i32, i32}.  The final minScalarSameAs(1, 0)
+# is transcribed as an explicit "widen t1 to the width of t0" rule; after
+# both clamps the only reachable case is t0=s64, t1=s32.
+ruleset G_SHL, G_ASHR, G_LSHR {
+    custom when bits(t0) == 32 and bits(t1) == 32;
+    legal_for_pairs {(s32, s32), (s32, s64), (s64, s64)};
+    widen_to_next_pow2 1, 0;
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 1, s32, s64;
+    clamp_scalar 0, s32, s64;
+    widen t1 to s64 when bits(t0) == 64 and bits(t1) < 64;
+}
+
+# [C++:274-279]
+ruleset G_SDIV, G_UDIV {
+    legal_for {s32, s64};
+    libcall_for {s128};
+    clamp_scalar 0, s32, s64;
+    widen_to_next_pow2 0, 0;
+}
+
+# [C++:281-288]
+# Scalar s8/s16/s32/s64 are lowered; s128 is a libcall.  The scalar minimum
+# is applied by an explicit widen rule because the C++ uses minScalarOrElt,
+# not clampScalar (there is no maximum).
+ruleset G_SREM, G_UREM, G_SDIVREM, G_UDIVREM {
+    lower when t0 in {s8, s16, s32, s64};
+    libcall when t0 == s128;
+    widen_to_next_pow2 0, 0;
+    widen t0 to s32 when scalar(t0) and bits(t0) < 32;
+}
+
+# [C++:290-293]
+ruleset G_SMULO, G_UMULO {
+    widen_to_next_pow2 0, 32;
+    clamp_scalar 0, s32, s64;
+    lower;
+}
+
+# [C++:295-297]
+ruleset G_SMULH, G_UMULH {
+    legal_for {s64};
+    lower;
+}
+
+# [C++:303-310]
+# Vector legalFor / clampNumElements omitted.  HasCSSC is a construction-time
+# bool: generic contributes only the trailing lower; +cssc adds
+# legalFor({s32,s64}) and minScalar(0,s32).
+ruleset G_SMIN, G_SMAX, G_UMIN, G_UMAX {
+    legal_for {s32, s64};
+    widen t0 to s32 when scalar(t0) and bits(t0) < 32;
+    lower;
+}
+
+# [C++:313-332]
+# The customIf predicate is scalar && size < 128.  +cssc prepends
+# legalFor({s32,s64}); s128 falls through to lower in both configurations.
+ruleset G_ABS {
+    legal_for {s32, s64};
+    custom when scalar(t0) and bits(t0) < 128;
+    lower;
+}
+
+# [C++:339-345]
+ruleset G_UADDE, G_USUBE, G_UADDO, G_USUBO, G_SADDE, G_SSUBE, G_SADDO, G_SSUBO {
+    legal_for_pairs {(s32, s32), (s64, s32)};
+    clamp_scalar 0, s32, s64;
+    clamp_scalar 1, s32, s64;
+    widen_to_next_pow2 0, 0;
+    lower;
+}
+
+# [C++:363-383]
+# Scalar pair projection.  The 32/64-bit pairs are Custom when !HasCSSC and
+# Legal when HasCSSC; the {s128,s128} custom is unconditional.  clamp/widen
+# run before the min/max ElemSameAs pair, which forces t1 to t0's width.
+# widenScalarOrEltToNextPow2OrMinSize(0, 8) is scalar-shadowed by
+# clampScalar(0, s32, s128), as in G_PHI.
+ruleset G_CTPOP {
+    legal_for_pairs {(s32, s32), (s64, s64)};
+    custom when pair(t0, t1) in {(s128, s128)};
+    clamp_scalar 0, s32, s128;
+    widen_to_next_pow2 0, 0;
+    widen t1 to same_size_as(t0) when scalar_bits(t1) < scalar_bits(t0);
+    narrow t1 to same_size_as(t0) when scalar_bits(t1) > scalar_bits(t0);
+}
+
+# [C++:408-414]
+# lowerIf(isVector(0)) is vacuous in the scalar domain.  Rule order matters:
+# widen/clamp/scalarSameSizeAs precede legal/custom, so t1 is normalized
+# before t0's final action is chosen.  The final rule is
+# customFor(!HasCSSC, {s32,s64}); +cssc turns it into legalFor({s32,s64}).
+ruleset G_CTTZ {
+    widen_to_next_pow2 1, 32;
+    clamp_scalar 1, s32, s64;
+    widen t0 to same_size_as(t1) when scalar_bits(t0) < scalar_bits(t1);
+    narrow t0 to same_size_as(t1) when scalar_bits(t0) > scalar_bits(t1);
+    legal_for {s32, s64};
+}
+
+# [C++:433-440]
+ruleset G_BSWAP {
+    legal_for {s32, s64};
+    widen_to_next_pow2 0, 16;
+    clamp_scalar 0, s32, s64;
+}
+
+# [C++:740-769]
+# Result type is clamped to s32.  Vector clauses are omitted.
+ruleset G_ICMP {
+    legal_for_pairs {(s32, s32), (s32, s64)};
+    widen_to_next_pow2 1, 0;
+    widen t1 to s8 when scalar(t1) and bits(t1) < 8;
+    clamp_scalar 1, s32, s64;
+    clamp_scalar 0, s32, s32;
+}
+
+# [C++:802-841]
+# ExtLegalFunc only rejects vectors, then requires both sizes to be >= 8,
+# power-of-two, and the destination < 128 bits.  It does NOT compare
+# destination against source.  The domain has no vector LLTs, so the vector
+# rejection is vacuous here.
+ruleset G_ZEXT, G_SEXT, G_ANYEXT {
+    legal when bits(t0) >= 8 and bits(t0) < 128 and is_pow2(bits(t0))
+              and bits(t1) >= 8 and is_pow2(bits(t1));
+    clamp_scalar 0, s64, s64;
+}
+
+# [C++:843-860]
+# The final .alwaysLegal() catches every scalar truncation.
+ruleset G_TRUNC {
+    always_legal;
+}
+
+# [C++:1081-1088]
+ruleset G_SELECT {
+    legal_for_pairs {(s32, s32), (s64, s32)};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s32, s64;
+    clamp_scalar 1, s32, s32;
+}
+
+# [C++:1075-1078]
+ruleset G_BR {
+    always_legal;
+}
+ruleset G_BRCOND {
+    legal_for {s32};
+    clamp_scalar 0, s32, s32;
+}

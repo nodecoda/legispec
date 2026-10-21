@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "description": "AArch64 fixed-vector shift subset: two-slot legalFor pairs, scalar and lane clamps, minScalarSameAs, scalarizeIf, min/maxScalarEltSameAsIf. Custom handler required for scalar 32-bit shifts; no libcall or lower handlers.",
+  "custom": {
+    "opcodes": [
+      "G_SHL",
+      "G_ASHR",
+      "G_LSHR"
+    ]
+  },
+  "libcall": {
+    "opcodes": []
+  },
+  "lower": {
+    "opcodes": []
+  }
+}

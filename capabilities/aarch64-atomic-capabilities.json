@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "description": "AArch64 generic atomic subset.  Custom: 128-bit compare-and-swap.  Lower: compare-and-swap-with-success.  No libcall rules are active because UseOutlineAtomics is false for generic AArch64 without LSE.",
+  "custom": {
+    "opcodes": ["G_ATOMIC_CMPXCHG"]
+  },
+  "libcall": {
+    "opcodes": []
+  },
+  "lower": {
+    "opcodes": ["G_ATOMIC_CMPXCHG_WITH_SUCCESS"]
+  }
+}

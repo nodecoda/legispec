@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "description": "AArch64 fixed-vector subset: min/max clamps, absolute-difference/average legalFor+lower, and CLMUL legalFor. No custom handlers.",
+  "custom": {
+    "opcodes": []
+  },
+  "libcall": {
+    "opcodes": []
+  },
+  "lower": {
+    "opcodes": [
+      "G_SMIN", "G_SMAX", "G_UMIN", "G_UMAX",
+      "G_ABDS", "G_ABDU", "G_UAVGFLOOR", "G_UAVGCEIL",
+      "G_SAVGFLOOR", "G_SAVGCEIL"
+    ]
+  }
+}

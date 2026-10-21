@@ -1,0 +1,1412 @@
+{
+  "boundary": "one step: LegalizerInfo::getAction(LegalityQuery); not the iterative Legalizer pass, not LegalizerHelper MIR rewrites, not instruction selection or codegen; domain = declared D union R, with R taken inside D (successors outside D are boundaries, not claims)",
+  "claims": [
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 2,
+      "divergences": 0,
+      "excludes": [],
+      "id": "toycpu",
+      "llvm_build": "F:/llvm/build-toycpu",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle/legalizer-oracle.exe",
+      "oracle_sha256": "4e4c314071ca89b949e2cf75ccba7aba7daa225fca89d00541a2528fb9774d95",
+      "oracle_size": 22508544,
+      "problems": [],
+      "queries": 243714,
+      "report": "conformance-report.json",
+      "rules": "toycpu.ldsl",
+      "rules_matched": 87,
+      "rules_sha256": "404d82a0f4bf161aa1e819dfb51228e62188dd7de6146ca5f3fccd0615c77756",
+      "rules_total": 89,
+      "scope": "full ToyCPU policy layer",
+      "unmatched": [
+        {
+          "index": 3,
+          "rule": "widen t1 to s1 when (scalar(t1)) and (bits(t1) < 1)",
+          "ruleset": "G_UADDO"
+        },
+        {
+          "index": 1,
+          "rule": "widen t0 to s1 when (scalar(t0)) and (bits(t0) < 1)",
+          "ruleset": "G_CONSTANT"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 2,
+      "divergences": 0,
+      "excludes": [],
+      "id": "toycpu-generated",
+      "llvm_build": "F:/llvm/build-toycpu",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle/legalizer-oracle-gen.exe",
+      "oracle_sha256": "067ec9860a4263e3a99542708d75320e2f16e61c20f1c28c387b345a6e37e221",
+      "oracle_size": 6741504,
+      "problems": [],
+      "queries": 243714,
+      "report": "conformance-gen-report.json",
+      "rules": "toycpu.ldsl",
+      "rules_matched": 87,
+      "rules_sha256": "404d82a0f4bf161aa1e819dfb51228e62188dd7de6146ca5f3fccd0615c77756",
+      "rules_total": 89,
+      "scope": "C++ generated from toycpu.ldsl by codegen.py",
+      "unmatched": [
+        {
+          "index": 3,
+          "rule": "widen t1 to s1 when (scalar(t1)) and (bits(t1) < 1)",
+          "ruleset": "G_UADDO"
+        },
+        {
+          "index": 1,
+          "rule": "widen t0 to s1 when (scalar(t0)) and (bits(t0) < 1)",
+          "ruleset": "G_CONSTANT"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "vector",
+        "FP",
+        "memory descriptors",
+        "atomics",
+        "custom"
+      ],
+      "id": "x86-scalar",
+      "llvm_build": "F:/llvm/build-toycpu",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle/legalizer-oracle-x86.exe",
+      "oracle_sha256": "0379fe581588adc3657ff76a53aec3b8eaaaa0be79e243e75d744642afcfbe9e",
+      "oracle_size": 32434688,
+      "problems": [],
+      "queries": 7591,
+      "report": "x86-scalar-conformance-report.json",
+      "rules": "x86-scalar.ldsl",
+      "rules_matched": 69,
+      "rules_sha256": "b19200c9023faeb3bac8c895ac681c37b5b507c1b4d02f788c1782051a701148",
+      "rules_total": 69,
+      "scope": "X86-64 integer + pointer shapes",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "vector",
+        "FP",
+        "memory descriptors",
+        "atomics",
+        "custom"
+      ],
+      "id": "x86-generated",
+      "llvm_build": "F:/llvm/build-toycpu",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle/legalizer-oracle-x86-gen.exe",
+      "oracle_sha256": "5be823e75b371bfeaeaabbe4e610ac2161fb5b68e0806c051fb806873cdea5f0",
+      "oracle_size": 6752768,
+      "problems": [],
+      "queries": 7591,
+      "report": "x86-gen-conformance-report.json",
+      "rules": "x86-scalar.ldsl",
+      "rules_matched": 69,
+      "rules_sha256": "b19200c9023faeb3bac8c895ac681c37b5b507c1b4d02f788c1782051a701148",
+      "rules_total": 69,
+      "scope": "C++ generated from x86-scalar.ldsl by codegen.py",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "vector / SVE / FP16",
+        "memory descriptors",
+        "atomics"
+      ],
+      "id": "aarch64-scalar",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64.exe",
+      "oracle_sha256": "283ca76edc5fbc48118bc741b48fbdd28c964024a8c04083fd0d51c07947ae4a",
+      "oracle_size": 32883712,
+      "problems": [],
+      "queries": 8161,
+      "report": "aarch64-scalar-conformance-report.json",
+      "rules": "aarch64-scalar.ldsl",
+      "rules_matched": 91,
+      "rules_sha256": "37abeb7d5b6940f4e0ba1e89005dd3052d1c16152ffae1261836a0be9fb8861e",
+      "rules_total": 91,
+      "scope": "AArch64 generic scalar subset",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "vector / SVE / FP16",
+        "memory descriptors",
+        "atomics"
+      ],
+      "id": "aarch64-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-gen.exe",
+      "oracle_sha256": "0cb60e8f0c2d9cf56d4f6325fb4ea5496229d1f38e26a98ce85d8c1c51ae0873",
+      "oracle_size": 4333056,
+      "problems": [],
+      "queries": 8161,
+      "report": "aarch64-gen-conformance-report.json",
+      "rules": "aarch64-scalar.ldsl",
+      "rules_matched": 91,
+      "rules_sha256": "37abeb7d5b6940f4e0ba1e89005dd3052d1c16152ffae1261836a0be9fb8861e",
+      "rules_total": 91,
+      "scope": "C++ generated from aarch64-scalar.ldsl by codegen.py",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "vector / SVE / FP16",
+        "memory descriptors",
+        "atomics"
+      ],
+      "id": "aarch64-cssc-scalar",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-cssc.exe",
+      "oracle_sha256": "89b9be594f7b334ddb4c42a2ebae27acb1bdd658a678bc94275c97078942569f",
+      "oracle_size": 32883712,
+      "problems": [],
+      "queries": 8161,
+      "report": "aarch64-cssc-scalar-conformance-report.json",
+      "rules": "aarch64-cssc-scalar.ldsl",
+      "rules_matched": 95,
+      "rules_sha256": "9050a54cab5af5fb8008be6c08c05d7af9017ea845310bdef78dcdd638a75a62",
+      "rules_total": 95,
+      "scope": "AArch64 scalar subset with +cssc",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "vector / SVE / FP16",
+        "memory descriptors",
+        "atomics"
+      ],
+      "id": "aarch64-cssc-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-cssc-gen.exe",
+      "oracle_sha256": "536e543796d3f3e7217a02ed470f09a9c80dc7f321b0718ee550f7deb58f0e14",
+      "oracle_size": 4337664,
+      "problems": [],
+      "queries": 8161,
+      "report": "aarch64-cssc-gen-conformance-report.json",
+      "rules": "aarch64-cssc-scalar.ldsl",
+      "rules_matched": 95,
+      "rules_sha256": "9050a54cab5af5fb8008be6c08c05d7af9017ea845310bdef78dcdd638a75a62",
+      "rules_total": 95,
+      "scope": "C++ generated from aarch64-cssc-scalar.ldsl by codegen.py",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "vector / SVE / FP16",
+        "memory descriptors",
+        "atomics"
+      ],
+      "id": "aarch64-pointer",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64.exe",
+      "oracle_sha256": "283ca76edc5fbc48118bc741b48fbdd28c964024a8c04083fd0d51c07947ae4a",
+      "oracle_size": 32883712,
+      "problems": [],
+      "queries": 924,
+      "report": "aarch64-pointer-conformance-report.json",
+      "rules": "aarch64-pointer.ldsl",
+      "rules_matched": 17,
+      "rules_sha256": "f019d702722d6ab13103ffa358b4bddfe5c7cf3f7995ab5f31201908c68ea5a9",
+      "rules_total": 17,
+      "scope": "AArch64 pointer subset",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "vector / SVE / FP16",
+        "memory descriptors",
+        "outline atomics",
+        "LSE"
+      ],
+      "id": "aarch64-atomic",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64.exe",
+      "oracle_sha256": "283ca76edc5fbc48118bc741b48fbdd28c964024a8c04083fd0d51c07947ae4a",
+      "oracle_size": 32883712,
+      "problems": [],
+      "queries": 612,
+      "report": "aarch64-atomic-conformance-report.json",
+      "rules": "aarch64-atomic.ldsl",
+      "rules_matched": 11,
+      "rules_sha256": "d79e998e4d63717ca629faa80a381c538ed3d1da25f4a4aa50d9bdd6d2ea0e36",
+      "rules_total": 11,
+      "scope": "AArch64 generic atomic subset (UseOutlineAtomics=false)",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "vector / SVE / FP16",
+        "memory descriptors",
+        "outline atomics",
+        "LSE"
+      ],
+      "id": "aarch64-atomic-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-atomic-gen.exe",
+      "oracle_sha256": "8cc1c4c8d162d820725a0589e35c3c7fd7d68c1965a50415c66aef14974e5163",
+      "oracle_size": 4237312,
+      "problems": [],
+      "queries": 612,
+      "report": "aarch64-atomic-gen-conformance-report.json",
+      "rules": "aarch64-atomic.ldsl",
+      "rules_matched": 11,
+      "rules_sha256": "d79e998e4d63717ca629faa80a381c538ed3d1da25f4a4aa50d9bdd6d2ea0e36",
+      "rules_total": 11,
+      "scope": "C++ generated from aarch64-atomic.ldsl by codegen.py",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "vector / SVE / FP16",
+        "memory descriptors",
+        "LSE"
+      ],
+      "id": "aarch64-atomic-outline",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-outline.exe",
+      "oracle_sha256": "36c74d0fb8473af0a9bc943fd757dcd0cb1cf8da7ece3551e9e9976de77230cc",
+      "oracle_size": 32883712,
+      "problems": [],
+      "queries": 612,
+      "report": "aarch64-atomic-outline-conformance-report.json",
+      "rules": "aarch64-atomic-outline.ldsl",
+      "rules_matched": 10,
+      "rules_sha256": "85d69029856b8ac8f3ed636f49ece832bda1fbaa6d66ed68c1910e2a6984a0d9",
+      "rules_total": 10,
+      "scope": "AArch64 atomic subset with +outline-atomics (UseOutlineAtomics=true)",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "vector / SVE / FP16",
+        "memory descriptors",
+        "LSE"
+      ],
+      "id": "aarch64-atomic-outline-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-atomic-outline-gen.exe",
+      "oracle_sha256": "b63d63c221dad6d18adf543e306ce705c267e425b4b49d8904116eaf379e87f1",
+      "oracle_size": 4237312,
+      "problems": [],
+      "queries": 612,
+      "report": "aarch64-atomic-outline-gen-conformance-report.json",
+      "rules": "aarch64-atomic-outline.ldsl",
+      "rules_matched": 10,
+      "rules_sha256": "85d69029856b8ac8f3ed636f49ece832bda1fbaa6d66ed68c1910e2a6984a0d9",
+      "rules_total": 10,
+      "scope": "C++ generated from aarch64-atomic-outline.ldsl by codegen.py",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "vector / SVE / FP16",
+        "memory descriptors",
+        "outline atomics"
+      ],
+      "id": "aarch64-atomic-lse",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-lse.exe",
+      "oracle_sha256": "d2e02fe76230eff9addd054c6ea1b3e31066e9aa96dd7213e1c364e64c91690e",
+      "oracle_size": 32883712,
+      "problems": [],
+      "queries": 612,
+      "report": "aarch64-atomic-lse-conformance-report.json",
+      "rules": "aarch64-atomic.ldsl",
+      "rules_matched": 11,
+      "rules_sha256": "d79e998e4d63717ca629faa80a381c538ed3d1da25f4a4aa50d9bdd6d2ea0e36",
+      "rules_total": 11,
+      "scope": "AArch64 atomic subset with +lse (policy table identical to generic)",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 1,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "FP16",
+        "memory descriptors",
+        "atomics",
+        "custom handlers"
+      ],
+      "id": "aarch64-vector",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64.exe",
+      "oracle_sha256": "283ca76edc5fbc48118bc741b48fbdd28c964024a8c04083fd0d51c07947ae4a",
+      "oracle_size": 32883712,
+      "problems": [],
+      "queries": 176,
+      "report": "aarch64-vector-conformance-report.json",
+      "rules": "aarch64-vector.ldsl",
+      "rules_matched": 10,
+      "rules_sha256": "9853efdd7277425525e3d5677a4c77d9840ebf3cabbdaf665b10693bbb1b338c",
+      "rules_total": 11,
+      "scope": "AArch64 generic fixed-vector subset: min/max element-count clamps, abs-difference/average legalFor+lower, CLMUL legalFor",
+      "unmatched": [
+        {
+          "index": 5,
+          "rule": "more t0 to v2s32 when fixed_vector(t0, s32) and lanes(t0) < 2",
+          "ruleset": "G_SMIN"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 1,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "FP16",
+        "memory descriptors",
+        "atomics",
+        "custom handlers"
+      ],
+      "id": "aarch64-vector-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-vector-gen.exe",
+      "oracle_sha256": "cc3122fb86ed2f374bb1429d7e3524051731697dc79151a5dbc0ec56ebf75717",
+      "oracle_size": 4232192,
+      "problems": [],
+      "queries": 176,
+      "report": "aarch64-vector-gen-conformance-report.json",
+      "rules": "aarch64-vector.ldsl",
+      "rules_matched": 10,
+      "rules_sha256": "9853efdd7277425525e3d5677a4c77d9840ebf3cabbdaf665b10693bbb1b338c",
+      "rules_total": 11,
+      "scope": "C++ generated from aarch64-vector.ldsl by codegen.py",
+      "unmatched": [
+        {
+          "index": 5,
+          "rule": "more t0 to v2s32 when fixed_vector(t0, s32) and lanes(t0) < 2",
+          "ruleset": "G_SMIN"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 2,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "memory descriptors",
+        "atomics",
+        "custom handlers",
+        "FP and calls"
+      ],
+      "id": "aarch64-vector-arith",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64.exe",
+      "oracle_sha256": "283ca76edc5fbc48118bc741b48fbdd28c964024a8c04083fd0d51c07947ae4a",
+      "oracle_size": 32883712,
+      "problems": [],
+      "queries": 120,
+      "report": "aarch64-vector-arith-conformance-report.json",
+      "rules": "aarch64-vector-arith.ldsl",
+      "rules_matched": 13,
+      "rules_sha256": "cc410b4fc51c7b2996f3e101d15d0286400896bd85852bb71e9ac05f81dc3f81",
+      "rules_total": 15,
+      "scope": "AArch64 generic G_ADD/G_SUB/G_AND/G_OR/G_XOR: legalFor, scalar clamps, lane-count clamps, minScalarOrEltIf, scalarizeIf and moreElementsToNextPow2",
+      "unmatched": [
+        {
+          "index": 6,
+          "rule": "more t0 to v2s32 when fixed_vector(t0, s32) and lanes(t0) < 2",
+          "ruleset": "G_ADD"
+        },
+        {
+          "index": 8,
+          "rule": "more t0 to v2s64 when fixed_vector(t0, s64) and lanes(t0) < 2",
+          "ruleset": "G_ADD"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 2,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "memory descriptors",
+        "atomics",
+        "custom handlers",
+        "FP and calls"
+      ],
+      "id": "aarch64-vector-arith-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-vector-arith-gen.exe",
+      "oracle_sha256": "06b60a4be52f1192016f165f7cc3c94a0204339a42a189e56db52a48d163640a",
+      "oracle_size": 4251648,
+      "problems": [],
+      "queries": 120,
+      "report": "aarch64-vector-arith-gen-conformance-report.json",
+      "rules": "aarch64-vector-arith.ldsl",
+      "rules_matched": 13,
+      "rules_sha256": "cc410b4fc51c7b2996f3e101d15d0286400896bd85852bb71e9ac05f81dc3f81",
+      "rules_total": 15,
+      "scope": "C++ generated from aarch64-vector-arith.ldsl by codegen.py",
+      "unmatched": [
+        {
+          "index": 6,
+          "rule": "more t0 to v2s32 when fixed_vector(t0, s32) and lanes(t0) < 2",
+          "ruleset": "G_ADD"
+        },
+        {
+          "index": 8,
+          "rule": "more t0 to v2s64 when fixed_vector(t0, s64) and lanes(t0) < 2",
+          "ruleset": "G_ADD"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 2,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "memory descriptors",
+        "atomics",
+        "custom handlers",
+        "FP and calls"
+      ],
+      "id": "aarch64-vector-mul",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64.exe",
+      "oracle_sha256": "283ca76edc5fbc48118bc741b48fbdd28c964024a8c04083fd0d51c07947ae4a",
+      "oracle_size": 32883712,
+      "problems": [],
+      "queries": 24,
+      "report": "aarch64-vector-mul-conformance-report.json",
+      "rules": "aarch64-vector-mul.ldsl",
+      "rules_matched": 13,
+      "rules_sha256": "902fb69e06b9b2c34e9371249bed04d7a89a5d521b10f7123810f5bc5f27d662",
+      "rules_total": 15,
+      "scope": "AArch64 generic G_MUL: legalFor, scalar clamps, lane-count clamps, minScalarOrEltIf, scalarizeIf and moreElementsToNextPow2",
+      "unmatched": [
+        {
+          "index": 6,
+          "rule": "more t0 to v2s32 when fixed_vector(t0, s32) and lanes(t0) < 2",
+          "ruleset": "G_MUL"
+        },
+        {
+          "index": 8,
+          "rule": "more t0 to v2s64 when fixed_vector(t0, s64) and lanes(t0) < 2",
+          "ruleset": "G_MUL"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 2,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "memory descriptors",
+        "atomics",
+        "custom handlers",
+        "FP and calls"
+      ],
+      "id": "aarch64-vector-mul-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-vector-mul-gen.exe",
+      "oracle_sha256": "0cb42ae72c5822cb6c230c617643681bd9596e4870e6edd38747852b93b1de86",
+      "oracle_size": 4251136,
+      "problems": [],
+      "queries": 24,
+      "report": "aarch64-vector-mul-gen-conformance-report.json",
+      "rules": "aarch64-vector-mul.ldsl",
+      "rules_matched": 13,
+      "rules_sha256": "902fb69e06b9b2c34e9371249bed04d7a89a5d521b10f7123810f5bc5f27d662",
+      "rules_total": 15,
+      "scope": "C++ generated from aarch64-vector-mul.ldsl by codegen.py",
+      "unmatched": [
+        {
+          "index": 6,
+          "rule": "more t0 to v2s32 when fixed_vector(t0, s32) and lanes(t0) < 2",
+          "ruleset": "G_MUL"
+        },
+        {
+          "index": 8,
+          "rule": "more t0 to v2s64 when fixed_vector(t0, s64) and lanes(t0) < 2",
+          "ruleset": "G_MUL"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 2,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "memory descriptors",
+        "atomics",
+        "custom handlers",
+        "FP and calls"
+      ],
+      "id": "aarch64-vector-shift",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64.exe",
+      "oracle_sha256": "283ca76edc5fbc48118bc741b48fbdd28c964024a8c04083fd0d51c07947ae4a",
+      "oracle_size": 32883712,
+      "problems": [],
+      "queries": 270,
+      "report": "aarch64-vector-shift-conformance-report.json",
+      "rules": "aarch64-vector-shift.ldsl",
+      "rules_matched": 19,
+      "rules_sha256": "27638cdc5c3ca63c6a639f72ce1479d0dd9bf66ccf391afca0963f4ecba25d53",
+      "rules_total": 21,
+      "scope": "AArch64 generic G_SHL/G_ASHR/G_LSHR: two-slot scalar/vector interaction (minScalarSameAs, min/maxScalarEltSameAsIf), scalar clamps, lane-count clamps, scalarizeIf and moreElementsToNextPow2",
+      "unmatched": [
+        {
+          "index": 12,
+          "rule": "more t0 to v2s32 when fixed_vector(t0, s32) and lanes(t0) < 2",
+          "ruleset": "G_SHL"
+        },
+        {
+          "index": 14,
+          "rule": "more t0 to v2s64 when fixed_vector(t0, s64) and lanes(t0) < 2",
+          "ruleset": "G_SHL"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 2,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "memory descriptors",
+        "atomics",
+        "custom handlers",
+        "FP and calls"
+      ],
+      "id": "aarch64-vector-shift-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-vector-shift-gen.exe",
+      "oracle_sha256": "392d73f6a45440b7f6c738c31beaada4483725106b0d9728bda1f44c3309a3e0",
+      "oracle_size": 4261888,
+      "problems": [],
+      "queries": 270,
+      "report": "aarch64-vector-shift-gen-conformance-report.json",
+      "rules": "aarch64-vector-shift.ldsl",
+      "rules_matched": 19,
+      "rules_sha256": "27638cdc5c3ca63c6a639f72ce1479d0dd9bf66ccf391afca0963f4ecba25d53",
+      "rules_total": 21,
+      "scope": "C++ generated from aarch64-vector-shift.ldsl by codegen.py",
+      "unmatched": [
+        {
+          "index": 12,
+          "rule": "more t0 to v2s32 when fixed_vector(t0, s32) and lanes(t0) < 2",
+          "ruleset": "G_SHL"
+        },
+        {
+          "index": 14,
+          "rule": "more t0 to v2s64 when fixed_vector(t0, s64) and lanes(t0) < 2",
+          "ruleset": "G_SHL"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 1,
+      "declared_unreachable": 3,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "memory descriptors",
+        "atomics",
+        "custom handler bodies",
+        "FP and calls"
+      ],
+      "id": "aarch64-icmp",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64.exe",
+      "oracle_sha256": "283ca76edc5fbc48118bc741b48fbdd28c964024a8c04083fd0d51c07947ae4a",
+      "oracle_size": 32883712,
+      "problems": [],
+      "queries": 173,
+      "report": "aarch64-icmp-conformance-report.json",
+      "rules": "aarch64-icmp.ldsl",
+      "rules_matched": 19,
+      "rules_sha256": "5acb2757a6b3568ce47fb4fbc65adc4e749430e4a665292705f7b7e8680c7a77",
+      "rules_total": 23,
+      "scope": "AArch64 generic G_ICMP: result/operand slot relation, widenScalarOrEltToNextPow2, minScalarOrElt, pointer-vector result widening and scalar/lane clamps",
+      "unmatched": [
+        {
+          "index": 14,
+          "rule": "more t1 to v4s16 when fixed_vector(t1, s16) and lanes(t1) < 4",
+          "ruleset": "G_ICMP"
+        },
+        {
+          "index": 16,
+          "rule": "more t1 to v2s32 when fixed_vector(t1, s32) and lanes(t1) < 2",
+          "ruleset": "G_ICMP"
+        },
+        {
+          "index": 18,
+          "rule": "more t1 to v2s64 when fixed_vector(t1, s64) and lanes(t1) < 2",
+          "ruleset": "G_ICMP"
+        },
+        {
+          "index": 20,
+          "rule": "more t1 to v2p0:64 when fixed_vector(t1, p0:64) and lanes(t1) < 2",
+          "ruleset": "G_ICMP"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 1,
+      "declared_unreachable": 3,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "memory descriptors",
+        "atomics",
+        "custom handler bodies",
+        "FP and calls"
+      ],
+      "id": "aarch64-icmp-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-icmp-gen.exe",
+      "oracle_sha256": "168d0c1059a76445054f0072fef7d262b454c59d06157662101c9841a608f36a",
+      "oracle_size": 4261376,
+      "problems": [],
+      "queries": 173,
+      "report": "aarch64-icmp-gen-conformance-report.json",
+      "rules": "aarch64-icmp.ldsl",
+      "rules_matched": 19,
+      "rules_sha256": "5acb2757a6b3568ce47fb4fbc65adc4e749430e4a665292705f7b7e8680c7a77",
+      "rules_total": 23,
+      "scope": "C++ generated from aarch64-icmp.ldsl by codegen.py",
+      "unmatched": [
+        {
+          "index": 14,
+          "rule": "more t1 to v4s16 when fixed_vector(t1, s16) and lanes(t1) < 4",
+          "ruleset": "G_ICMP"
+        },
+        {
+          "index": 16,
+          "rule": "more t1 to v2s32 when fixed_vector(t1, s32) and lanes(t1) < 2",
+          "ruleset": "G_ICMP"
+        },
+        {
+          "index": 18,
+          "rule": "more t1 to v2s64 when fixed_vector(t1, s64) and lanes(t1) < 2",
+          "ruleset": "G_ICMP"
+        },
+        {
+          "index": 20,
+          "rule": "more t1 to v2p0:64 when fixed_vector(t1, p0:64) and lanes(t1) < 2",
+          "ruleset": "G_ICMP"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 1,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "memory descriptors",
+        "atomics",
+        "custom handler bodies",
+        "libcall target lowering / ABI",
+        "+fullfp16 (HasFP16 = false is frozen)"
+      ],
+      "id": "aarch64-fcmp",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64.exe",
+      "oracle_sha256": "283ca76edc5fbc48118bc741b48fbdd28c964024a8c04083fd0d51c07947ae4a",
+      "oracle_size": 32883712,
+      "problems": [],
+      "queries": 185,
+      "report": "aarch64-fcmp-conformance-report.json",
+      "rules": "aarch64-fcmp.ldsl",
+      "rules_matched": 13,
+      "rules_sha256": "f99046f45aef4209515bd38c40f6f4abe3f8a6471a6b508da8a6855106b02a9d",
+      "rules_total": 14,
+      "scope": "AArch64 generic G_FCMP: integer mask result, float operand, mixed-slot widening, scalarize of 128-bit vectors, lane clamps and the s128 libcall",
+      "unmatched": [
+        {
+          "index": 9,
+          "rule": "more t1 to v2s32 when fixed_vector(t1, s32) and lanes(t1) < 2",
+          "ruleset": "G_FCMP"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 1,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "memory descriptors",
+        "atomics",
+        "custom handler bodies",
+        "libcall target lowering / ABI",
+        "+fullfp16 (HasFP16 = false is frozen)"
+      ],
+      "id": "aarch64-fcmp-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-fcmp-gen.exe",
+      "oracle_sha256": "8265f2059d857acab46f734ff87bba7ba559b91b2fbf8f0f332c41e5980eb367",
+      "oracle_size": 4252160,
+      "problems": [],
+      "queries": 185,
+      "report": "aarch64-fcmp-gen-conformance-report.json",
+      "rules": "aarch64-fcmp.ldsl",
+      "rules_matched": 13,
+      "rules_sha256": "f99046f45aef4209515bd38c40f6f4abe3f8a6471a6b508da8a6855106b02a9d",
+      "rules_total": 14,
+      "scope": "C++ generated from aarch64-fcmp.ldsl by codegen.py, with LLT::setUseExtended(true) declared explicitly",
+      "unmatched": [
+        {
+          "index": 9,
+          "rule": "more t1 to v2s32 when fixed_vector(t1, s32) and lanes(t1) < 2",
+          "ruleset": "G_FCMP"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "custom handler bodies (legalizeConcatVectors MIR)",
+        "bitcast successors outside the concat contract",
+        "memory descriptors and atomics",
+        "calls / ABI"
+      ],
+      "id": "aarch64-concat-vectors",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64.exe",
+      "oracle_sha256": "283ca76edc5fbc48118bc741b48fbdd28c964024a8c04083fd0d51c07947ae4a",
+      "oracle_size": 32883712,
+      "problems": [],
+      "queries": 28,
+      "report": "aarch64-concat-vectors-conformance-report.json",
+      "rules": "aarch64-concat-vectors.ldsl",
+      "rules_matched": 3,
+      "rules_sha256": "9eb16cf9ae4afba3db88857cf36331bfa4f857a66b58696fc69dd20d7be4e674",
+      "rules_total": 3,
+      "scope": "AArch64 generic G_CONCAT_VECTORS: legalFor pairs, the sub-byte custom escape hatch, and the concat bitcast (source total size plus result lane division)",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "scalable vectors (SVE)",
+        "custom handler bodies (legalizeConcatVectors MIR)",
+        "bitcast successors outside the concat contract",
+        "memory descriptors and atomics",
+        "calls / ABI"
+      ],
+      "id": "aarch64-concat-vectors-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-aarch64/legalizer-oracle-aarch64-concat-gen.exe",
+      "oracle_sha256": "b6fb65f52c19d394cb24d0c0f9eaac62010c9e2fb6cc2b4de66ea161731ffd8d",
+      "oracle_size": 4230144,
+      "problems": [],
+      "queries": 28,
+      "report": "aarch64-concat-vectors-gen-conformance-report.json",
+      "rules": "aarch64-concat-vectors.ldsl",
+      "rules_matched": 3,
+      "rules_sha256": "9eb16cf9ae4afba3db88857cf36331bfa4f857a66b58696fc69dd20d7be4e674",
+      "rules_total": 3,
+      "scope": "C++ generated from aarch64-concat-vectors.ldsl by codegen.py, with LLT::setUseExtended(true) declared explicitly",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
+        "vector / scalable vector",
+        "memory descriptors and atomics",
+        "FP (F/D) and calls"
+      ],
+      "id": "riscv64-scalar",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv.exe",
+      "oracle_sha256": "4a29aa21136c80cc125737667661ca02f09194bbbd79de159820dfc87c35faf2",
+      "oracle_size": 33523712,
+      "problems": [],
+      "queries": 7861,
+      "report": "riscv64-scalar-conformance-report.json",
+      "rules": "riscv64-scalar.ldsl",
+      "rules_matched": 103,
+      "rules_sha256": "f114b3108346c412049493b000f7d0a1bc22e3c44fb5d1575e4f75a0b9b3145f",
+      "rules_total": 103,
+      "scope": "RV64 generic-rv64 (+64bit,+i) scalar subset",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
+        "vector / scalable vector",
+        "memory descriptors and atomics",
+        "FP (F/D) and calls"
+      ],
+      "id": "riscv64-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv-gen.exe",
+      "oracle_sha256": "359b0e7d881a821e9ff216e29f24c71b7df2f7e3918b8b920b36eac1fe48c516",
+      "oracle_size": 4315648,
+      "problems": [],
+      "queries": 7861,
+      "report": "riscv64-gen-conformance-report.json",
+      "rules": "riscv64-scalar.ldsl",
+      "rules_matched": 103,
+      "rules_sha256": "f114b3108346c412049493b000f7d0a1bc22e3c44fb5d1575e4f75a0b9b3145f",
+      "rules_total": 103,
+      "scope": "C++ generated from riscv64-scalar.ldsl by codegen.py (RV64)",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 1,
+      "divergences": 0,
+      "excludes": [
+        "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
+        "vector / scalable vector",
+        "memory descriptors and atomics",
+        "FP (F/D) and calls"
+      ],
+      "id": "riscv64-mzb-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv-mzb-gen.exe",
+      "oracle_sha256": "fabc24c1e1bff432faa7f57260b207457d351546a8a3ffdc7bc51fc3e4fb9e16",
+      "oracle_size": 4331008,
+      "problems": [],
+      "queries": 7861,
+      "report": "riscv64-mzb-gen-conformance-report.json",
+      "rules": "riscv64-mzb-scalar.ldsl",
+      "rules_matched": 117,
+      "rules_sha256": "8ffd42936d66c85cb89c7d6b588b36d5b298758d1365705d56096de016fdfb30",
+      "rules_total": 118,
+      "scope": "C++ generated from riscv64-mzb-scalar.ldsl by codegen.py",
+      "unmatched": [
+        {
+          "index": 7,
+          "rule": "lower",
+          "ruleset": "G_CTLZ"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
+        "vector / scalable vector",
+        "memory descriptors and atomics",
+        "FP (F/D) and calls"
+      ],
+      "id": "riscv64-pointer",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv.exe",
+      "oracle_sha256": "4a29aa21136c80cc125737667661ca02f09194bbbd79de159820dfc87c35faf2",
+      "oracle_size": 33523712,
+      "problems": [],
+      "queries": 770,
+      "report": "riscv64-pointer-conformance-report.json",
+      "rules": "riscv64-pointer.ldsl",
+      "rules_matched": 32,
+      "rules_sha256": "7a30477c0ae0f8570a41f8c49fa795a89090ef4acb8d28e0942840e692ef1bc9",
+      "rules_total": 32,
+      "scope": "RV64 pointer subset",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 1,
+      "divergences": 0,
+      "excludes": [
+        "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
+        "vector / scalable vector",
+        "memory descriptors and atomics",
+        "FP (F/D) and calls"
+      ],
+      "id": "riscv64-mzb-scalar",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv-mzb.exe",
+      "oracle_sha256": "8af23627703aa8982a2c7aa6682864043291c418d82c8438ef234b1a4d65d2df",
+      "oracle_size": 33523712,
+      "problems": [],
+      "queries": 7861,
+      "report": "riscv64-mzb-scalar-conformance-report.json",
+      "rules": "riscv64-mzb-scalar.ldsl",
+      "rules_matched": 117,
+      "rules_sha256": "8ffd42936d66c85cb89c7d6b588b36d5b298758d1365705d56096de016fdfb30",
+      "rules_total": 118,
+      "scope": "RV64 scalar subset with +m,+zmmul,+zbb",
+      "unmatched": [
+        {
+          "index": 7,
+          "rule": "lower",
+          "ruleset": "G_CTLZ"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
+        "vector / scalable vector",
+        "memory descriptors and atomics",
+        "FP (F/D) and calls"
+      ],
+      "id": "riscv64-pointer-mzb",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv-mzb.exe",
+      "oracle_sha256": "8af23627703aa8982a2c7aa6682864043291c418d82c8438ef234b1a4d65d2df",
+      "oracle_size": 33523712,
+      "problems": [],
+      "queries": 770,
+      "report": "riscv64-pointer-mzb-conformance-report.json",
+      "rules": "riscv64-pointer.ldsl",
+      "rules_matched": 32,
+      "rules_sha256": "7a30477c0ae0f8570a41f8c49fa795a89090ef4acb8d28e0942840e692ef1bc9",
+      "rules_total": 32,
+      "scope": "RV64 pointer subset with +m,+zmmul,+zbb",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
+        "vector / scalable vector",
+        "memory descriptors and atomics",
+        "FP (F/D) and calls"
+      ],
+      "id": "riscv32-scalar",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv32.exe",
+      "oracle_sha256": "6933bed234264be91b51a9e865f4a751b53922c344ef2823ece53c56af52f402",
+      "oracle_size": 33523712,
+      "problems": [],
+      "queries": 7861,
+      "report": "riscv32-scalar-conformance-report.json",
+      "rules": "riscv32-scalar.ldsl",
+      "rules_matched": 100,
+      "rules_sha256": "933cd5a229754e1e407f625af4ee1763ad2b1023395000585a9e79f8c9bb6d28",
+      "rules_total": 100,
+      "scope": "RV32 generic-rv32 (+32bit,+i) scalar subset",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
+        "vector / scalable vector",
+        "memory descriptors and atomics",
+        "FP (F/D) and calls"
+      ],
+      "id": "riscv32-generated",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv32-gen.exe",
+      "oracle_sha256": "68440f60aaa9daffec4763204e27a04b97c913cc1140566a9b10c019a29b2bb5",
+      "oracle_size": 4310016,
+      "problems": [],
+      "queries": 7861,
+      "report": "riscv32-gen-conformance-report.json",
+      "rules": "riscv32-scalar.ldsl",
+      "rules_matched": 100,
+      "rules_sha256": "933cd5a229754e1e407f625af4ee1763ad2b1023395000585a9e79f8c9bb6d28",
+      "rules_total": 100,
+      "scope": "C++ generated from riscv32-scalar.ldsl by codegen.py",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 4,
+      "divergences": 0,
+      "excludes": [
+        "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
+        "vector / scalable vector",
+        "memory descriptors and atomics",
+        "FP (F/D) and calls"
+      ],
+      "id": "riscv32-mzb-scalar",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv32-mzb.exe",
+      "oracle_sha256": "6d303b451e1abcfc583de3826f4de00e603f56179835c8050bcfd38c019737f9",
+      "oracle_size": 33523712,
+      "problems": [],
+      "queries": 7861,
+      "report": "riscv32-mzb-scalar-conformance-report.json",
+      "rules": "riscv32-mzb-scalar.ldsl",
+      "rules_matched": 111,
+      "rules_sha256": "bf696467d124f8110fd25b104b971a1445bcf8808a52cee235d0c3d67e2eed1f",
+      "rules_total": 115,
+      "scope": "RV32 scalar subset with +m,+zmmul,+zbb",
+      "unmatched": [
+        {
+          "index": 1,
+          "rule": "custom when (t0 == s32) and (t1 == s32)",
+          "ruleset": "G_CTLZ"
+        },
+        {
+          "index": 4,
+          "rule": "widen t0 to next_pow2(bits(t0), 0) when (scalar(t0)) and (not is_pow2(bits(t0)))",
+          "ruleset": "G_CTLZ"
+        },
+        {
+          "index": 7,
+          "rule": "lower",
+          "ruleset": "G_CTLZ"
+        },
+        {
+          "index": 1,
+          "rule": "custom when t0 == s32",
+          "ruleset": "G_SDIV"
+        }
+      ]
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
+        "vector / scalable vector",
+        "memory descriptors and atomics",
+        "FP (F/D) and calls"
+      ],
+      "id": "riscv32-pointer",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv32.exe",
+      "oracle_sha256": "6933bed234264be91b51a9e865f4a751b53922c344ef2823ece53c56af52f402",
+      "oracle_size": 33523712,
+      "problems": [],
+      "queries": 770,
+      "report": "riscv32-pointer-conformance-report.json",
+      "rules": "riscv32-pointer.ldsl",
+      "rules_matched": 31,
+      "rules_sha256": "d9004611a870a552e0fcef276c9df9f46928503f50490185292c90d62402fe14",
+      "rules_total": 31,
+      "scope": "RV32 pointer subset",
+      "unmatched": []
+    },
+    {
+      "config": {},
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
+        "vector / scalable vector",
+        "memory descriptors and atomics",
+        "FP (F/D) and calls"
+      ],
+      "id": "riscv32-pointer-mzb",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv32-mzb.exe",
+      "oracle_sha256": "6d303b451e1abcfc583de3826f4de00e603f56179835c8050bcfd38c019737f9",
+      "oracle_size": 33523712,
+      "problems": [],
+      "queries": 770,
+      "report": "riscv32-pointer-mzb-conformance-report.json",
+      "rules": "riscv32-pointer.ldsl",
+      "rules_matched": 31,
+      "rules_sha256": "d9004611a870a552e0fcef276c9df9f46928503f50490185292c90d62402fe14",
+      "rules_total": 31,
+      "scope": "RV32 pointer subset with +m,+zmmul,+zbb",
+      "unmatched": []
+    },
+    {
+      "config": {
+        "is64bit": true,
+        "sXLen": "s64"
+      },
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "everything outside G_CONSTANT"
+      ],
+      "id": "riscv-conditional-gconstant-rv64",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv.exe",
+      "oracle_sha256": "4a29aa21136c80cc125737667661ca02f09194bbbd79de159820dfc87c35faf2",
+      "oracle_size": 33523712,
+      "problems": [],
+      "queries": 9,
+      "report": "riscv-conditional-gconstant-rv64-conformance.json",
+      "rules": "riscv-conditional-gconstant.ldsl",
+      "rules_matched": 4,
+      "rules_sha256": "ce28a4e5301f1aa41ef141b1545f877e932269582c81d162ce1e8d438f85e702",
+      "rules_total": 4,
+      "scope": "G_CONSTANT guard experiment, RV64",
+      "unmatched": []
+    },
+    {
+      "config": {
+        "is64bit": false,
+        "sXLen": "s32"
+      },
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "everything outside G_CONSTANT"
+      ],
+      "id": "riscv-conditional-gconstant-rv32",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv32.exe",
+      "oracle_sha256": "6933bed234264be91b51a9e865f4a751b53922c344ef2823ece53c56af52f402",
+      "oracle_size": 33523712,
+      "problems": [],
+      "queries": 9,
+      "report": "riscv-conditional-gconstant-rv32-conformance.json",
+      "rules": "riscv-conditional-gconstant.ldsl",
+      "rules_matched": 4,
+      "rules_sha256": "ce28a4e5301f1aa41ef141b1545f877e932269582c81d162ce1e8d438f85e702",
+      "rules_total": 4,
+      "scope": "G_CONSTANT guard experiment, RV32",
+      "unmatched": []
+    },
+    {
+      "config": {
+        "is64bit": true,
+        "sDoubleXLen": "s128",
+        "sXLen": "s64"
+      },
+      "declared_shadowed": 0,
+      "declared_unreachable": 0,
+      "divergences": 0,
+      "excludes": [
+        "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
+        "vector / scalable vector",
+        "memory descriptors and atomics",
+        "FP (F/D) and calls"
+      ],
+      "id": "riscv-conditional-scalar-rv64",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv.exe",
+      "oracle_sha256": "4a29aa21136c80cc125737667661ca02f09194bbbd79de159820dfc87c35faf2",
+      "oracle_size": 33523712,
+      "problems": [],
+      "queries": 7861,
+      "report": "riscv-conditional-scalar-rv64-conformance.json",
+      "rules": "riscv-scalar-conditional.ldsl",
+      "rules_matched": 108,
+      "rules_sha256": "b9820a7f5bfc3f4e91cf02d05b8c8c8decf8d9087ef2737a0b443fb9f9d3d73a",
+      "rules_total": 108,
+      "scope": "one-source scalar subset, RV64",
+      "unmatched": []
+    },
+    {
+      "config": {
+        "is64bit": false,
+        "sDoubleXLen": "s64",
+        "sXLen": "s32"
+      },
+      "declared_shadowed": 0,
+      "declared_unreachable": 1,
+      "divergences": 0,
+      "excludes": [
+        "M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V",
+        "vector / scalable vector",
+        "memory descriptors and atomics",
+        "FP (F/D) and calls"
+      ],
+      "id": "riscv-conditional-scalar-rv32",
+      "llvm_build": "F:/llvm/build",
+      "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+      "ok": true,
+      "oracle": "oracle-riscv/legalizer-oracle-riscv32.exe",
+      "oracle_sha256": "6933bed234264be91b51a9e865f4a751b53922c344ef2823ece53c56af52f402",
+      "oracle_size": 33523712,
+      "problems": [],
+      "queries": 7861,
+      "report": "riscv-conditional-scalar-rv32-conformance.json",
+      "rules": "riscv-scalar-conditional.ldsl",
+      "rules_matched": 100,
+      "rules_sha256": "b9820a7f5bfc3f4e91cf02d05b8c8c8decf8d9087ef2737a0b443fb9f9d3d73a",
+      "rules_total": 101,
+      "scope": "one-source scalar subset, RV32",
+      "unmatched": [
+        {
+          "index": 0,
+          "rule": "legal when ((t0 == s32) and (bits(t0) == 64)) and (imm0 == 32)",
+          "ruleset": "G_SEXT_INREG"
+        }
+      ]
+    }
+  ],
+  "llvm_commit": "d855d9e48067026317998cbff734004f328f833d",
+  "schema": "legalizer-dsl-claims-v1"
+}

@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "description": "AArch64 G_ICMP subset: result/operand slot relation, scalar clamps, scalar/elt widen, pointer-vector shape clamp. Custom handler required for vector results; no libcall or lower handlers.",
+  "custom": {
+    "opcodes": [
+      "G_ICMP"
+    ]
+  },
+  "libcall": {
+    "opcodes": []
+  },
+  "lower": {
+    "opcodes": []
+  }
+}

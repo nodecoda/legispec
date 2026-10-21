@@ -1,0 +1,165 @@
+# RISC-V GlobalISel legality rules -- pointer subset, RV32.
+#
+# Transcribed from llvm/lib/Target/RISCV/GISel/RISCVLegalizerInfo.cpp
+# (LLVM d855d9e48067026317998cbff734004f328f833d).
+#
+# Configuration observed:
+#   triple      = riscv32-unknown-linux-gnu
+#   cpu         = generic-rv32
+#   code model  = small
+#   pointer     = LLT::pointer(0, 32), written p0:32
+#   features    = +32bit, +i (no M/Zmmul/Zbb/Zbc/Zbkc/P/V/F/D)
+#   XLen        = 32, sXLen = s32
+#
+# This is the XLen flip of riscv64-pointer.ldsl.  Every XLen substitution
+# moves: p0:64 -> p0:32, sXLen -> s32.  The rulesets themselves keep their
+# shape, which makes the diff a clean test of configuration sensitivity:
+#
+#   G_PTR_ADD/PTRMASK   legal (p0,s32)
+#   G_PTRTOINT          legal (s32,p0), clamp s32
+#   G_INTTOPTR          legal (p0,s32), clamp s32
+#   G_BRJT              custom (p0,s32)
+#   G_CONSTANT          legal {p0,s32}; no s64 Custom (RV64-only)
+#   G_PHI               legal {p0,s32}; clamp s32
+#   G_ICMP              legal (s32,s32),(s32,p0); clamp both to s32
+#   G_SELECT            legal (s32,s32),(p0,s32); clamp both to s32
+#
+# This is NOT a model of all RISC-V pointer legalization.  Omitted on purpose:
+#   * vector pointer types (nxv*i p0) and every V-gated rule
+#   * G_LOAD / G_STORE memory descriptors, atomics and address spaces
+#   * G_PTR_ADD custom rewrites (the policy layer is just legalFor here)
+#   * G_MERGE_VALUES / G_UNMERGE_VALUES, G_BITCAST
+#   * calls, jump tables in memory, and the actual legalizeCustom bodies
+#
+# Some opcodes appear both here and in riscv32-scalar.ldsl because their C++
+# ruleset mixes pointer and scalar shapes (G_CONSTANT, G_PHI, G_ICMP,
+# G_SELECT).  Each LDSL file is a standalone experiment: the scalar file
+# models only the scalar domain, this file adds p0:32 and re-states the whole
+# ruleset so the pointer branch is actually exercised.  The two files are
+# never loaded together.
+#
+# Configuration-level predicates are resolved at transcription time: on RV32
+# legalFor(!is64Bit(), {s32}) is active, while customFor(is64Bit(), {s64}) is
+# not emitted at all.
+#
+# LLVM LegalizeRuleSet::apply() returns the first matching rule and only
+# falls back to Unsupported after every rule has been tried.
+
+domain {
+    types {
+        p0:32, s1, s8, s16, s32, s48, s64, s96, s128, s256
+    };
+    imms {};
+    mems {};
+    q0 {
+        (G_PTR_ADD, [p0:32, s32]);
+        (G_PTR_ADD, [p0:32, s64]);
+        (G_PTRMASK, [p0:32, s128]);
+        (G_PTRTOINT, [s32, p0:32]);
+        (G_PTRTOINT, [s64, p0:32]);
+        (G_INTTOPTR, [p0:32, s32]);
+        (G_INTTOPTR, [p0:32, s64]);
+        (G_BRINDIRECT, [p0:32]);
+        (G_BRINDIRECT, [s32]);
+        (G_BRJT, [p0:32, s32]);
+        (G_BRJT, [p0:32, s64]);
+        (G_FRAME_INDEX, [p0:32]);
+        (G_FRAME_INDEX, [s32]);
+        (G_GLOBAL_VALUE, [p0:32]);
+        (G_GLOBAL_VALUE, [s32]);
+        (G_JUMP_TABLE, [p0:32]);
+        (G_CONSTANT_POOL, [p0:32]);
+        (G_CONSTANT, [p0:32]);
+        (G_CONSTANT, [s32]);
+        (G_CONSTANT, [s64]);
+        (G_PHI, [p0:32]);
+        (G_PHI, [s32]);
+        (G_PHI, [s64]);
+        (G_ICMP, [s32, p0:32]);
+        (G_ICMP, [s1, s1]);
+        (G_SELECT, [p0:32, s32]);
+        (G_SELECT, [s8, s8]);
+    }
+}
+
+# [C++:457]
+ruleset G_PTR_ADD, G_PTRMASK {
+    legal_for_pairs {(p0:32, s32)};
+}
+
+# [C++:459-461]
+ruleset G_PTRTOINT {
+    legal_for_pairs {(s32, p0:32)};
+    clamp_scalar 0, s32, s32;
+}
+
+# [C++:463-465]
+ruleset G_INTTOPTR {
+    legal_for_pairs {(p0:32, s32)};
+    clamp_scalar 1, s32, s32;
+}
+
+# [C++:473]
+ruleset G_BRINDIRECT {
+    legal_for {p0:32};
+}
+
+# [C++:471]
+# customFor({{p0, sXLen}}) -> (p0,s32): other shapes have no fallback.
+ruleset G_BRJT {
+    custom when t0 == p0:32 and t1 == s32;
+}
+
+# [C++:552]
+ruleset G_FRAME_INDEX {
+    legal_for {p0:32};
+}
+
+# [C++:480-481]
+ruleset G_GLOBAL_VALUE, G_JUMP_TABLE, G_CONSTANT_POOL {
+    legal_for {p0:32};
+}
+
+# [C++:290-295]
+# Full ruleset restated with p0 in the domain:
+#   legalFor({p0}); legalFor(!is64Bit(), {s32}) ACTIVE;
+#   customFor(RV64, {s64}) inactive; widenScalarToNextPow2(0);
+#   clampScalar(0, s32, s32).
+ruleset G_CONSTANT {
+    legal_for {p0:32, s32};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s32, s32;
+}
+
+# [C++:475-478]
+# Full ruleset restated with p0 in the domain:
+#   legalFor({p0, s32, sXLen}) -> {p0, s32};
+#   widenScalarToNextPow2(0); clampScalar(0, s32, s32).
+ruleset G_PHI {
+    legal_for {p0:32, s32};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s32, s32;
+}
+
+# [C++:316-322]
+# Full ruleset restated with p0 in the domain:
+#   legalFor({{sXLen,sXLen},{sXLen,p0}}) -> (s32,s32),(s32,p0).
+# t1's pow2/min8 rule only applies to scalars.
+ruleset G_ICMP {
+    legal_for_pairs {(s32, s32), (s32, p0:32)};
+    widen_to_next_pow2_or_min 1, 8;
+    clamp_scalar 1, s32, s32;
+    clamp_scalar 0, s32, s32;
+}
+
+# [C++:324-331]
+# Full ruleset restated with p0 in the domain:
+#   legalFor({{s32,sXLen},{p0,sXLen}}) -> (s32,s32),(p0,s32).
+# legalFor(XLen==64 || hasD, {{s64,sXLen}}) is inactive on RV32 without D.
+# clamp(0, s32, XLen==64||D ? s64 : s32) -> s32.
+ruleset G_SELECT {
+    legal_for_pairs {(s32, s32), (p0:32, s32)};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s32, s32;
+    clamp_scalar 1, s32, s32;
+}

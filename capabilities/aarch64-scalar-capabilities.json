@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "description": "AArch64 scalar subset experiment.  Custom: scalar 32-bit shifts, scalar abs, and the 32/64-bit popcount/cttz pairs.  Libcall: 128-bit division/remainder.  Lower: the scalar remainder family, overflow/high-multiply, carry-producing add/sub, min/max, and 128-bit abs.",
+  "custom": {
+    "opcodes": [
+      "G_SHL",
+      "G_ASHR",
+      "G_LSHR",
+      "G_ABS",
+      "G_CTPOP",
+      "G_CTTZ"
+    ]
+  },
+  "libcall": {
+    "opcodes": [
+      "G_SDIV",
+      "G_UDIV",
+      "G_SREM",
+      "G_UREM",
+      "G_SDIVREM",
+      "G_UDIVREM"
+    ]
+  },
+  "lower": {
+    "opcodes": [
+      "G_SREM",
+      "G_UREM",
+      "G_SDIVREM",
+      "G_UDIVREM",
+      "G_SMULO",
+      "G_UMULO",
+      "G_SMULH",
+      "G_UMULH",
+      "G_UADDE",
+      "G_USUBE",
+      "G_UADDO",
+      "G_USUBO",
+      "G_SADDE",
+      "G_SSUBE",
+      "G_SADDO",
+      "G_SSUBO",
+      "G_SMIN",
+      "G_SMAX",
+      "G_UMIN",
+      "G_UMAX",
+      "G_ABS"
+    ]
+  }
+}

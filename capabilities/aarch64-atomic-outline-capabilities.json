@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "description": "AArch64 +outline-atomics atomic subset.  UseOutlineAtomics is true, so the compare-and-swap and read-modify-write atomic families select Libcall.  Compare-and-swap-with-success still lowers.  No custom atomic rule is active.",
+  "custom": {
+    "opcodes": []
+  },
+  "libcall": {
+    "opcodes": [
+      "G_ATOMIC_CMPXCHG",
+      "G_ATOMICRMW_XCHG",
+      "G_ATOMICRMW_ADD",
+      "G_ATOMICRMW_SUB",
+      "G_ATOMICRMW_AND",
+      "G_ATOMICRMW_OR",
+      "G_ATOMICRMW_XOR"
+    ]
+  },
+  "lower": {
+    "opcodes": ["G_ATOMIC_CMPXCHG_WITH_SUCCESS"]
+  }
+}

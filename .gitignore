@@ -1,0 +1,20 @@
+# Local evidence cache: reports and oracle binaries are build outputs.
+out/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# CI scratch
+.ci/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini

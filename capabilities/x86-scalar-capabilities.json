@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "description": "X86-64 scalar subset experiment.  The modeled rules contain no Custom/Libcall/Lower actions: s64 div/rem is Legal on x86-64, and the C++ libcallFor({s64}) is shadowed by the preceding legalFor(Is64Bit, {s64}).",
+  "custom": { "opcodes": [] },
+  "libcall": { "opcodes": [] },
+  "lower": { "opcodes": [] }
+}

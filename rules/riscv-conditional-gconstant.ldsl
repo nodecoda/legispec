@@ -1,0 +1,39 @@
+# RISC-V G_CONSTANT with a compile-time configuration guard.
+#
+# This is the counterexample from RISC-VLegalizerInfo.cpp:290-295:
+#
+#   getActionDefinitionsBuilder(G_CONSTANT)
+#       .legalFor({p0})
+#       .legalFor(!ST.is64Bit(), {s32})
+#       .customFor(ST.is64Bit(), {s64})
+#       .widenScalarToNextPow2(0)
+#       .clampScalar(0, sXLen, sXLen);
+#
+# The p0 rule belongs to the separate pointer experiment.  The two
+# configuration-dependent rules are expressed once with compile-time guards:
+#
+#   RV64: is64bit=true,  sXLen=s64  -> s64 Custom, s32 Widen s64
+#   RV32: is64bit=false, sXLen=s32  -> s32 Legal,  s64 Narrow s32
+#
+# Guards are erased before rule ordering and static checks.  A false guard
+# emits no rule, exactly like LLVM's `if (!Pred) return *this;`.
+
+domain {
+    types { s1, s2, s3, s4, s8, s16, s32, s64, s128 };
+    imms {};
+    mems {};
+    q0 {
+        (G_CONSTANT, [s1]);
+        (G_CONSTANT, [s3]);
+        (G_CONSTANT, [s32]);
+        (G_CONSTANT, [s64]);
+        (G_CONSTANT, [s128]);
+    }
+}
+
+ruleset G_CONSTANT {
+    legal_for {s32} when not is64bit;
+    custom_for {s64} when is64bit;
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, sXLen, sXLen;
+}

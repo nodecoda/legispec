@@ -1,0 +1,86 @@
+# AArch64 GlobalISel legality rules -- fixed-vector subset.
+#
+# Transcribed from llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp
+# (LLVM d855d9e48067026317998cbff734004f328f833d):
+#
+#   G_SMIN/G_SMAX/G_UMIN/G_UMAX   lines 303-310
+#   G_ABDS family                 lines 334-337
+#   G_CLMUL                       line 431
+#
+# Configuration observed:
+#   triple      = aarch64-unknown-linux-gnu
+#   cpu         = generic
+#   NEON/FPARMv8 enabled
+#   HasCSSC        = false
+#   HasSVE         = false
+#
+# The HasCSSC legalFor/minScalar branches in the min/max family are
+# construction-time false and therefore emit no rule.
+#
+# Domain boundary:
+#   * fixed vectors only; no scalable vectors
+#   * one type slot per query (the rulesets only inspect type index 0)
+#   * no memory descriptors, FP, calls or atomics
+#   * no custom/lower rewriting bodies
+#
+# The element-count clamps mirror LLVM exactly:
+#
+#   clampNumElements(0, v8s8, v16s8)
+#     = MoreElements when fixed_vector(t0, s8) and lanes(t0) < 8
+#       -> v8s8
+#     . FewerElements when fixed_vector(t0, s8) and lanes(t0) > 16
+#       -> v16s8
+#
+# The first clamp in the min/max family is deliberately transcribed even
+# though its min half (lanes(t0) < 2 for s32) is unreachable: LLVM cannot
+# represent v1, since ElementCount::getFixed(1) is scalar.  This is recorded
+# as the single declared-unreachable rule in the claim ledger, not silently
+# dropped.
+#
+# Rule order is first-match order.  legalFor comes first; each
+# clampNumElements contributes min then max; lower is last.
+
+domain {
+    types {
+        s32, s64,
+        v2s8, v4s8, v8s8, v16s8, v32s8,
+        v2s16, v4s16, v8s16, v16s16,
+        v2s32, v4s32, v8s32,
+        v2s64, v4s64
+    };
+    imms {};
+    mems {};
+    q0 {
+        (G_SMIN, [v4s8]);
+        (G_SMAX, [v8s8]);
+        (G_UMIN, [v4s16]);
+        (G_UMAX, [v2s32]);
+        (G_ABDS, [v8s8]);
+        (G_ABDU, [v4s16]);
+        (G_UAVGFLOOR, [v2s32]);
+        (G_UAVGCEIL, [v4s32]);
+        (G_SAVGFLOOR, [v8s16]);
+        (G_SAVGCEIL, [v8s8]);
+        (G_CLMUL, [v8s8]);
+    }
+}
+
+# [C++:303-310]
+ruleset G_SMIN, G_SMAX, G_UMIN, G_UMAX {
+    legal_for {v8s8, v16s8, v4s16, v8s16, v2s32, v4s32};
+    clamp_num_elements 0, v8s8, v16s8;
+    clamp_num_elements 0, v4s16, v8s16;
+    clamp_num_elements 0, v2s32, v4s32;
+    lower;
+}
+
+# [C++:334-337]
+ruleset G_ABDS, G_ABDU, G_UAVGFLOOR, G_UAVGCEIL, G_SAVGFLOOR, G_SAVGCEIL {
+    legal_for {v8s8, v16s8, v4s16, v8s16, v2s32, v4s32};
+    lower;
+}
+
+# [C++:431]
+ruleset G_CLMUL {
+    legal_for {v8s8, v16s8};
+}

@@ -1,0 +1,200 @@
+# X86-64 GlobalISel legality rules -- scalar subset.
+#
+# Transcribed from llvm/lib/Target/X86/GISel/X86LegalizerInfo.cpp.
+# Configuration observed: x86_64, CPU=generic, default features.
+#   Is64Bit = true, sMaxScalar = s64, p0 = pointer(0, 64).
+#
+# This is deliberately NOT a model of all of X86.  The following C++
+# clauses are outside this experiment and are omitted:
+#   * every vector legalFor / vector legality clause
+#   * clampMinNumElements / clampMaxNumElements
+#   * moreElementsToNextPow2 / scalarize
+#   * memory descriptors, custom legalization, FP, atomics.
+# The domain below contains only scalar and pointer LLTs, so each omitted
+# clause is vector-only and cannot change an observation in this domain.
+#
+# Rule order is significant: LLVM LegalizeRuleSet::apply() returns the
+# first matching rule and only falls back to Unsupported after all rules.
+
+domain {
+    types {
+        s1, s2, s3, s4, s5, s6, s7, s8, s12, s16, s20, s24,
+        s32, s40, s48, s64, s80, s96, s128, s256,
+        p0, p0:64
+    };
+    imms {};
+    mems {};
+    q0 {
+        (G_ADD, [s32]);
+        (G_SUB, [s24]);
+        (G_CONSTANT, [s32]);
+        (G_CONSTANT, [p0:64]);
+        (G_SDIV, [s32]);
+        (G_UREM, [s24]);
+        (G_SHL, [s32, s32]);
+        (G_ASHR, [s24, s16]);
+        (G_ICMP, [s8, s32]);
+        (G_ICMP, [s32, s1]);
+        (G_TRUNC, [s8, s32]);
+        (G_TRUNC, [s64, s128]);
+        (G_MUL, [s24]);
+        (G_UMULH, [s32]);
+        (G_AND, [s1]);
+        (G_UADDO, [s16, s16]);
+        (G_BSWAP, [s16]);
+        (G_INTTOPTR, [p0:64, s64]);
+        (G_PTR_ADD, [p0:64, s16]);
+        (G_PTRTOINT, [s24, p0:64]);
+        (G_ANYEXT, [s32, s1]);
+        (G_SEXT, [s32, s8]);
+        (G_ZEXT, [s32, s8]);
+        (G_BRCOND, [s32]);
+        (G_BR, []);
+    }
+}
+
+# [C++:187-204]
+# General integer add/sub.  Legal scalar sizes are s8/s16/s32 plus s64
+# when Is64Bit.  Vector legalFor and vector clamp/scalarize clauses do not
+# match scalar queries and are omitted.
+ruleset G_ADD, G_SUB {
+    legal_for {s8, s16, s32, s64};
+    widen_to_next_pow2 0, 32;
+    clamp_scalar 0, s8, s64;
+}
+
+# [C++:114-118]
+ruleset G_CONSTANT {
+    legal_for {p0:64, s8, s16, s32, s64};
+    widen_to_next_pow2 0, 8;
+    clamp_scalar 0, s8, s64;
+}
+
+# [C++:243-247]
+# On x86-64 the C++ rule .libcallFor({s64}) is shadowed by the preceding
+# .legalFor(Is64Bit, {s64}); it only becomes reachable on 32-bit X86.
+ruleset G_SDIV, G_SREM, G_UDIV, G_UREM {
+    legal_for {s8, s16, s32, s64};
+    clamp_scalar 0, s8, s64;
+}
+
+# [C++:250-254]
+# The shift amount is clamped to s8 after the result type is clamped.
+ruleset G_SHL, G_LSHR, G_ASHR {
+    legal_for_pairs {(s8, s8), (s16, s8), (s32, s8), (s64, s8)};
+    clamp_scalar 0, s8, s64;
+    clamp_scalar 1, s8, s8;
+}
+
+# [C++:275-279]
+# IntTypes64 = {s8, s16, s32, s64, p0}; the result type is clamped to s8.
+ruleset G_ICMP {
+    legal_for_pairs {
+        (s8, s8), (s8, s16), (s8, s32), (s8, s64), (s8, p0:64)
+    };
+    clamp_scalar 0, s8, s8;
+    widen_to_next_pow2 1, 8;
+    clamp_scalar 1, s8, s64;
+}
+
+# [C++:431-432] legalForCartesianProduct({s1,s8,s16,s32,s64},
+#                                      {s8,s16,s32,s64,s128})
+ruleset G_TRUNC {
+    legal_for_pairs {
+        (s1, s8), (s1, s16), (s1, s32), (s1, s64), (s1, s128),
+        (s8, s8), (s8, s16), (s8, s32), (s8, s64), (s8, s128),
+        (s16, s8), (s16, s16), (s16, s32), (s16, s64), (s16, s128),
+        (s32, s8), (s32, s16), (s32, s32), (s32, s64), (s32, s128),
+        (s64, s8), (s64, s16), (s64, s32), (s64, s64), (s64, s128)
+    };
+}
+
+# [C++:206-212]
+# Carry-producing add/sub.  The carry is s8 in the legalizer, not s1.
+ruleset G_UADDE, G_UADDO, G_USUBE, G_USUBO {
+    legal_for_pairs {(s8, s8), (s16, s8), (s32, s8), (s64, s8)};
+    widen_to_next_pow2 0, 32;
+    clamp_scalar 0, s8, s64;
+    clamp_scalar 1, s8, s8;
+}
+
+# [C++:215-233]
+# Scalar subset; vector legalFor and clampNumElements are vector-only.
+ruleset G_MUL {
+    legal_for {s8, s16, s32, s64};
+    widen_to_next_pow2 0, 32;
+    clamp_scalar 0, s8, s64;
+}
+
+# [C++:235-240]
+ruleset G_SMULH, G_UMULH {
+    legal_for {s8, s16, s32, s64};
+    widen_to_next_pow2 0, 32;
+    clamp_scalar 0, s8, s64;
+}
+
+# [C++:257-269]
+# Scalar subset; vector legalFor and clampNumElements are vector-only.
+ruleset G_AND, G_OR, G_XOR {
+    legal_for {s8, s16, s32, s64};
+    widen_to_next_pow2 0, 32;
+    clamp_scalar 0, s8, s64;
+}
+
+# [C++:282-286]
+ruleset G_BSWAP {
+    legal_for {s32, s64};
+    widen_to_next_pow2 0, 32;
+    clamp_scalar 0, s32, s64;
+}
+
+# [C++:326-329]
+# PtrTypes64 = {s1, s8, s16, s32, s64}; maxScalar(0, s64) is written as
+# an explicit narrow rule because there is no scalar narrower than s1.
+ruleset G_PTRTOINT {
+    legal_for_pairs {
+        (s1, p0:64), (s8, p0:64), (s16, p0:64), (s32, p0:64), (s64, p0:64)
+    };
+    narrow t0 to s64 when scalar(t0) and bits(t0) > 64;
+    widen_to_next_pow2 0, 8;
+}
+
+# [C++:331]
+ruleset G_INTTOPTR {
+    legal_for_pairs {(p0:64, s64)};
+}
+
+# [C++:335-339]
+ruleset G_PTR_ADD {
+    legal_for_pairs {(p0:64, s32), (p0:64, s64)};
+    widen_to_next_pow2 1, 32;
+    clamp_scalar 1, s32, s64;
+}
+
+# [C++:413-420]
+# legalFor only constrains t0, so any t1 is legal with a legal t0.
+ruleset G_ANYEXT {
+    legal when t0 in {s8, s16, s32, s64, s128};
+    widen_to_next_pow2 0, 8;
+    clamp_scalar 0, s8, s64;
+    widen_to_next_pow2 1, 8;
+    clamp_scalar 1, s8, s64;
+}
+
+# [C++:422-429]
+ruleset G_SEXT, G_ZEXT {
+    legal when t0 in {s8, s16, s32, s64};
+    widen_to_next_pow2 0, 8;
+    clamp_scalar 0, s8, s64;
+    widen_to_next_pow2 1, 8;
+    clamp_scalar 1, s8, s64;
+}
+
+# [C++:319-320]
+ruleset G_BR {
+    always_legal;
+}
+
+ruleset G_BRCOND {
+    legal_for {s1};
+}

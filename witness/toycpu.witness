@@ -1,0 +1,1153 @@
+# ToyCPU witness corpus, spec v0.1
+#
+# 地位：这些证人是【意图】的载体，先于实现输出冻结。
+# 推导来源：spec/ldsl-v0.1.md 的语法、宏展开与 first-match-wins 规则。
+# 未参考解释器输出来编造期望；解释器只用于事后交叉验证。
+#
+# 格式
+# ----
+#   witness <name> {
+#       query      = (<OPCODE>, [<types>] [, mem = [<ty>:<align_bits>]] [, imm = [<int>]])
+#       step       = <Action> [t<N> -> <LLT>] [rule <N>]
+#       not_rule   = <N>            # 反例：命中的规则不得是第 N 条
+#       not_action = <Action>       # 反例：动作不得是该值
+#       unreachable = <N>           # 该规则在 D 上不可达
+#       reason     = "<text>"
+#   }
+#
+# step 中的 rule 编号从 0 开始，对应宏展开后的位置（见 spec §2.6）。
+#
+# 统计（2026-10-19 冻结）
+#   witnesses = 205
+#   positives = 114（覆盖 87 条可达规则，部分规则有多条边界证人）
+#   negatives = 89
+#   unreachable = 2（G_UADDO rule 3、G_CONSTANT rule 1；见 spec/decisions.md D-0002）
+#
+# query.types 的语义
+#   types 是【去重后的 generic type index 数组】，不是操作数数组。
+#   G_UNMERGE_VALUES 的 (outs type0, variable_ops), (ins type1) 对应 [t0, t1]。
+#   见 spec/domain.md §4.1 与 spec/decisions.md D-0001。
+
+# ---------------------------------------------------------------------------
+# G_ADD / G_SUB / G_AND / G_OR / G_XOR   (rules 0..2)
+# ---------------------------------------------------------------------------
+
+witness add_s32_legal {
+    query = (G_ADD, [s32])
+    step  = Legal rule 0
+}
+
+witness add_v4s32_legal {
+    query = (G_ADD, [v4s32])
+    step  = Legal rule 0
+}
+
+witness add_s16_widen {
+    query = (G_ADD, [s16])
+    step  = WidenScalar t0 -> s32 rule 1
+}
+
+witness add_s64_narrow {
+    query = (G_ADD, [s64])
+    step  = NarrowScalar t0 -> s32 rule 2
+}
+
+witness neg_add_s16_not_legal {
+    query    = (G_ADD, [s16])
+    not_rule = 0
+}
+
+witness neg_add_s32_not_widen {
+    query    = (G_ADD, [s32])
+    not_rule = 1
+}
+
+witness neg_add_s16_not_narrow {
+    query    = (G_ADD, [s16])
+    not_rule = 2
+}
+
+# ---------------------------------------------------------------------------
+# G_SHL / G_ASHR / G_LSHR   (rules 0..4)
+# ---------------------------------------------------------------------------
+
+witness shl_pair_legal {
+    query = (G_SHL, [s32, s32])
+    step  = Legal rule 0
+}
+
+witness shl_amount_s16_widen {
+    query = (G_SHL, [s32, s16])
+    step  = WidenScalar t1 -> s32 rule 1
+}
+
+witness shl_amount_s64_narrow {
+    query = (G_SHL, [s32, s64])
+    step  = NarrowScalar t1 -> s32 rule 2
+}
+
+witness shl_value_s16_widen {
+    query = (G_SHL, [s16, s32])
+    step  = WidenScalar t0 -> s32 rule 3
+}
+
+witness shl_value_s48_narrow {
+    query = (G_SHL, [s48, s32])
+    step  = NarrowScalar t0 -> s32 rule 4
+}
+
+witness neg_shl_s16_not_legal {
+    query    = (G_SHL, [s16, s32])
+    not_rule = 0
+}
+
+witness neg_shl_s32_not_widen_amount {
+    query    = (G_SHL, [s32, s32])
+    not_rule = 1
+}
+
+witness neg_shl_amount_s16_not_narrow {
+    query    = (G_SHL, [s32, s16])
+    not_rule = 2
+}
+
+witness neg_shl_amount_s16_not_widen_value {
+    query    = (G_SHL, [s32, s16])
+    not_rule = 3
+}
+
+witness neg_shl_amount_s64_not_narrow_value {
+    query    = (G_SHL, [s32, s64])
+    not_rule = 4
+}
+
+# ---------------------------------------------------------------------------
+# G_MUL   (rules 0..3)
+# ---------------------------------------------------------------------------
+
+witness mul_v4s32_legal {
+    query = (G_MUL, [v4s32])
+    step  = Legal rule 0
+}
+
+witness mul_s32_libcall {
+    query = (G_MUL, [s32])
+    step  = Libcall rule 1
+}
+
+witness mul_s16_widen {
+    query = (G_MUL, [s16])
+    step  = WidenScalar t0 -> s32 rule 2
+}
+
+witness mul_s48_narrow {
+    query = (G_MUL, [s48])
+    step  = NarrowScalar t0 -> s32 rule 3
+}
+
+witness neg_mul_s16_not_legal {
+    query    = (G_MUL, [s16])
+    not_rule = 0
+}
+
+witness neg_mul_s16_not_libcall {
+    query    = (G_MUL, [s16])
+    not_rule = 1
+}
+
+witness neg_mul_s32_not_widen {
+    query    = (G_MUL, [s32])
+    not_rule = 2
+}
+
+witness neg_mul_s64_libcall_not_narrow {
+    query = (G_MUL, [s64])
+    step  = Libcall rule 1
+}
+
+witness neg_mul_s64_not_rule3 {
+    query    = (G_MUL, [s64])
+    not_rule = 3
+}
+
+# ---------------------------------------------------------------------------
+# G_SDIV / G_UDIV / G_SREM / G_UREM   (rules 0..2)
+# ---------------------------------------------------------------------------
+
+witness sdiv_s32_libcall {
+    query = (G_SDIV, [s32])
+    step  = Libcall rule 0
+}
+
+witness sdiv_s16_widen {
+    query = (G_SDIV, [s16])
+    step  = WidenScalar t0 -> s32 rule 1
+}
+
+witness sdiv_s48_narrow {
+    query = (G_SDIV, [s48])
+    step  = NarrowScalar t0 -> s32 rule 2
+}
+
+witness neg_sdiv_s16_not_libcall {
+    query    = (G_SDIV, [s16])
+    not_rule = 0
+}
+
+witness neg_sdiv_s32_not_widen {
+    query    = (G_SDIV, [s32])
+    not_rule = 1
+}
+
+witness neg_sdiv_s64_libcall_not_narrow {
+    query    = (G_SDIV, [s64])
+    not_rule = 2
+}
+
+# ---------------------------------------------------------------------------
+# Carry ops: G_UADDO G_USUBO G_UADDE G_USUBE G_SADDO G_SSUBO G_SADDE G_SSUBE
+# rules 0..4; rule 3 is unreachable
+# ---------------------------------------------------------------------------
+
+witness uaddo_s32_s1_legal {
+    query = (G_UADDO, [s32, s1])
+    step  = Legal rule 0
+}
+
+witness uaddo_s16_s1_widen_value {
+    query = (G_UADDO, [s16, s1])
+    step  = WidenScalar t0 -> s32 rule 1
+}
+
+witness uaddo_s48_s1_narrow_value {
+    query = (G_UADDO, [s48, s1])
+    step  = NarrowScalar t0 -> s32 rule 2
+}
+
+witness uaddo_s32_s2_narrow_carry {
+    query = (G_UADDO, [s32, s2])
+    step  = NarrowScalar t1 -> s1 rule 4
+}
+
+witness carry_widen_carry_unreachable {
+    query       = (G_UADDO, [s32, s1])
+    unreachable = 3
+    reason      = "predicate bits(t1) < 1 has no valid LLT"
+}
+
+witness neg_uaddo_s16_s1_not_legal {
+    query    = (G_UADDO, [s16, s1])
+    not_rule = 0
+}
+
+witness neg_uaddo_s32_s1_not_widen_value {
+    query    = (G_UADDO, [s32, s1])
+    not_rule = 1
+}
+
+witness neg_uaddo_s16_s1_not_narrow_value {
+    query    = (G_UADDO, [s16, s1])
+    not_rule = 2
+}
+
+witness neg_uaddo_s32_s1_not_rule3 {
+    query    = (G_UADDO, [s32, s1])
+    not_rule = 3
+}
+
+witness neg_uaddo_s32_s1_not_narrow_carry {
+    query    = (G_UADDO, [s32, s1])
+    not_rule = 4
+}
+
+# ---------------------------------------------------------------------------
+# G_CONSTANT   (rules 0..2; rule 1 is unreachable)
+# ---------------------------------------------------------------------------
+
+witness constant_s32_legal {
+    query = (G_CONSTANT, [s32])
+    step  = Legal rule 0
+}
+
+witness constant_s16_legal {
+    query = (G_CONSTANT, [s16])
+    step  = Legal rule 0
+}
+
+witness constant_s64_narrow {
+    query = (G_CONSTANT, [s64])
+    step  = NarrowScalar t0 -> s32 rule 2
+}
+
+witness constant_widen_min_unreachable {
+    query       = (G_CONSTANT, [s32])
+    unreachable = 1
+    reason      = "predicate bits(t0) < 1 has no valid LLT"
+}
+
+witness neg_constant_s64_not_legal {
+    query    = (G_CONSTANT, [s64])
+    not_rule = 0
+}
+
+witness neg_constant_s16_not_rule1 {
+    query    = (G_CONSTANT, [s16])
+    not_rule = 1
+}
+
+witness neg_constant_s16_not_narrow {
+    query    = (G_CONSTANT, [s16])
+    not_rule = 2
+}
+
+# ---------------------------------------------------------------------------
+# Pointers
+# ---------------------------------------------------------------------------
+
+witness frame_index_p0_legal {
+    query = (G_FRAME_INDEX, [p0])
+    step  = Legal rule 0
+}
+
+witness neg_frame_index_s32_not_legal {
+    query    = (G_FRAME_INDEX, [s32])
+    not_rule = 0
+}
+
+witness ptr_add_legal {
+    query = (G_PTR_ADD, [p0, s32])
+    step  = Legal rule 0
+}
+
+witness neg_ptr_add_swapped_unsupported {
+    query = (G_PTR_ADD, [s32, p0])
+    step  = Unsupported
+}
+
+witness neg_ptr_add_swapped_not_rule0 {
+    query    = (G_PTR_ADD, [s32, p0])
+    not_rule = 0
+}
+
+witness ptrtoint_legal {
+    query = (G_PTRTOINT, [s32, p0])
+    step  = Legal rule 0
+}
+
+witness inttoptr_legal {
+    query = (G_INTTOPTR, [p0, s32])
+    step  = Legal rule 0
+}
+
+witness neg_ptrtoint_s32_s32 {
+    query    = (G_PTRTOINT, [s32, s32])
+    not_rule = 0
+}
+
+# ---------------------------------------------------------------------------
+# Memory: G_LOAD / G_STORE   (rules 0..2)
+# ---------------------------------------------------------------------------
+
+witness load_s32_legal {
+    query = (G_LOAD, [s32, p0], mem = [s32:32])
+    step  = Legal rule 0
+}
+
+witness load_p0_legal {
+    query = (G_LOAD, [p0, p0], mem = [s32:32])
+    step  = Legal rule 0
+}
+
+witness load_v4s32_legal {
+    query = (G_LOAD, [v4s32, p0], mem = [v4s32:128])
+    step  = Legal rule 0
+}
+
+witness load_s16_widen {
+    query = (G_LOAD, [s16, p0], mem = [s16:16])
+    step  = WidenScalar t0 -> s32 rule 1
+}
+
+witness load_s64_narrow {
+    query = (G_LOAD, [s64, p0], mem = [s64:64])
+    step  = NarrowScalar t0 -> s32 rule 2
+}
+
+witness load_v4s32_align64_unsupported {
+    query = (G_LOAD, [v4s32, p0], mem = [v4s32:64])
+    step  = Unsupported
+}
+
+witness store_s32_legal {
+    query = (G_STORE, [s32, p0], mem = [s32:32])
+    step  = Legal rule 0
+}
+
+witness neg_load_s16_not_legal {
+    query    = (G_LOAD, [s16, p0], mem = [s16:16])
+    not_rule = 0
+}
+
+witness neg_load_s32_not_widen {
+    query    = (G_LOAD, [s32, p0], mem = [s32:32])
+    not_rule = 1
+}
+
+witness neg_load_s16_not_narrow {
+    query    = (G_LOAD, [s16, p0], mem = [s16:16])
+    not_rule = 2
+}
+
+# ---------------------------------------------------------------------------
+# G_ZEXTLOAD / G_SEXTLOAD   (rule 0)
+# ---------------------------------------------------------------------------
+
+witness zextload_s8_legal {
+    query = (G_ZEXTLOAD, [s32, p0], mem = [s8:8])
+    step  = Legal rule 0
+}
+
+witness sextload_s16_legal {
+    query = (G_SEXTLOAD, [s32, p0], mem = [s16:16])
+    step  = Legal rule 0
+}
+
+witness neg_zextload_s32_unsupported {
+    query = (G_ZEXTLOAD, [s32, p0], mem = [s32:32])
+    step  = Unsupported
+}
+
+witness neg_zextload_not_rule0 {
+    query    = (G_ZEXTLOAD, [s32, p0], mem = [s32:32])
+    not_rule = 0
+}
+
+# ---------------------------------------------------------------------------
+# G_JUMP_TABLE / G_BRJT
+# ---------------------------------------------------------------------------
+
+witness jump_table_legal {
+    query = (G_JUMP_TABLE, [p0])
+    step  = Legal rule 0
+}
+
+witness neg_jump_table_s32 {
+    query    = (G_JUMP_TABLE, [s32])
+    not_rule = 0
+}
+
+witness brjt_legal {
+    query = (G_BRJT, [p0, s32])
+    step  = Legal rule 0
+}
+
+witness neg_brjt_swapped {
+    query    = (G_BRJT, [s32, p0])
+    not_rule = 0
+}
+
+# ---------------------------------------------------------------------------
+# G_ICMP   (rules 0..6)
+# ---------------------------------------------------------------------------
+
+witness icmp_s32_legal {
+    query = (G_ICMP, [s32, s32])
+    step  = Legal rule 0
+}
+
+witness icmp_p0_legal {
+    query = (G_ICMP, [p0, p0])
+    step  = Legal rule 0
+}
+
+witness icmp_v4s32_legal {
+    query = (G_ICMP, [v4s32, v4s32])
+    step  = Legal rule 0
+}
+
+witness icmp_v4s1_custom {
+    query = (G_ICMP, [v4s1, v4s32])
+    step  = Custom rule 1
+}
+
+witness icmp_s48_widen_pow2 {
+    query = (G_ICMP, [s48, s32])
+    step  = WidenScalar t0 -> s64 rule 2
+}
+
+witness icmp_s24_widen_pow2 {
+    query = (G_ICMP, [s24, s32])
+    step  = WidenScalar t0 -> s32 rule 2
+}
+
+witness icmp_s16_widen_value {
+    query = (G_ICMP, [s16, s32])
+    step  = WidenScalar t0 -> s32 rule 3
+}
+
+witness icmp_s64_narrow_value {
+    query = (G_ICMP, [s64, s32])
+    step  = NarrowScalar t0 -> s32 rule 4
+}
+
+witness icmp_s16_widen_lhs {
+    query = (G_ICMP, [s32, s16])
+    step  = WidenScalar t1 -> s32 rule 5
+}
+
+witness icmp_s64_narrow_lhs {
+    query = (G_ICMP, [s32, s64])
+    step  = NarrowScalar t1 -> s32 rule 6
+}
+
+witness neg_icmp_s16_not_legal {
+    query    = (G_ICMP, [s16, s32])
+    not_rule = 0
+}
+
+witness neg_icmp_s32_not_custom {
+    query    = (G_ICMP, [s32, s32])
+    not_rule = 1
+}
+
+witness neg_icmp_s16_not_rule2 {
+    query    = (G_ICMP, [s16, s32])
+    not_rule = 2
+}
+
+witness neg_icmp_s32_not_widen_value {
+    query    = (G_ICMP, [s32, s32])
+    not_rule = 3
+}
+
+witness neg_icmp_s16_not_narrow_value {
+    query    = (G_ICMP, [s16, s32])
+    not_rule = 4
+}
+
+witness neg_icmp_s32_not_widen_lhs {
+    query    = (G_ICMP, [s32, s32])
+    not_rule = 5
+}
+
+witness neg_icmp_s16_not_narrow_lhs {
+    query    = (G_ICMP, [s32, s16])
+    not_rule = 6
+}
+
+# ---------------------------------------------------------------------------
+# G_PHI   (rules 0..1)
+# ---------------------------------------------------------------------------
+
+witness phi_s32_legal {
+    query = (G_PHI, [s32])
+    step  = Legal rule 0
+}
+
+witness phi_v2s32_legal {
+    query = (G_PHI, [v2s32])
+    step  = Legal rule 0
+}
+
+witness phi_s1_widen {
+    query = (G_PHI, [s1])
+    step  = WidenScalar t0 -> s32 rule 1
+}
+
+witness phi_s48_widen {
+    query = (G_PHI, [s48])
+    step  = WidenScalar t0 -> s64 rule 1
+}
+
+witness neg_phi_s1_not_legal {
+    query    = (G_PHI, [s1])
+    not_rule = 0
+}
+
+witness neg_phi_s32_not_widen {
+    query    = (G_PHI, [s32])
+    not_rule = 1
+}
+
+# ---------------------------------------------------------------------------
+# G_BR / G_BRCOND
+# ---------------------------------------------------------------------------
+
+witness br_legal {
+    query = (G_BR, [])
+    step  = Legal rule 0
+}
+
+witness br_ignores_type {
+    query = (G_BR, [])
+    step  = Legal rule 0
+}
+
+witness neg_br_not_unsupported {
+    query      = (G_BR, [])
+    not_action = Unsupported
+}
+
+witness brcond_s32_legal {
+    query = (G_BRCOND, [s32])
+    step  = Legal rule 0
+}
+
+witness brcond_s16_widen {
+    query = (G_BRCOND, [s16])
+    step  = WidenScalar t0 -> s32 rule 1
+}
+
+witness brcond_s64_narrow {
+    query = (G_BRCOND, [s64])
+    step  = NarrowScalar t0 -> s32 rule 2
+}
+
+witness neg_brcond_s16_not_legal {
+    query    = (G_BRCOND, [s16])
+    not_rule = 0
+}
+
+witness neg_brcond_s32_not_widen {
+    query    = (G_BRCOND, [s32])
+    not_rule = 1
+}
+
+witness neg_brcond_s16_not_narrow {
+    query    = (G_BRCOND, [s16])
+    not_rule = 2
+}
+
+# ---------------------------------------------------------------------------
+# G_TRUNC   (rules 0..1)
+# ---------------------------------------------------------------------------
+
+witness trunc_s8_legal {
+    query = (G_TRUNC, [s8, s32])
+    step  = Legal rule 0
+}
+
+witness trunc_s1_legal {
+    query = (G_TRUNC, [s1, s32])
+    step  = Legal rule 0
+}
+
+witness trunc_s8_from_s64_custom {
+    query = (G_TRUNC, [s8, s64])
+    step  = Custom rule 1
+}
+
+witness neg_trunc_s8_s64_not_legal {
+    query    = (G_TRUNC, [s8, s64])
+    not_rule = 0
+}
+
+witness neg_trunc_s8_s32_not_custom {
+    query    = (G_TRUNC, [s8, s32])
+    not_rule = 1
+}
+
+# ---------------------------------------------------------------------------
+# G_ANYEXT   (rules 0..1)
+# ---------------------------------------------------------------------------
+
+witness anyext_s32_from_s8_legal {
+    query = (G_ANYEXT, [s32, s8])
+    step  = Legal rule 0
+}
+
+witness anyext_s64_custom {
+    query = (G_ANYEXT, [s64, s8])
+    step  = Custom rule 1
+}
+
+witness neg_anyext_s64_not_legal {
+    query    = (G_ANYEXT, [s64, s8])
+    not_rule = 0
+}
+
+witness neg_anyext_s32_not_custom {
+    query    = (G_ANYEXT, [s32, s8])
+    not_rule = 1
+}
+
+# ---------------------------------------------------------------------------
+# G_ZEXT   (rules 0..2)
+# ---------------------------------------------------------------------------
+
+witness zext_s32_s32_legal {
+    query = (G_ZEXT, [s32, s32])
+    step  = Legal rule 0
+}
+
+witness zext_s32_from_s8_custom {
+    query = (G_ZEXT, [s32, s8])
+    step  = Custom rule 1
+}
+
+witness zext_s64_custom {
+    query = (G_ZEXT, [s64, s8])
+    step  = Custom rule 2
+}
+
+witness neg_zext_s32_s8_not_legal {
+    query    = (G_ZEXT, [s32, s8])
+    not_rule = 0
+}
+
+witness neg_zext_s64_not_rule1 {
+    query    = (G_ZEXT, [s64, s8])
+    not_rule = 1
+}
+
+witness neg_zext_s32_s8_not_rule2 {
+    query    = (G_ZEXT, [s32, s8])
+    not_rule = 2
+}
+
+# ---------------------------------------------------------------------------
+# G_SELECT   (rules 0..4)
+# ---------------------------------------------------------------------------
+
+witness select_s32_legal {
+    query = (G_SELECT, [s32, s32])
+    step  = Legal rule 0
+}
+
+witness select_v4s32_v4s1_legal {
+    query = (G_SELECT, [v4s32, v4s1])
+    step  = Legal rule 0
+}
+
+witness select_s16_widen_result {
+    query = (G_SELECT, [s16, s32])
+    step  = WidenScalar t0 -> s32 rule 1
+}
+
+witness select_s64_narrow_result {
+    query = (G_SELECT, [s64, s32])
+    step  = NarrowScalar t0 -> s32 rule 2
+}
+
+witness select_s16_widen_cond {
+    query = (G_SELECT, [s32, s16])
+    step  = WidenScalar t1 -> s32 rule 3
+}
+
+witness select_s64_narrow_cond {
+    query = (G_SELECT, [s32, s64])
+    step  = NarrowScalar t1 -> s32 rule 4
+}
+
+witness neg_select_s16_not_legal {
+    query    = (G_SELECT, [s16, s32])
+    not_rule = 0
+}
+
+witness neg_select_s32_not_widen_result {
+    query    = (G_SELECT, [s32, s32])
+    not_rule = 1
+}
+
+witness neg_select_s16_not_narrow_result {
+    query    = (G_SELECT, [s16, s32])
+    not_rule = 2
+}
+
+witness neg_select_s32_not_widen_cond {
+    query    = (G_SELECT, [s32, s32])
+    not_rule = 3
+}
+
+witness neg_select_s16_not_narrow_cond {
+    query    = (G_SELECT, [s32, s16])
+    not_rule = 4
+}
+
+# ---------------------------------------------------------------------------
+# G_SEXT   (rules 0..2)
+# ---------------------------------------------------------------------------
+
+witness sext_s32_s32_legal {
+    query = (G_SEXT, [s32, s32])
+    step  = Legal rule 0
+}
+
+witness sext_v4s32_v4s1_legal {
+    query = (G_SEXT, [v4s32, v4s1])
+    step  = Legal rule 0
+}
+
+witness sext_s32_s1_custom {
+    query = (G_SEXT, [s32, s1])
+    step  = Custom rule 1
+}
+
+witness sext_s64_custom {
+    query = (G_SEXT, [s64, s8])
+    step  = Custom rule 2
+}
+
+witness neg_sext_s32_s1_not_legal {
+    query    = (G_SEXT, [s32, s1])
+    not_rule = 0
+}
+
+witness neg_sext_s64_not_rule1 {
+    query    = (G_SEXT, [s64, s8])
+    not_rule = 1
+}
+
+witness neg_sext_s32_s1_not_rule2 {
+    query    = (G_SEXT, [s32, s1])
+    not_rule = 2
+}
+
+# ---------------------------------------------------------------------------
+# Floating point
+# ---------------------------------------------------------------------------
+
+witness fadd_s32_libcall {
+    query = (G_FADD, [s32])
+    step  = Libcall rule 0
+}
+
+witness fadd_s64_libcall {
+    query = (G_FADD, [s64])
+    step  = Libcall rule 0
+}
+
+witness neg_fadd_s16_unsupported {
+    query    = (G_FADD, [s16])
+    not_rule = 0
+}
+
+witness fneg_s32_lower {
+    query = (G_FNEG, [s32])
+    step  = Lower rule 0
+}
+
+witness neg_fneg_s16_not_lower {
+    query    = (G_FNEG, [s16])
+    not_rule = 0
+}
+
+witness fpext_libcall {
+    query = (G_FPEXT, [s64, s32])
+    step  = Libcall rule 0
+}
+
+witness neg_fpext_swapped {
+    query    = (G_FPEXT, [s32, s64])
+    not_rule = 0
+}
+
+witness fptrunc_libcall {
+    query = (G_FPTRUNC, [s32, s64])
+    step  = Libcall rule 0
+}
+
+witness neg_fptrunc_swapped {
+    query    = (G_FPTRUNC, [s64, s32])
+    not_rule = 0
+}
+
+witness fptosi_s32_s32_libcall {
+    query = (G_FPTOSI, [s32, s32])
+    step  = Libcall rule 0
+}
+
+witness fptosi_s32_s64_libcall {
+    query = (G_FPTOSI, [s32, s64])
+    step  = Libcall rule 0
+}
+
+witness neg_fptosi_s64_not_libcall {
+    query    = (G_FPTOSI, [s64, s32])
+    not_rule = 0
+}
+
+witness sitofp_s32_s32_libcall {
+    query = (G_SITOFP, [s32, s32])
+    step  = Libcall rule 0
+}
+
+witness sitofp_s64_s32_libcall {
+    query = (G_SITOFP, [s64, s32])
+    step  = Libcall rule 0
+}
+
+witness neg_sitofp_s32_s64 {
+    query    = (G_SITOFP, [s32, s64])
+    not_rule = 0
+}
+
+witness fcmp_custom {
+    query = (G_FCMP, [s1, s32])
+    step  = Custom rule 0
+}
+
+witness neg_fcmp_s32_not_custom {
+    query    = (G_FCMP, [s32, s32])
+    not_rule = 0
+}
+
+witness fconstant_custom {
+    query = (G_FCONSTANT, [s32])
+    step  = Custom rule 0
+}
+
+witness neg_fconstant_s16_not_custom {
+    query    = (G_FCONSTANT, [s16])
+    not_rule = 0
+}
+
+# ---------------------------------------------------------------------------
+# Varargs and memory intrinsics
+# ---------------------------------------------------------------------------
+
+witness vastart_custom {
+    query = (G_VASTART, [p0])
+    step  = Custom rule 0
+}
+
+witness neg_vastart_s32_not_custom {
+    query    = (G_VASTART, [s32])
+    not_rule = 0
+}
+
+witness vaarg_s32_lower {
+    query = (G_VAARG, [s32, p0])
+    step  = Lower rule 0
+}
+
+witness vaarg_v4s32_custom {
+    query = (G_VAARG, [v4s32, p0])
+    step  = Custom rule 1
+}
+
+witness vaarg_v2s32_custom {
+    query = (G_VAARG, [v2s32, p0])
+    step  = Custom rule 1
+}
+
+witness neg_vaarg_v4_not_lower {
+    query    = (G_VAARG, [v4s32, p0])
+    not_rule = 0
+}
+
+witness neg_vaarg_s32_not_custom {
+    query    = (G_VAARG, [s32, p0])
+    not_rule = 1
+}
+
+witness memcpy_custom {
+    query = (G_MEMCPY, [p0, p0, s32])
+    step  = Custom rule 0
+}
+
+witness neg_memcpy_s32_not_custom {
+    query    = (G_MEMCPY, [s32, s32, s32])
+    not_rule = 0
+}
+
+# ---------------------------------------------------------------------------
+# Wide artifacts
+# ---------------------------------------------------------------------------
+
+witness merge_s64_legal {
+    query = (G_MERGE_VALUES, [s64, s32])
+    step  = Legal rule 0
+}
+
+witness merge_s128_legal {
+    query = (G_MERGE_VALUES, [s128, s32])
+    step  = Legal rule 0
+}
+
+witness neg_merge_s32_not_legal {
+    query    = (G_MERGE_VALUES, [s32, s32])
+    not_rule = 0
+}
+
+witness unmerge_s32_s64_legal {
+    query = (G_UNMERGE_VALUES, [s32, s64])
+    step  = Legal rule 0
+}
+
+witness unmerge_s32_s128_legal {
+    query = (G_UNMERGE_VALUES, [s32, s128])
+    step  = Legal rule 0
+}
+
+witness neg_unmerge_swapped {
+    query    = (G_UNMERGE_VALUES, [s64, s32])
+    not_rule = 0
+}
+
+# ---------------------------------------------------------------------------
+# Atomics
+# ---------------------------------------------------------------------------
+
+witness atomic_rmw_add_legal {
+    query = (G_ATOMICRMW_ADD, [s32, p0])
+    step  = Legal rule 0
+}
+
+witness atomic_cmpxchg_legal {
+    query = (G_ATOMIC_CMPXCHG, [s32, p0])
+    step  = Legal rule 0
+}
+
+witness neg_atomic_rmw_add_s64 {
+    query    = (G_ATOMICRMW_ADD, [s64, p0])
+    not_rule = 0
+}
+
+witness atomic_rmw_sub_lower {
+    query = (G_ATOMICRMW_SUB, [s32, p0])
+    step  = Lower rule 0
+}
+
+witness neg_atomic_rmw_sub_s64 {
+    query    = (G_ATOMICRMW_SUB, [s64, p0])
+    not_rule = 0
+}
+
+witness atomic_cmpxchg_with_success_lower {
+    query = (G_ATOMIC_CMPXCHG_WITH_SUCCESS, [s32, s1, p0])
+    step  = Lower rule 0
+}
+
+witness neg_atomic_cmpxchg_with_success_t2 {
+    query    = (G_ATOMIC_CMPXCHG_WITH_SUCCESS, [s32, s1, s32])
+    not_rule = 0
+}
+
+witness fence_legal {
+    query = (G_FENCE, [])
+    step  = Legal rule 0
+}
+
+witness neg_fence_not_unsupported {
+    query      = (G_FENCE, [])
+    not_action = Unsupported
+}
+
+# ---------------------------------------------------------------------------
+# Vector lane operations
+# ---------------------------------------------------------------------------
+
+witness implicit_def_v4_custom {
+    query = (G_IMPLICIT_DEF, [v4s32])
+    step  = Custom rule 0
+}
+
+witness neg_implicit_def_s32 {
+    query    = (G_IMPLICIT_DEF, [s32])
+    not_rule = 0
+}
+
+witness build_vector_custom {
+    query = (G_BUILD_VECTOR, [v4s32, s32])
+    step  = Custom rule 0
+}
+
+witness neg_build_vector_elem_s16 {
+    query    = (G_BUILD_VECTOR, [v4s32, s16])
+    not_rule = 0
+}
+
+witness extract_vector_elt_custom {
+    query = (G_EXTRACT_VECTOR_ELT, [s32, v4s32, s32])
+    step  = Custom rule 0
+}
+
+witness neg_extract_vector_elt_scalar {
+    query    = (G_EXTRACT_VECTOR_ELT, [s32, s32, s32])
+    not_rule = 0
+}
+
+witness insert_vector_elt_custom {
+    query = (G_INSERT_VECTOR_ELT, [v4s32, s32, s32])
+    step  = Custom rule 0
+}
+
+witness neg_insert_vector_elt_scalar {
+    query    = (G_INSERT_VECTOR_ELT, [s32, s32, s32])
+    not_rule = 0
+}
+
+witness shuffle_vector_custom {
+    query = (G_SHUFFLE_VECTOR, [v4s32, v4s32])
+    step  = Custom rule 0
+}
+
+witness shuffle_vector_scalar_unsupported {
+    query = (G_SHUFFLE_VECTOR, [s32, s32])
+    step  = Unsupported rule 1
+}
+
+witness neg_shuffle_vector_scalar_not_custom {
+    query    = (G_SHUFFLE_VECTOR, [s32, s32])
+    not_rule = 0
+}
+
+witness neg_shuffle_vector_vec_not_unsupported {
+    query    = (G_SHUFFLE_VECTOR, [v4s32, v4s32])
+    not_rule = 1
+}
+
+witness concat_vectors_custom {
+    query = (G_CONCAT_VECTORS, [v4s32, v2s32])
+    step  = Custom rule 0
+}
+
+witness concat_vectors_unsupported {
+    query = (G_CONCAT_VECTORS, [v2s32, v2s32])
+    step  = Unsupported rule 1
+}
+
+witness neg_concat_vectors_not_custom {
+    query    = (G_CONCAT_VECTORS, [v2s32, v2s32])
+    not_rule = 0
+}
+
+witness neg_concat_vectors_not_unsupported {
+    query    = (G_CONCAT_VECTORS, [v4s32, v2s32])
+    not_rule = 1
+}
+
+witness extract_subvector_custom {
+    query = (G_EXTRACT_SUBVECTOR, [v2s32, v4s32])
+    step  = Custom rule 0
+}
+
+witness extract_subvector_unsupported {
+    query = (G_EXTRACT_SUBVECTOR, [v4s32, v4s32])
+    step  = Unsupported rule 1
+}
+
+witness neg_extract_subvector_not_custom {
+    query    = (G_EXTRACT_SUBVECTOR, [v4s32, v4s32])
+    not_rule = 0
+}
+
+witness neg_extract_subvector_not_unsupported {
+    query    = (G_EXTRACT_SUBVECTOR, [v2s32, v4s32])
+    not_rule = 1
+}
+
+# ---------------------------------------------------------------------------
+# Intrinsics
+# ---------------------------------------------------------------------------
+
+witness intrinsic_legal {
+    query = (G_INTRINSIC, [s32, s32, s32])
+    step  = Legal rule 0
+}
+
+witness neg_intrinsic_not_unsupported {
+    query      = (G_INTRINSIC, [s1])
+    not_action = Unsupported
+}

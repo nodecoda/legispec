@@ -1,0 +1,61 @@
+name: ci
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        run: python -m pip install -e .
+      - name: Unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Strict rule check (ToyCPU)
+        run: legalizer-dsl --rules rules/toycpu.ldsl check --strict
+      - name: Construct coverage (committed LLVM header snapshot)
+        run: ldsl-constructs check
+      - name: Closure (structure and pinned numbers only)
+        run: ldsl-closure check --skip-evidence
+
+  evidence:
+    name: evidence (claims + oracle, only when out/ is present)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -e .
+      - name: Detect collected evidence
+        id: evidence
+        shell: bash
+        run: |
+          if compgen -G "out/*.json" > /dev/null; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::out/ is empty; claims are not verified in this run (see docs/EVIDENCE.md)"
+          fi
+      - name: Claim ledger vs reports and oracles
+        if: steps.evidence.outputs.present == 'true'
+        run: ldsl-claims verify
+      - name: Full closure (claims audited)
+        if: steps.evidence.outputs.present == 'true'
+        run: ldsl-closure check

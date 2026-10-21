@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "description": "RISC-V RV64 pointer subset experiment, generic-rv64 (+64bit,+i; no M/Zmmul/Zbb/Zbc/Zbkc/P/V/F/D). Custom: G_BRJT and 64-bit G_CONSTANT. No libcall or lower rules are reachable in this subset.",
+  "custom": {
+    "opcodes": ["G_BRJT", "G_CONSTANT"]
+  },
+  "libcall": {
+    "opcodes": []
+  },
+  "lower": {
+    "opcodes": []
+  }
+}

@@ -1,0 +1,88 @@
+# Executable witnesses for rules/aarch64-concat-vectors.ldsl.
+#
+# Every emitted rule index is covered once by a positive step.  There are
+# three rules in this configuration:
+#
+#   0  legalFor({(v16s8, v8s8), (v8s16, v4s16), (v4s32, v2s32)})
+#   1  customIf(t0 fixed vector && t0 scalar size < 8)
+#   2  bitcastIf(... concat_bitcast(t1))
+#
+# Nothing is unreachable and nothing is shadowed.  Rule 1 and rule 2 have
+# disjoint predicates: custom needs a sub-byte element, bitcast needs an
+# element of at least 8 bits.  Rule 0 wins before both for its three pairs.
+#
+# The custom witness is deliberately a *policy* witness only.  It proves that
+# the rule table hands the opcode to AArch64LegalizerInfo::legalizeCustom; the
+# MIR that the handler emits is outside the DSL.
+
+witness legal_concat_128_s8 {
+    query = (G_CONCAT_VECTORS, [v16s8, v8s8])
+    step = Legal rule 0
+    reason = "explicit legalFor pair {v16s8, v8s8}"
+}
+
+witness legal_concat_128_s16 {
+    query = (G_CONCAT_VECTORS, [v8s16, v4s16])
+    step = Legal rule 0
+    reason = "explicit legalFor pair {v8s16, v4s16}"
+}
+
+witness legal_concat_128_s32 {
+    query = (G_CONCAT_VECTORS, [v4s32, v2s32])
+    step = Legal rule 0
+    reason = "explicit legalFor pair {v4s32, v2s32}"
+}
+
+witness custom_sub_byte_s1 {
+    query = (G_CONCAT_VECTORS, [v16s1, v8s1])
+    step = Custom rule 1
+    reason = "element size 1 is below 8; policy hands off to legalizeCustom"
+}
+
+witness custom_sub_byte_s4 {
+    query = (G_CONCAT_VECTORS, [v8s4, v4s4])
+    step = Custom rule 1
+    reason = "element size 4 is below 8; policy hands off to legalizeCustom"
+}
+
+witness bitcast_half_size_s8 {
+    query = (G_CONCAT_VECTORS, [v8s8, v4s8])
+    step = Bitcast t0 -> v2s32 rule 2
+    reason = "64-bit result, 32-bit source: changeElementSize(32) then 8/4 lanes -> v2s32"
+}
+
+witness bitcast_half_size_s16 {
+    query = (G_CONCAT_VECTORS, [v4s16, v2s16])
+    step = Bitcast t0 -> v2s32 rule 2
+    reason = "64-bit result, 32-bit source: changeElementSize(32) then 4/2 lanes -> v2s32"
+}
+
+witness bitcast_quarter_size_s8 {
+    query = (G_CONCAT_VECTORS, [v4s8, v2s8])
+    step = Bitcast t0 -> v2s16 rule 2
+    reason = "32-bit result, 16-bit source: changeElementSize(16) then 4/2 lanes -> v2s16"
+}
+
+witness unsupported_256_bit_result {
+    query = (G_CONCAT_VECTORS, [v8s32, v4s32])
+    step = Unsupported
+    reason = "result is 256 bits; bitcastIf requires bits(t0) <= 128"
+}
+
+witness negative_legal_is_not_custom {
+    query = (G_CONCAT_VECTORS, [v16s8, v8s8])
+    not_rule = 1
+    reason = "legalFor wins before customIf"
+}
+
+witness negative_bitcast_is_not_legal {
+    query = (G_CONCAT_VECTORS, [v8s8, v4s8])
+    not_rule = 0
+    reason = "v8s8/v4s8 is not one of the three legalFor pairs"
+}
+
+witness negative_oversize_is_not_bitcast {
+    query = (G_CONCAT_VECTORS, [v8s32, v4s32])
+    not_action = Bitcast
+    reason = "the size guard rejects a 256-bit result before the bitcast mutation"
+}

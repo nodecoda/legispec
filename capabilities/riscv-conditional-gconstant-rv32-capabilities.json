@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "description": "RISC-V RV32 G_CONSTANT guard experiment: 32-bit constants are Legal, so no Custom rule is emitted.",
+  "custom": {
+    "opcodes": []
+  },
+  "libcall": {
+    "opcodes": []
+  },
+  "lower": {
+    "opcodes": []
+  }
+}

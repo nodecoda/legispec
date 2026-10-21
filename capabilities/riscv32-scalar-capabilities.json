@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "description": "RISC-V RV32 scalar subset experiment, generic-rv32 (+32bit,+i; no M/Zmmul/Zbb/Zbc/Zbkc/P/V/F/D). The only Custom opcodes are the 64-bit counters, which RV32 reads with a re-read-the-high-half loop. Libcall: multiply, divide and remainder (s32/s64). Lower: carry/saturating/overflow, bit manipulation, count-zeros/ctpop/ctls, abs/min-max/compare, divrem, and the unsatisfiable G_SEXT_INREG legal rule.",
+  "custom": {
+    "opcodes": ["G_READCYCLECOUNTER", "G_READSTEADYCOUNTER"]
+  },
+  "libcall": {
+    "opcodes": ["G_MUL", "G_SDIV", "G_UDIV", "G_UREM", "G_SREM"]
+  },
+  "lower": {
+    "opcodes": [
+      "G_UADDE", "G_UADDO", "G_USUBE", "G_USUBO",
+      "G_SADDE", "G_SADDO", "G_SSUBE", "G_SSUBO",
+      "G_UADDSAT", "G_SADDSAT", "G_USUBSAT", "G_SSUBSAT",
+      "G_SSHLSAT", "G_USHLSAT",
+      "G_SEXT_INREG", "G_FSHL", "G_FSHR",
+      "G_ROTR", "G_ROTL", "G_BITREVERSE", "G_BSWAP",
+      "G_CTLZ", "G_CTTZ", "G_CTLZ_ZERO_POISON", "G_CTTZ_ZERO_POISON",
+      "G_CTLS", "G_CTPOP",
+      "G_SMULH", "G_UMULH", "G_SMULO", "G_UMULO",
+      "G_SDIVREM", "G_UDIVREM",
+      "G_ABS", "G_ABDS", "G_ABDU",
+      "G_UMAX", "G_UMIN", "G_SMAX", "G_SMIN",
+      "G_SCMP", "G_UCMP"
+    ]
+  }
+}

@@ -1,0 +1,21 @@
+# Declared-unreachable rules for the RV32 configuration of
+# rules/riscv-scalar-conditional.ldsl.
+#
+# G_SEXT_INREG rule 0 is the transcription of
+#
+#   legalIf(all(typeIs(0, sXLen), sizeIs(0, 64), immIs(0, 32)))
+#
+# With sXLen == s32 the first two conjuncts cannot both hold, so the C++
+# really builds a rule that can never fire on RV32.  The frozen
+# riscv32-scalar.ldsl file drops that rule; the single-source file keeps it,
+# so the rule table still matches the C++ and the fact is declared here.
+#
+# This is a configuration-specific witness: under is64bit=true the same rule
+# IS reachable (query (G_SEXT_INREG, [s64], imm = [32])), so the RV64 run must
+# not use this file.
+
+witness rv32_sext_inreg_legal_unreachable {
+    query = (G_SEXT_INREG, [s32], imm = [32])
+    unreachable = 0
+    reason = "typeIs(0, s32) and sizeIs(0, 64) cannot both hold on RV32"
+}

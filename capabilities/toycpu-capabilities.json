@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "description": "Capabilities the ToyCPU legalizer policy assumes are provided by the target.  The checker verifies that every Custom/Libcall/Lower rule in the LDSL has a declaration here, and (optionally) that every Custom opcode has a case in ToyCPULegalizerInfo::legalizeCustom.",
+  "custom": {
+    "symbol": "ToyCPULegalizerInfo::legalizeCustom",
+    "opcodes": [
+      "G_ANYEXT",
+      "G_BUILD_VECTOR",
+      "G_CONCAT_VECTORS",
+      "G_EXTRACT_SUBVECTOR",
+      "G_EXTRACT_VECTOR_ELT",
+      "G_FCMP",
+      "G_FCONSTANT",
+      "G_ICMP",
+      "G_IMPLICIT_DEF",
+      "G_INSERT_VECTOR_ELT",
+      "G_MEMCPY",
+      "G_MEMMOVE",
+      "G_MEMSET",
+      "G_SEXT",
+      "G_SHUFFLE_VECTOR",
+      "G_TRUNC",
+      "G_VAARG",
+      "G_VASTART",
+      "G_ZEXT"
+    ]
+  },
+  "libcall": {
+    "symbol": "LegalizeRuleSet::libcall",
+    "opcodes": [
+      "G_FADD",
+      "G_FDIV",
+      "G_FMUL",
+      "G_FPEXT",
+      "G_FPTOSI",
+      "G_FPTOUI",
+      "G_FPTRUNC",
+      "G_FSUB",
+      "G_MUL",
+      "G_SDIV",
+      "G_SITOFP",
+      "G_SREM",
+      "G_UDIV",
+      "G_UITOFP",
+      "G_UREM"
+    ]
+  },
+  "lower": {
+    "symbol": "LegalizeRuleSet::lower",
+    "opcodes": [
+      "G_ATOMICRMW_SUB",
+      "G_ATOMIC_CMPXCHG_WITH_SUCCESS",
+      "G_FNEG",
+      "G_VAARG"
+    ]
+  }
+}

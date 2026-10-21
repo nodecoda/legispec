@@ -1,0 +1,109 @@
+# Executable witnesses for rules/aarch64-vector-arith.ldsl.
+#
+# Every rule index is covered once, either by a positive step or by an
+# explicit unreachable declaration.  The two unreachable rules are the
+# min halves of clampNumElements(0, v2s32, v4s32) and
+# clampNumElements(0, v2s64, v2s64): LLVM cannot represent v1 because
+# ElementCount::getFixed(1) is scalar.
+
+witness legal_s32 {
+    query = (G_ADD, [s32])
+    step = Legal rule 0
+    reason = "s32 is in the legalFor set"
+}
+
+witness widen_s24_to_next_pow2 {
+    query = (G_ADD, [s24])
+    step = WidenScalar t0 -> s32 rule 1
+    reason = "sizeNotPow2 is scalar-only and s24 is not a power of two"
+}
+
+witness clamp_scalar_min_s8 {
+    query = (G_ADD, [s8])
+    step = WidenScalar t0 -> s32 rule 2
+    reason = "widenScalarToNextPow2 does not fire for the power-of-two s8; clampScalar min does"
+}
+
+witness clamp_scalar_max_s128 {
+    query = (G_ADD, [s128])
+    step = NarrowScalar t0 -> s64 rule 3
+    reason = "s128 is a power of two, so only clampScalar max fires"
+}
+
+witness clamp_max_s8_v32s8 {
+    query = (G_ADD, [v32s8])
+    step = FewerElements t0 -> v16s8 rule 4
+    reason = "clampMaxNumElements(0, s8, 16)"
+}
+
+witness clamp_max_s16_v16s16 {
+    query = (G_ADD, [v16s16])
+    step = FewerElements t0 -> v8s16 rule 5
+    reason = "clampMaxNumElements(0, s16, 8)"
+}
+
+witness clamp_v2s32_min_unreachable {
+    query = (G_ADD, [v2s32])
+    unreachable = 6
+    reason = "requires a fixed vector with fewer than 2 s32 lanes; LLVM represents v1 as a scalar"
+}
+
+witness clamp_v2s32_max_v8s32 {
+    query = (G_ADD, [v8s32])
+    step = FewerElements t0 -> v4s32 rule 7
+    reason = "clampNumElements(0, v2s32, v4s32) max half"
+}
+
+witness clamp_v2s64_min_unreachable {
+    query = (G_ADD, [v2s64])
+    unreachable = 8
+    reason = "requires a fixed vector with fewer than 2 s64 lanes; LLVM represents v1 as a scalar"
+}
+
+witness clamp_v2s64_max_v4s64 {
+    query = (G_ADD, [v4s64])
+    step = FewerElements t0 -> v2s64 rule 9
+    reason = "clampNumElements(0, v2s64, v2s64) max half"
+}
+
+witness min_elt_two_lanes_v2s8 {
+    query = (G_ADD, [v2s8])
+    step = WidenScalar t0 -> v2s32 rule 10
+    reason = "lanes <= 2 and element size < 32"
+}
+
+witness min_elt_four_lanes_v4s8 {
+    query = (G_ADD, [v4s8])
+    step = WidenScalar t0 -> v4s16 rule 11
+    reason = "lanes <= 4 and element size < 16"
+}
+
+witness min_elt_sixteen_lanes_v8s4 {
+    query = (G_ADD, [v8s4])
+    step = WidenScalar t0 -> v8s8 rule 12
+    reason = "lanes <= 16 and element size < 8"
+}
+
+witness scalarize_v2s128 {
+    query = (G_ADD, [v2s128])
+    step = FewerElements t0 -> s128 rule 13
+    reason = "vector with element size > 64 is scalarized"
+}
+
+witness more_elements_v6s8 {
+    query = (G_ADD, [v6s8])
+    step = MoreElements t0 -> v8s8 rule 14
+    reason = "six lanes round up to the next power of two"
+}
+
+witness negative_v3s16_does_not_hit_lane_le_4 {
+    query = (G_ADD, [v3s16])
+    not_rule = 11
+    reason = "v3s16 has 16-bit elements, so the s16 minimum rule must not fire"
+}
+
+witness negative_s24_not_legal {
+    query = (G_ADD, [s24])
+    not_action = Legal
+    reason = "s24 must be widened to s32 before it can be legal"
+}

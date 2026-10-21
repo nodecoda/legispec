@@ -1,0 +1,164 @@
+# Executable witnesses for rules/aarch64-icmp.ldsl.
+#
+# Every rule index is covered once, either by a positive step or by an
+# explicit unreachable declaration.  Four rules are declared unreachable for
+# two different reasons:
+#
+#   * 16, 18, 20 are the min halves of clampNumElements(1, v2s32, ...),
+#     (1, v2s64, ...) and (1, v2p0, ...).  Each needs a fixed v1, which LLVM
+#     represents as a scalar.
+#   * 14 is the min half of clampNumElements(1, v4s16, v8s16).  Its predicate
+#     is satisfiable (v3s16 has fewer than 4 lanes), but it is always preceded:
+#     v2s16 is captured by rule 9, and v3s16 is rounded to v4s16 by rule 11.
+#     It is declared `shadowed`, not `unreachable`: the predicate matches,
+#     the rule never wins.
+
+witness legal_result_operand {
+    query = (G_ICMP, [s32, s32])
+    step = Legal rule 0
+    reason = "explicit legalFor pair"
+}
+
+witness widen_operand_s24 {
+    query = (G_ICMP, [s32, s24])
+    step = WidenScalar t1 -> s32 rule 1
+    reason = "widenScalarOrEltToNextPow2(1) sees element 24 and rounds to 32"
+}
+
+witness min_operand_s1 {
+    query = (G_ICMP, [s32, s1])
+    step = WidenScalar t1 -> s8 rule 2
+    reason = "minScalarOrElt(1, s8): s1 is already a power of two, so rule 1 declines"
+}
+
+witness clamp_operand_min_s16 {
+    query = (G_ICMP, [s32, s16])
+    step = WidenScalar t1 -> s32 rule 3
+    reason = "clampScalar(1, s32, s64) min; clampScalar is scalar-only, vectors fall through"
+}
+
+witness clamp_operand_max_s128 {
+    query = (G_ICMP, [s32, s128])
+    step = NarrowScalar t1 -> s64 rule 4
+    reason = "clampScalar(1, s32, s64) max"
+}
+
+witness clamp_result_min_s16 {
+    query = (G_ICMP, [s16, s32])
+    step = WidenScalar t0 -> s32 rule 5
+    reason = "the operand is already legal; clampScalar(0, s32, s32) min widens the result"
+}
+
+witness clamp_result_max_s64 {
+    query = (G_ICMP, [s64, s32])
+    step = NarrowScalar t0 -> s32 rule 6
+    reason = "clampScalar(0, s32, s32) max; this half is reachable for non-mask results"
+}
+
+witness scalarize_wide_operand {
+    query = (G_ICMP, [v4s1, v4s128])
+    step = FewerElements t1 -> s128 rule 7
+    reason = "scalarizeIf(scalarOrEltWiderThan(1, 64), 1) runs before the result rules"
+}
+
+witness result_takes_operand_element_size {
+    query = (G_ICMP, [v4s1, v4s32])
+    step = WidenScalar t0 -> v4s32 rule 8
+    reason = "minScalarEltSameAsIf(pred, 0, 1) widens the result element to the operand element size"
+}
+
+witness v2s16_operand_special_case {
+    query = (G_ICMP, [v2s16, v2s16])
+    step = WidenScalar t1 -> v2s32 rule 9
+    reason = "minScalarOrEltIf(Types[1] == v2s16, 1, s32) fires before the lane clamps"
+}
+
+witness pointer_vector_operand {
+    query = (G_ICMP, [v2s1, v2p0:64])
+    step = WidenScalar t0 -> v2s64 rule 10
+    reason = "minScalarOrEltIf(isPointerVector(1), 0, s64) widens the result element"
+}
+
+witness more_elements_v6s8 {
+    query = (G_ICMP, [v6s8, v6s8])
+    step = MoreElements t1 -> v8s8 rule 11
+    reason = "moreElementsToNextPow2(1)"
+}
+
+witness clamp_v8s8_min {
+    query = (G_ICMP, [v2s8, v2s8])
+    step = MoreElements t1 -> v8s8 rule 12
+    reason = "clampNumElements(1, v8s8, v16s8) min"
+}
+
+witness clamp_v8s8_max {
+    query = (G_ICMP, [v32s8, v32s8])
+    step = FewerElements t1 -> v16s8 rule 13
+    reason = "clampNumElements(1, v8s8, v16s8) max"
+}
+
+witness clamp_v8s16_max {
+    query = (G_ICMP, [v16s16, v16s16])
+    step = FewerElements t1 -> v8s16 rule 15
+    reason = "clampNumElements(1, v4s16, v8s16) max"
+}
+
+witness clamp_v4s32_max {
+    query = (G_ICMP, [v8s32, v8s32])
+    step = FewerElements t1 -> v4s32 rule 17
+    reason = "clampNumElements(1, v2s32, v4s32) max"
+}
+
+witness clamp_v2s64_max {
+    query = (G_ICMP, [v4s64, v4s64])
+    step = FewerElements t1 -> v2s64 rule 19
+    reason = "clampNumElements(1, v2s64, v2s64) max"
+}
+
+witness clamp_v2p0_max {
+    query = (G_ICMP, [v4s64, v4p0:64])
+    step = FewerElements t1 -> v2p0:64 rule 21
+    reason = "clampNumElements(1, v2p0, v2p0) max; rule 10 declines because the result element is already 64"
+}
+
+witness vector_result_is_custom {
+    query = (G_ICMP, [v2s32, v2s32])
+    step = Custom rule 22
+    reason = "customIf(isVector(0)) is last, so it only fires after every earlier rule declines"
+}
+
+witness v4s16_min_shadowed_by_more_elements {
+    query = (G_ICMP, [v3s16, v3s16])
+    shadowed = 14
+    reason = "rule 11 rounds 3 lanes up to v4s16 before the v4s16 min clamp can fire; v2s16 is captured earlier by rule 9"
+}
+
+witness v2s32_min_unreachable {
+    query = (G_ICMP, [v2s32, v2s32])
+    unreachable = 16
+    reason = "requires a fixed vector with fewer than 2 s32 lanes; LLVM represents v1 as a scalar"
+}
+
+witness v2s64_min_unreachable {
+    query = (G_ICMP, [v2s64, v2s64])
+    unreachable = 18
+    reason = "requires a fixed vector with fewer than 2 s64 lanes; LLVM represents v1 as a scalar"
+}
+
+witness v2p0_min_unreachable {
+    query = (G_ICMP, [v2s64, v2p0:64])
+    unreachable = 20
+    reason = "requires a fixed vector with fewer than 2 pointer lanes; v1p0 is not an LLT"
+}
+
+witness negative_result_never_custom_when_scalar {
+    query = (G_ICMP, [s1, s32])
+    not_action = Custom
+    reason = "the result clamp widens s1 to s32 before customIf(isVector(0)) can fire"
+}
+
+witness negative_equal_element_types_skip_rule_8 {
+    query = (G_ICMP, [v4s32, v4s32])
+    not_rule = 8
+    reason = "minScalarEltSameAsIf tests element type equality, so equal elements fall through to custom"
+}

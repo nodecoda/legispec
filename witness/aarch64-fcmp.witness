@@ -1,0 +1,171 @@
+# Executable witnesses for rules/aarch64-fcmp.ldsl.
+#
+# Every emitted rule index is covered once, either by a positive step or by an
+# explicit unreachable declaration.  There are 14 rules in the frozen
+# HasFP16=false configuration.
+#
+#   * Rule 9 is the min half of clampNumElements(1, v2s32, v4s32).  Its
+#     predicate needs a fixed vector with fewer than two s32 lanes.  LLVM
+#     represents v1 as a scalar and LLT::vector asserts !EC.isScalar(), so the
+#     shape does not exist.  Declared unreachable, like the v2s32/v2s64/v2p0
+#     min halves in the G_ICMP slice.
+#
+# Nothing is declared shadowed.  In this configuration every other rule wins
+# for at least one query:
+#
+#   * rule 7 (v4s16 min) is NOT shadowed.  Unlike G_ICMP there is no
+#     minScalarOrEltIf(v2s16 -> s32) special case ahead of it, so v2s16 really
+#     does reach the clamp and becomes v4s16.
+#   * rule 12 (moreElementsToNextPow2) is NOT shadowed for 16-bit elements:
+#     v3s16 is captured by the v4s16 min clamp, but v6s16 is between the two
+#     clamps and survives to the pow2 rounding.
+#
+# Two witnesses exist to pin the ANY_SCALAR equality discovered by this slice:
+#
+#   * (v8s32, v8f32) reaches clampNumElements keyed on s32 and produces v4f32,
+#     because LLT::scalar(32) == LLT::float32().
+#   * (v4s32, v4f32) does NOT reach rule 6, because both element types compare
+#     equal under the same rule, so the pair is Legal at rule 0.
+#
+# And one pins the vector guard inside scalarizeIf:
+#
+#   * (s32, s128) reaches the libcall pair, not rule 5, because scalarizeIf is
+#     `actionIf(FewerElements, all(Predicate, isVector(TypeIdx)), scalarize)`.
+
+witness legal_result_f32 {
+    query = (G_FCMP, [s32, f32])
+    step = Legal rule 0
+    reason = "explicit legalFor pair {i32, f32}"
+}
+
+witness legal_v4f32 {
+    query = (G_FCMP, [v4s32, v4f32])
+    step = Legal rule 0
+    reason = "128-bit vector compare is legal on AArch64"
+}
+
+witness legal_v2f64 {
+    query = (G_FCMP, [v2s64, v2f64])
+    step = Legal rule 0
+    reason = "2-lane f64 compare is legal"
+}
+
+witness widen_operand_s24 {
+    query = (G_FCMP, [s32, s24])
+    step = WidenScalar t1 -> s32 rule 1
+    reason = "widenScalarOrEltToNextPow2(1) rounds a non-power-of-two scalar size"
+}
+
+witness clamp_result_min_s1 {
+    query = (G_FCMP, [s1, f32])
+    step = WidenScalar t0 -> s32 rule 2
+    reason = "clampScalar(0, s32, s32) min; the IRTranslator's i1 mask is widened"
+}
+
+witness clamp_result_max_s64 {
+    query = (G_FCMP, [s64, f32])
+    step = NarrowScalar t0 -> s32 rule 3
+    reason = "clampScalar(0, s32, s32) max"
+}
+
+witness widen_operand_f16 {
+    query = (G_FCMP, [s32, f16])
+    step = WidenScalar t1 -> f32 rule 4
+    reason = "HasFP16 = false, so the f16 legalFor pair does not exist and f16 becomes f32"
+}
+
+witness widen_operand_bf16 {
+    query = (G_FCMP, [s32, bf16])
+    step = WidenScalar t1 -> f32 rule 4
+    reason = "bfloat16 is always widened to f32, independent of HasFP16"
+}
+
+witness widen_vector_f16 {
+    query = (G_FCMP, [v4s1, v4f16])
+    step = WidenScalar t1 -> v4f32 rule 4
+    reason = "changeElementTo(1, f32) keeps the lane count"
+}
+
+witness scalarize_v2f128 {
+    query = (G_FCMP, [v2s32, v2f128])
+    step = FewerElements t1 -> f128 rule 5
+    reason = "scalarizeIf(scalarOrEltWiderThan(1, 64), 1) is vector-guarded"
+}
+
+witness result_follows_operand_element_size {
+    query = (G_FCMP, [v4s16, v4f32])
+    step = WidenScalar t0 -> v4s32 rule 6
+    reason = "minScalarEltSameAsIf widens the mask element to the operand element size"
+}
+
+witness clamp_s16_min {
+    query = (G_FCMP, [v2s16, v2s16])
+    step = MoreElements t1 -> v4s16 rule 7
+    reason = "clampNumElements(1, v4s16, v8s16) min; s16 matches 16-bit elements under ANY_SCALAR"
+}
+
+witness clamp_s16_max {
+    query = (G_FCMP, [v16s16, v16s16])
+    step = FewerElements t1 -> v8s16 rule 8
+    reason = "clampNumElements(1, v4s16, v8s16) max"
+}
+
+witness clamp_s32_max {
+    query = (G_FCMP, [v8s32, v8s32])
+    step = FewerElements t1 -> v4s32 rule 10
+    reason = "clampNumElements(1, v2s32, v4s32) max"
+}
+
+witness clamp_f32_max_any_scalar {
+    query = (G_FCMP, [v8s32, v8f32])
+    step = FewerElements t1 -> v4f32 rule 10
+    reason = "LLT::scalar(32) == LLT::float32(), so the s32-keyed clamp matches f32 and preserves the element type"
+}
+
+witness clamp_f64_max {
+    query = (G_FCMP, [v4s64, v4s64])
+    step = FewerElements t1 -> v2s64 rule 11
+    reason = "clampMaxNumElements(1, s64, 2)"
+}
+
+witness more_elements_v6s16 {
+    query = (G_FCMP, [v6s16, v6s16])
+    step = MoreElements t1 -> v8s16 rule 12
+    reason = "6 lanes survive both s16 clamps and are rounded up by moreElementsToNextPow2"
+}
+
+witness libcall_s128 {
+    query = (G_FCMP, [s32, s128])
+    step = Libcall rule 13
+    reason = "libcallFor({s32, s128}); rule 5 does not intercept a scalar operand"
+}
+
+witness libcall_f128_any_scalar {
+    query = (G_FCMP, [s32, f128])
+    step = Libcall rule 13
+    reason = "the pair constant s128 is ANY_SCALAR, so it also matches a 128-bit float operand"
+}
+
+witness v2s32_min_unreachable {
+    query = (G_FCMP, [v2s32, v2s32])
+    unreachable = 9
+    reason = "requires a fixed vector with fewer than 2 s32 lanes; LLVM represents v1 as a scalar"
+}
+
+witness negative_equal_element_types_skip_rule_6 {
+    query = (G_FCMP, [v4s32, v4f32])
+    not_rule = 6
+    reason = "s32 and f32 elements compare equal under LLT::operator==, so the pair is Legal at rule 0"
+}
+
+witness negative_scalar_s128_is_not_scalarized {
+    query = (G_FCMP, [s32, s128])
+    not_rule = 5
+    reason = "scalarizeIf is vector-guarded, so a 128-bit scalar falls through to the libcall pair"
+}
+
+witness negative_integer_scalar_result_is_legal {
+    query = (G_FCMP, [s32, s32])
+    not_action = Unsupported
+    reason = "the legalFor pair {i32, f32} matches because the query's s32 is ANY_SCALAR and ANY_SCALAR == float32"
+}

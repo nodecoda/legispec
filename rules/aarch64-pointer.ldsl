@@ -1,0 +1,124 @@
+# AArch64 GlobalISel legality rules -- pointer subset.
+#
+# Transcribed from llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp.
+# Configuration observed:
+#   triple      = aarch64-unknown-linux-gnu
+#   cpu         = generic
+#   code model  = small
+#   pointer     = LLT::pointer(0, 64), written p0:64
+#   NEON/FPARMv8 enabled (the constructor otherwise returns an empty rule set)
+#   HasCSSC     = false
+#   HasSVE      = false
+#
+# This is NOT a model of all AArch64 pointer legalization.  Omitted on purpose:
+#   * vector pointer types (v2p0) and clampNumElements / clampMaxNumElements
+#   * G_LOAD / G_STORE memory descriptors, atomics and address spaces
+#   * G_PTR_ADD custom rewrites and G_GLOBAL_VALUE's custom rewrite body
+#   * G_BITCAST, G_SELECT pointer forms, G_PTRMASK vector forms
+#
+# The domain uses p0:64, not p0.  In the oracle's LLT notation p0 is a 32-bit
+# pointer; AArch64's legal pointer is LLT::pointer(0, 64).  Feeding 32-bit p0
+# into the AArch64 rules can reach LLT::changeElementSize() and abort the
+# assertions build.  The scalar experiment's domain therefore excluded p0
+# entirely; this file models the real 64-bit pointer shape.
+#
+# LLVM LegalizeRuleSet::apply() returns the first matching rule and only
+# falls back to Unsupported after every rule has been tried.
+
+domain {
+    types {
+        p0:64, s1, s8, s16, s24, s32, s48, s64, s80, s96, s128, s256
+    };
+    imms {};
+    mems {};
+    q0 {
+        (G_PTR_ADD, [p0:64, s64]);
+        (G_PTR_ADD, [p0:64, s16]);
+        (G_PTR_ADD, [p0:64, s256]);
+        (G_PTRMASK, [p0:64, s64]);
+        (G_PTRMASK, [p0:64, s32]);
+        (G_PTRTOINT, [s64, p0:64]);
+        (G_PTRTOINT, [s16, p0:64]);
+        (G_PTRTOINT, [s80, p0:64]);
+        (G_INTTOPTR, [p0:64, s64]);
+        (G_INTTOPTR, [p0:64, s32]);
+        (G_BRINDIRECT, [p0:64]);
+        (G_BRINDIRECT, [s64]);
+        (G_FRAME_INDEX, [p0:64]);
+        (G_FRAME_INDEX, [s64]);
+        (G_GLOBAL_VALUE, [p0:64]);
+        (G_GLOBAL_VALUE, [s64]);
+        (G_PTRAUTH_GLOBAL_VALUE, [p0:64, p0:64]);
+        (G_PTRAUTH_GLOBAL_VALUE, [p0:64, s64]);
+        (G_BLOCK_ADDR, [p0:64]);
+        (G_BLOCK_ADDR, [s64]);
+        (G_JUMP_TABLE, [p0:64]);
+        (G_JUMP_TABLE, [s64]);
+        (G_BRJT, [p0:64, s64]);
+        (G_BRJT, [p0:64, s16]);
+    }
+}
+
+# [C++:267-270]
+# Vector legalFor {v2p0, v2i64} and clampNumElements omitted.
+ruleset G_PTR_ADD {
+    legal_for_pairs {(p0:64, s64)};
+    clamp_scalar 1, s64, s64;
+}
+
+# [C++:272]
+ruleset G_PTRMASK {
+    legal_for_pairs {(p0:64, s64)};
+}
+
+# [C++:1079]
+ruleset G_BRINDIRECT {
+    legal_for {p0:64};
+}
+
+# [C++:1091]
+ruleset G_FRAME_INDEX {
+    legal_for {p0:64};
+}
+
+# [C++:1093-1096]
+# Small code model selects the .custom() branch, unconditionally.
+ruleset G_GLOBAL_VALUE {
+    custom;
+}
+
+# [C++:1098-1099]
+ruleset G_PTRAUTH_GLOBAL_VALUE {
+    legal when t0 == p0:64 and t1 == p0:64;
+}
+
+# [C++:1101-1105]
+# Vector pair {v2i64, v2p0} and clampMaxNumElements omitted.
+ruleset G_PTRTOINT {
+    legal_for_pairs {(s64, p0:64)};
+    widen_to_next_pow2 0, 64;
+    clamp_scalar 0, s64, s64;
+}
+
+# [C++:1107-1112]
+# unsupportedIf(size(t0) != size(t1)) is the first rule.
+# Vector pair {v2p0, v2i64} and clampMaxNumElements omitted.
+ruleset G_INTTOPTR {
+    unsupported when not same_size(t0, t1);
+    legal_for_pairs {(p0:64, s64)};
+}
+
+# [C++:1176]
+ruleset G_BLOCK_ADDR {
+    legal_for {p0:64};
+}
+
+# [C++:1374]
+ruleset G_JUMP_TABLE {
+    legal_for {p0:64};
+}
+
+# [C++:1376]
+ruleset G_BRJT {
+    legal_for_pairs {(p0:64, s64)};
+}

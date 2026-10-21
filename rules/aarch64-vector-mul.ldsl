@@ -1,0 +1,84 @@
+# AArch64 GlobalISel legality rules -- G_MUL, vector-aware slice.
+#
+# Transcribed from llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp
+# (LLVM d855d9e48067026317998cbff734004f328f833d), lines 208-235:
+#
+#   getActionDefinitionsBuilder(G_MUL)
+#
+# Configuration observed:
+#   triple      = aarch64-unknown-linux-gnu
+#   cpu         = generic
+#
+# G_MUL deliberately has no HasSVE legalFor branch.  Apart from that absent
+# construction-time rule, the chain is identical to the G_ADD family, so this
+# file is an independent ruleset rather than an alias into that family: the
+# C++ source has two separate getActionDefinitionsBuilder calls, and keeping
+# them separate preserves the builder boundary in the model.
+#
+# Rule order is first-match order.  The C++ builder expands to:
+#
+#   1  legalFor({s32,s64,v8s8,v16s8,v4s16,v8s16,v2s32,v4s32,v2s64})
+#   2  widenScalarToNextPow2(0)
+#   3  clampScalar(0,s32,s64) step 1/2 (min)
+#   4  clampScalar(0,s32,s64) step 2/2 (max)
+#   5  clampMaxNumElements(0,s8,16)
+#   6  clampMaxNumElements(0,s16,8)
+#   7  clampNumElements(0,v2s32,v4s32) step 1/2 (min)
+#   8  clampNumElements(0,v2s32,v4s32) step 2/2 (max)
+#   9  clampNumElements(0,v2s64,v2s64) step 1/2 (min)
+#   10 clampNumElements(0,v2s64,v2s64) step 2/2 (max)
+#   11 minScalarOrEltIf(lanes<=2,  0, s32)
+#   12 minScalarOrEltIf(lanes<=4,  0, s16)
+#   13 minScalarOrEltIf(lanes<=16, 0, s8)
+#   14 scalarizeIf(scalarOrEltWiderThan(0,64), 0)
+#   15 moreElementsToNextPow2(0)
+#
+# Rule 2 is structurally unreachable for vectors: LLVM's sizeNotPow2 is
+# `isScalar() && !has_single_bit(getSizeInBits())`.  It is retained so the
+# rule indices still line up with the C++ builder.
+#
+# Rules 7-min and 9-min are unreachable because LLVM cannot represent v1:
+# ElementCount::getFixed(1) is a scalar, so LLVM::LLT::vector(1, ...) does not
+# exist.  They are declared in the witness file, not silently dropped.
+#
+# Domain boundary:
+#   * fixed vectors plus the scalar shapes needed to exercise clampScalar
+#   * one type slot per query
+#   * no scalable vectors, memory descriptors, FP, calls or atomics
+#   * no custom/lower rewriting bodies
+#
+# The malformed lane counts (v3, v6) and narrow elements (v8s4) are deliberate:
+# they force the lane-rounding and element-minimum rules, including their
+# interaction with the earlier clamps.
+
+domain {
+    types {
+        s8, s16, s24, s32, s64, s128,
+        v2s8, v4s8, v6s8, v8s4, v8s8, v16s8, v32s8,
+        v3s16, v4s16, v6s16, v8s16, v16s16,
+        v2s32, v4s32, v8s32,
+        v2s64, v4s64,
+        v2s128
+    };
+    imms {};
+    mems {};
+    q0 {
+        (G_MUL, [v8s8]);
+    }
+}
+
+# [C++:208-235]
+ruleset G_MUL {
+    legal_for {s32, s64, v8s8, v16s8, v4s16, v8s16, v2s32, v4s32, v2s64};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s32, s64;
+    clamp_max_num_elements 0, s8, 16;
+    clamp_max_num_elements 0, s16, 8;
+    clamp_num_elements 0, v2s32, v4s32;
+    clamp_num_elements 0, v2s64, v2s64;
+    min_scalar_or_elt_if 0, lanes <= 2, s32;
+    min_scalar_or_elt_if 0, lanes <= 4, s16;
+    min_scalar_or_elt_if 0, lanes <= 16, s8;
+    fewer t0 to element_of(t0) when vector(t0) and elem_bits(t0) > 64;
+    more_elements_to_next_pow2 0;
+}

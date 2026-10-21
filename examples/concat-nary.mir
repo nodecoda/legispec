@@ -1,0 +1,49 @@
+# Real-MIR shape corpus for G_CONCAT_VECTORS with more than two sources.
+# MachineVerifier.cpp:1611-1631 permits `lanes(dst) == k * lanes(src)` with
+# k >= 2; these functions make k=4 and k=8 reach LegalizerInfo::getAction.
+# The partial.reduce intrinsic keeps the concat live until the legalizer
+# visits it (a store or vecreduce is split first and erases the concat).
+#   llc -mtriple=aarch64-unknown-linux-gnu -run-pass=legalizer \
+#       -debug-only=legalizer
+---
+name:            concat_k4
+alignment:       4
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    liveins: $q0, $q1, $q2, $q3, $q4
+    %0:_(<4 x i32>) = COPY $q0
+    %2:_(<4 x i32>) = COPY $q1
+    %3:_(<4 x i32>) = COPY $q2
+    %4:_(<4 x i32>) = COPY $q3
+    %5:_(<4 x i32>) = COPY $q4
+    %1:_(<16 x i32>) = G_CONCAT_VECTORS %2:_(<4 x i32>), %3:_(<4 x i32>), %4:_(<4 x i32>), %5:_(<4 x i32>)
+    %6:_(<4 x i32>) = G_INTRINSIC intrinsic(@llvm.vector.partial.reduce.add), %0:_(<4 x i32>), %1:_(<16 x i32>)
+    %7:_(i32) = G_VECREDUCE_ADD %6:_(<4 x i32>)
+    $w0 = COPY %7:_(i32)
+    RET_ReallyLR implicit $w0
+
+...
+---
+name:            concat_k8
+alignment:       4
+tracksRegLiveness: true
+body:             |
+  bb.0:
+    liveins: $q0, $q1, $q2, $q3, $q4, $q5, $q6, $q7, $q8
+    %0:_(<4 x i32>) = COPY $q0
+    %2:_(<4 x i32>) = COPY $q1
+    %3:_(<4 x i32>) = COPY $q2
+    %4:_(<4 x i32>) = COPY $q3
+    %5:_(<4 x i32>) = COPY $q4
+    %6:_(<4 x i32>) = COPY $q5
+    %7:_(<4 x i32>) = COPY $q6
+    %8:_(<4 x i32>) = COPY $q7
+    %9:_(<4 x i32>) = COPY $q8
+    %1:_(<32 x i32>) = G_CONCAT_VECTORS %2:_(<4 x i32>), %3:_(<4 x i32>), %4:_(<4 x i32>), %5:_(<4 x i32>), %6:_(<4 x i32>), %7:_(<4 x i32>), %8:_(<4 x i32>), %9:_(<4 x i32>)
+    %10:_(<4 x i32>) = G_INTRINSIC intrinsic(@llvm.vector.partial.reduce.add), %0:_(<4 x i32>), %1:_(<32 x i32>)
+    %11:_(i32) = G_VECREDUCE_ADD %10:_(<4 x i32>)
+    $w0 = COPY %11:_(i32)
+    RET_ReallyLR implicit $w0
+
+...

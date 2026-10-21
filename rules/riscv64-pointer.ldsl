@@ -1,0 +1,144 @@
+# RISC-V GlobalISel legality rules -- pointer subset.
+#
+# Transcribed from llvm/lib/Target/RISCV/GISel/RISCVLegalizerInfo.cpp
+# (LLVM d855d9e48067026317998cbff734004f328f833d).
+#
+# Configuration observed:
+#   triple      = riscv64-unknown-linux-gnu
+#   cpu         = generic-rv64
+#   code model  = small
+#   pointer     = LLT::pointer(0, 64), written p0:64
+#   features    = +64bit, +i (no M/Zmmul/Zbb/Zbc/Zbkc/P/V/F/D)
+#   XLen        = 64, sXLen = s64
+#
+# This is NOT a model of all RISC-V pointer legalization.  Omitted on purpose:
+#   * vector pointer types (nxv*i p0) and every V-gated rule
+#   * G_LOAD / G_STORE memory descriptors, atomics and address spaces
+#   * G_PTR_ADD custom rewrites (the policy layer is just legalFor here)
+#   * G_MERGE_VALUES / G_UNMERGE_VALUES, G_BITCAST
+#   * calls, jump tables in memory, and the actual legalizeCustom bodies
+#
+# Some opcodes appear both here and in riscv64-scalar.ldsl because their C++
+# ruleset mixes pointer and scalar shapes (G_CONSTANT, G_PHI, G_ICMP,
+# G_SELECT).  Each LDSL file is a standalone experiment: the scalar file
+# models only the scalar domain, this file adds p0:64 and re-states the whole
+# ruleset so the pointer branch is actually exercised.  The two files are
+# never loaded together.
+#
+# LLVM LegalizeRuleSet::apply() returns the first matching rule and only
+# falls back to Unsupported after every rule has been tried.
+
+domain {
+    types {
+        p0:64, s1, s8, s16, s32, s48, s64, s96, s128, s256
+    };
+    imms {};
+    mems {};
+    q0 {
+        (G_PTR_ADD, [p0:64, s64]);
+        (G_PTR_ADD, [p0:64, s32]);
+        (G_PTRMASK, [p0:64, s128]);
+        (G_PTRTOINT, [s64, p0:64]);
+        (G_PTRTOINT, [s32, p0:64]);
+        (G_INTTOPTR, [p0:64, s64]);
+        (G_INTTOPTR, [p0:64, s32]);
+        (G_BRINDIRECT, [p0:64]);
+        (G_BRINDIRECT, [s64]);
+        (G_BRJT, [p0:64, s64]);
+        (G_BRJT, [p0:64, s32]);
+        (G_FRAME_INDEX, [p0:64]);
+        (G_FRAME_INDEX, [s64]);
+        (G_GLOBAL_VALUE, [p0:64]);
+        (G_GLOBAL_VALUE, [s64]);
+        (G_JUMP_TABLE, [p0:64]);
+        (G_CONSTANT_POOL, [p0:64]);
+        (G_CONSTANT, [p0:64]);
+        (G_CONSTANT, [s64]);
+        (G_PHI, [p0:64]);
+        (G_PHI, [s32]);
+        (G_ICMP, [s64, p0:64]);
+        (G_ICMP, [s1, s1]);
+        (G_SELECT, [p0:64, s64]);
+        (G_SELECT, [s8, s8]);
+    }
+}
+
+# [C++:457]
+ruleset G_PTR_ADD, G_PTRMASK {
+    legal_for_pairs {(p0:64, s64)};
+}
+
+# [C++:459-461]
+ruleset G_PTRTOINT {
+    legal_for_pairs {(s64, p0:64)};
+    clamp_scalar 0, s64, s64;
+}
+
+# [C++:463-465]
+ruleset G_INTTOPTR {
+    legal_for_pairs {(p0:64, s64)};
+    clamp_scalar 1, s64, s64;
+}
+
+# [C++:473]
+ruleset G_BRINDIRECT {
+    legal_for {p0:64};
+}
+
+# [C++:471]
+# customFor({{p0, sXLen}}): other shapes have no fallback.
+ruleset G_BRJT {
+    custom when t0 == p0:64 and t1 == s64;
+}
+
+# [C++:552]
+ruleset G_FRAME_INDEX {
+    legal_for {p0:64};
+}
+
+# [C++:480-481]
+ruleset G_GLOBAL_VALUE, G_JUMP_TABLE, G_CONSTANT_POOL {
+    legal_for {p0:64};
+}
+
+# [C++:290-295]
+# Full ruleset restated with p0 in the domain:
+#   legalFor({p0}); legalFor(!is64Bit(), {s32}) skipped;
+#   customFor(RV64, {s64}); widenScalarToNextPow2(0);
+#   clampScalar(0, sXLen, sXLen).
+ruleset G_CONSTANT {
+    legal_for {p0:64};
+    custom when t0 == s64;
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s64, s64;
+}
+
+# [C++:475-478]
+# Full ruleset restated with p0 in the domain:
+#   legalFor({p0, s32, sXLen}); widenScalarToNextPow2(0);
+#   clampScalar(0, s32, sXLen).
+ruleset G_PHI {
+    legal_for {p0:64, s32, s64};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s32, s64;
+}
+
+# [C++:316-322]
+# Full ruleset restated with p0 in the domain.  The pointer form is the
+# legal pair (sXLen, p0); t1's pow2/min8 rule only applies to scalars.
+ruleset G_ICMP {
+    legal_for_pairs {(s64, s64), (s64, p0:64)};
+    widen_to_next_pow2_or_min 1, 8;
+    clamp_scalar 1, s64, s64;
+    clamp_scalar 0, s64, s64;
+}
+
+# [C++:324-331]
+# Full ruleset restated with p0 in the domain.  The pointer form is the
+# legal pair (p0, sXLen).
+ruleset G_SELECT {
+    legal_for_pairs {(s32, s64), (p0:64, s64), (s64, s64)};
+    widen_to_next_pow2 0, 0;
+    clamp_scalar 0, s32, s64;
+    clamp_scalar 1, s64, s64;
+}

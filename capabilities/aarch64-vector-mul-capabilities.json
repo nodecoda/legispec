@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "description": "AArch64 G_MUL vector-aware subset: legalFor, scalar and element-count clamps, minScalarOrEltIf, scalarizeIf, moreElementsToNextPow2. No custom or libcall handlers.",
+  "custom": {
+    "opcodes": []
+  },
+  "libcall": {
+    "opcodes": []
+  },
+  "lower": {
+    "opcodes": []
+  }
+}

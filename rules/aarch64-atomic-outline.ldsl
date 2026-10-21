@@ -1,0 +1,79 @@
+# AArch64 GlobalISel legality rules -- atomic subset, +outline-atomics.
+#
+# Transcribed from llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp
+# (LLVM d855d9e48067026317998cbff734004f328f833d), lines 1148-1174.
+#
+# Configuration observed:
+#   triple         = aarch64-unknown-linux-gnu
+#   cpu            = generic
+#   code model     = small
+#   pointer        = LLT::pointer(0, 64), written p0:64
+#   outlineAtomics = true  (+outline-atomics)
+#   HasLSE         = false
+#   HasCSSC        = false
+#   HasSVE         = false
+#
+# `UseOutlineAtomics = ST.outlineAtomics() && !ST.hasLSE()` is true here.
+# The construction-time branches collapse to:
+#
+#   G_ATOMIC_CMPXCHG          libcallFor {s8,s16,s32,s64,s128}
+#   G_ATOMICRMW_{XCHG,...}    libcallFor {s8,s16,s32,s64}
+#
+# There is no legalFor/customFor atomic rule in this configuration.  The
+# trailing clampScalar still matters for G_ATOMICRMW_* s128, which is not in
+# the libcall set and therefore narrows to s64.
+#
+# This file is a frozen configuration point.  generic (outline atomics off)
+# and +lse are separate claims, and must not be inferred from this file.
+#
+# p0:64 is required: AArch64's `const LLT p0` is LLT::pointer(0, 64), while
+# the oracle spelling `p0` means a 32-bit pointer.
+
+domain {
+    types {s8, s16, s32, s64, s128, p0:64};
+    imms {};
+    mems {};
+    q0 {
+        (G_ATOMIC_CMPXCHG_WITH_SUCCESS, [s32, s32, p0:64]);
+        (G_ATOMIC_CMPXCHG_WITH_SUCCESS, [s128, s128, p0:64]);
+        (G_ATOMIC_CMPXCHG, [s8, p0:64]);
+        (G_ATOMIC_CMPXCHG, [s32, p0:64]);
+        (G_ATOMIC_CMPXCHG, [s128, p0:64]);
+        (G_ATOMICRMW_XCHG, [s8, p0:64]);
+        (G_ATOMICRMW_XCHG, [s64, p0:64]);
+        (G_ATOMICRMW_ADD, [s32, p0:64]);
+        (G_ATOMICRMW_SUB, [s64, p0:64]);
+        (G_ATOMICRMW_AND, [s8, p0:64]);
+        (G_ATOMICRMW_OR, [s16, p0:64]);
+        (G_ATOMICRMW_XOR, [s128, p0:64]);
+        (G_ATOMICRMW_MIN, [s32, p0:64]);
+        (G_ATOMICRMW_MAX, [s64, p0:64]);
+        (G_ATOMICRMW_UMIN, [s8, p0:64]);
+        (G_ATOMICRMW_UMAX, [s128, p0:64]);
+    }
+}
+
+# [C++:1148-1150] -- independent of UseOutlineAtomics.
+ruleset G_ATOMIC_CMPXCHG_WITH_SUCCESS {
+    lower when t0 in {s8, s16, s32, s64, s128} and t2 == p0:64;
+}
+
+# [C++:1154-1159], UseOutlineAtomics == true.
+ruleset G_ATOMIC_CMPXCHG {
+    libcall when t0 in {s8, s16, s32, s64, s128} and t1 == p0:64;
+    clamp_scalar 0, s32, s64;
+}
+
+# [C++:1161-1167], UseOutlineAtomics == true.
+ruleset G_ATOMICRMW_XCHG, G_ATOMICRMW_ADD, G_ATOMICRMW_SUB,
+        G_ATOMICRMW_AND, G_ATOMICRMW_OR, G_ATOMICRMW_XOR {
+    libcall when t0 in {s8, s16, s32, s64} and t1 == p0:64;
+    clamp_scalar 0, s32, s64;
+}
+
+# [C++:1171-1174] -- unaffected by UseOutlineAtomics.
+ruleset G_ATOMICRMW_MIN, G_ATOMICRMW_MAX,
+        G_ATOMICRMW_UMIN, G_ATOMICRMW_UMAX {
+    legal when t0 in {s32, s64} and t1 == p0:64;
+    clamp_scalar 0, s32, s64;
+}

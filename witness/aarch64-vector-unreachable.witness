@@ -1,0 +1,17 @@
+# Declared-unreachable rules for rules/aarch64-vector.ldsl.
+#
+# G_SMIN rule 5 is the min half of
+#
+#   clampNumElements(0, v2s32, v4s32)
+#
+# i.e. MoreElements when fixed_vector(t0, s32) and lanes(t0) < 2.  LLVM cannot
+# represent v1: ElementCount::getFixed(1) is scalar and LLT::vector asserts on
+# a scalar element count.  The C++ really builds this rule; it can never fire.
+# Keep it in the transcription so the rule table and rule indices match the
+# source, and declare the fact here.
+
+witness vector_v2s32_min_clamp_unreachable {
+    query = (G_SMIN, [v2s32])
+    unreachable = 5
+    reason = "lanes(t0) < 2 cannot hold: LLVM cannot represent v1"
+}

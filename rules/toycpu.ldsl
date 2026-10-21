@@ -1,0 +1,385 @@
+# ToyCPU GlobalISel legality rules, transcribed from
+# llvm/lib/Target/ToyCPU/GISel/ToyCPULegalizerInfo.cpp
+#
+# This file models the policy layer only:
+#   LegalityQuery -> LegalizeActionStep
+# It does not execute narrowScalar/widenScalar/libcall/custom MIR rewrites.
+#
+# Comment markers such as [C++:61-63] point at the source range being mirrored.
+
+domain {
+    types {
+        s1, s2, s4, s8, s16, s24, s32, s48,
+        s64, s128, p0, p0:64, p1, v2s1, v2s8, v2s16, v2s32,
+        v2s64, v4s1,
+        v4s8, v4s16, v4s32, v4s64, v8s1, v8s8, v8s16, v8s32,
+        v8s64
+    };
+    imms {
+        0, 1, -1, 2, 31, 32, 63, 64,
+        127, 128, -128, 2147483647
+    };
+    mems {
+        s8:1,
+        s8:8,
+        s16:1,
+        s16:16,
+        s32:1,
+        s32:32,
+        s64:64,
+        v4s32:64,
+        v4s32:128,
+        v2s32:32,
+        v2s32:64
+    };
+    q0 {
+        (G_ADD, [s32]);
+        (G_SHL, [s32, s32]);
+        (G_MUL, [v4s32]);
+        (G_SDIV, [s32]);
+        (G_UADDO, [s32, s1]);
+        (G_CONSTANT, [s32]);
+        (G_FRAME_INDEX, [p0]);
+        (G_PTR_ADD, [p0, s32]);
+        (G_PTRTOINT, [s32, p0]);
+        (G_LOAD, [s32, p0], mem = [s32:32]);
+        (G_ZEXTLOAD, [s32, p0], mem = [s8:8]);
+        (G_JUMP_TABLE, [p0]);
+        (G_BRJT, [p0, s32]);
+        (G_ICMP, [s32, s32]);
+        (G_PHI, [s32]);
+        (G_BR, []);
+        (G_BRCOND, [s32]);
+        (G_TRUNC, [s8, s32]);
+        (G_ANYEXT, [s32, s8]);
+        (G_ZEXT, [s32, s32]);
+        (G_SELECT, [s32, s32]);
+        (G_SEXT, [s32, s32]);
+        (G_FADD, [s32]);
+        (G_FNEG, [s32]);
+        (G_FPEXT, [s64, s32]);
+        (G_FPTRUNC, [s32, s64]);
+        (G_FPTOSI, [s32, s32]);
+        (G_SITOFP, [s32, s32]);
+        (G_FCMP, [s1, s32]);
+        (G_FCONSTANT, [s32]);
+        (G_VASTART, [p0]);
+        (G_VAARG, [s32, p0]);
+        (G_MEMCPY, [p0, p0, s32]);
+        (G_MERGE_VALUES, [s64, s32]);
+        (G_UNMERGE_VALUES, [s32, s64]);
+        (G_ATOMIC_CMPXCHG, [s32, p0]);
+        (G_ATOMICRMW_SUB, [s32, p0]);
+        (G_ATOMIC_CMPXCHG_WITH_SUCCESS, [s32, s1, p0]);
+        (G_FENCE, []);
+        (G_IMPLICIT_DEF, [v4s32]);
+        (G_BUILD_VECTOR, [v4s32, s32]);
+        (G_EXTRACT_VECTOR_ELT, [s32, v4s32, s32]);
+        (G_INSERT_VECTOR_ELT, [v4s32, s32, s32]);
+        (G_SHUFFLE_VECTOR, [v4s32, v4s32]);
+        (G_CONCAT_VECTORS, [v4s32, v2s32]);
+        (G_EXTRACT_SUBVECTOR, [v2s32, v4s32]);
+        (G_INTRINSIC, [s32, s32, s32]);
+    }
+}
+
+# ---------------------------------------------------------------------------
+# Integer ALU
+# ---------------------------------------------------------------------------
+
+# [C++:61-63]
+ruleset G_ADD, G_SUB, G_AND, G_OR, G_XOR {
+    legal_for {s32, v4s32};
+    clamp_scalar 0, s32, s32;
+}
+
+# [C++:67-75] The shift amount is clamped before the result on purpose.
+ruleset G_SHL, G_ASHR, G_LSHR {
+    legal_for_pairs {(s32, s32), (v4s32, v4s32)};
+    clamp_scalar 1, s32, s32;
+    clamp_scalar 0, s32, s32;
+}
+
+# [C++:83-86]
+ruleset G_MUL {
+    legal_for {v4s32};
+    libcall_for {s32, s64};
+    clamp_scalar 0, s32, s32;
+}
+
+# [C++:87-89]
+ruleset G_SDIV, G_UDIV, G_SREM, G_UREM {
+    libcall_for {s32, s64};
+    clamp_scalar 0, s32, s32;
+}
+
+# [C++:96-100] Carry is s1, but ToyCPU carries it in a 32-bit GPR.
+ruleset G_UADDO, G_USUBO, G_UADDE, G_USUBE, G_SADDO, G_SSUBO, G_SADDE, G_SSUBE {
+    legal_for_pairs {(s32, s1)};
+    clamp_scalar 0, s32, s32;
+    clamp_scalar 1, s1, s1;
+}
+
+# [C++:107-109]
+ruleset G_CONSTANT {
+    legal_for {s32, p0, s1, s8, s16};
+    clamp_scalar 0, s1, s32;
+}
+
+# ---------------------------------------------------------------------------
+# Pointers
+# ---------------------------------------------------------------------------
+
+# [C++:111]
+ruleset G_FRAME_INDEX, G_GLOBAL_VALUE {
+    legal_for {p0};
+}
+
+# [C++:113]
+ruleset G_PTR_ADD {
+    legal_for_pairs {(p0, s32)};
+}
+
+# [C++:118-119]
+ruleset G_PTRTOINT, G_INTTOPTR {
+    legal_for_pairs {(s32, p0), (p0, s32)};
+}
+
+# ---------------------------------------------------------------------------
+# Memory
+# ---------------------------------------------------------------------------
+
+# [C++:130-137] The last field is minimum alignment in bits.
+ruleset G_LOAD, G_STORE {
+    legal_for_mem {
+        (s32, p0, s32, 1),
+        (s32, p0, s8, 1),
+        (s32, p0, s16, 1),
+        (p0, p0, s32, 1),
+        (v4s32, p0, v4s32, 128),
+        (v2s32, p0, v2s32, 64)
+    };
+    clamp_scalar 0, s32, s32;
+}
+
+# [C++:142-144]
+ruleset G_ZEXTLOAD, G_SEXTLOAD {
+    legal_for_mem {(s32, p0, s8, 1), (s32, p0, s16, 1)};
+}
+
+# [C++:149-150]
+ruleset G_JUMP_TABLE {
+    legal_for {p0};
+}
+ruleset G_BRJT {
+    legal_for_pairs {(p0, s32)};
+}
+
+# ---------------------------------------------------------------------------
+# Compare, PHI, control flow
+# ---------------------------------------------------------------------------
+
+# [C++:154-159]
+ruleset G_ICMP {
+    legal_for_pairs {(s32, s32), (p0, p0), (v4s32, v4s32)};
+    custom_for_pairs {(v4s1, v4s32)};
+    widen_to_next_pow2 0, 32;
+    clamp_scalar 0, s32, s32;
+    clamp_scalar 1, s32, s32;
+}
+
+# [C++:164-166] i1 PHIs are widened by inserting G_ANYEXT on incoming edges.
+ruleset G_PHI {
+    legal_for {s32, p0, v4s32, v2s32};
+    widen_to_next_multiple 0, 32;
+}
+
+# [C++:168-171]
+ruleset G_BR {
+    always_legal;
+}
+ruleset G_BRCOND {
+    legal_for {s32};
+    clamp_scalar 0, s32, s32;
+}
+
+# ---------------------------------------------------------------------------
+# Conversions
+# ---------------------------------------------------------------------------
+
+# [C++:179-181]
+ruleset G_TRUNC {
+    legal_for_pairs {(s32, s32), (s8, s32), (s16, s32), (s1, s32)};
+    custom when scalar(t1) and bits(t1) > 32;
+}
+
+# [C++:182-184]
+ruleset G_ANYEXT {
+    legal_for_pairs {(s32, s32), (s32, s8), (s32, s16), (s32, s1)};
+    custom when scalar(t0) and bits(t0) > 32;
+}
+
+# [C++:189-192] G_ZEXT and G_SEXT must remain separate rule sets.
+ruleset G_ZEXT {
+    legal_for_pairs {(s32, s32)};
+    custom_for_pairs {(s32, s1), (s32, s8), (s32, s16)};
+    custom when scalar(t0) and bits(t0) > 32;
+}
+
+# [C++:199-206] v4s1 is deliberately legal: the reverse-order legalizer may
+# visit G_SELECT before the G_ICMP that defines its mask.
+ruleset G_SELECT {
+    legal_for_pairs {(s32, s32), (v4s32, v4s32), (v4s32, v4s1)};
+    clamp_scalar 0, s32, s32;
+    clamp_scalar 1, s32, s32;
+}
+
+# [C++:212-219]
+ruleset G_SEXT {
+    legal_for_pairs {(s32, s32), (v4s32, v4s1)};
+    custom_for_pairs {(s32, s1), (s32, s8), (s32, s16)};
+    custom when scalar(t0) and bits(t0) > 32;
+}
+
+# ---------------------------------------------------------------------------
+# Floating point (ToyCPU v0.1 has no FP hardware)
+# ---------------------------------------------------------------------------
+
+# [C++:226-227]
+ruleset G_FADD, G_FSUB, G_FMUL, G_FDIV {
+    libcall_for {s32, s64};
+}
+
+# [C++:232]
+ruleset G_FNEG {
+    lower when t0 in {s32, s64};
+}
+
+# [C++:237-238]
+ruleset G_FPEXT {
+    libcall when pair(t0, t1) in {(s64, s32)};
+}
+ruleset G_FPTRUNC {
+    libcall when pair(t0, t1) in {(s32, s64)};
+}
+
+# [C++:239-242]
+ruleset G_FPTOSI, G_FPTOUI {
+    libcall when t0 in {s32} and t1 in {s32, s64};
+}
+ruleset G_SITOFP, G_UITOFP {
+    libcall when t0 in {s32, s64} and t1 in {s32};
+}
+
+# [C++:247-248]
+ruleset G_FCMP {
+    custom when t0 in {s1} and t1 in {s32, s64};
+}
+
+# [C++:253]
+ruleset G_FCONSTANT {
+    custom when t0 in {s32, s64};
+}
+
+# ---------------------------------------------------------------------------
+# Varargs and memory intrinsics
+# ---------------------------------------------------------------------------
+
+# [C++:259]
+ruleset G_VASTART {
+    custom when t0 in {p0};
+}
+
+# [C++:265-267]
+ruleset G_VAARG {
+    lower when t0 in {s32};
+    custom when t0 in {v4s32, v2s32};
+}
+
+# [C++:275-276]
+ruleset G_MEMCPY, G_MEMMOVE, G_MEMSET {
+    custom when t0 in {p0};
+}
+
+# ---------------------------------------------------------------------------
+# Wide artifacts
+# ---------------------------------------------------------------------------
+
+# [C++:282-285]
+ruleset G_MERGE_VALUES {
+    legal_for_pairs {(s64, s32), (s128, s32)};
+}
+ruleset G_UNMERGE_VALUES {
+    legal_for_pairs {(s32, s64), (s32, s128)};
+}
+
+# ---------------------------------------------------------------------------
+# Atomics
+# ---------------------------------------------------------------------------
+
+# [C++:291-294]
+ruleset G_ATOMIC_CMPXCHG, G_ATOMICRMW_XCHG, G_ATOMICRMW_ADD, G_ATOMICRMW_AND, G_ATOMICRMW_OR, G_ATOMICRMW_XOR {
+    legal_for_pairs {(s32, p0)};
+}
+
+# [C++:299]
+ruleset G_ATOMICRMW_SUB {
+    lower when pair(t0, t1) in {(s32, p0)};
+}
+
+# [C++:303-304]
+ruleset G_ATOMIC_CMPXCHG_WITH_SUCCESS {
+    lower when t0 in {s32} and t1 in {s1} and t2 == p0;
+}
+
+# [C++:307]
+ruleset G_FENCE {
+    always_legal;
+}
+
+# ---------------------------------------------------------------------------
+# Vector lane operations (stack round-trip custom legalization)
+# ---------------------------------------------------------------------------
+
+# [C++:314-315]
+ruleset G_IMPLICIT_DEF {
+    custom when t0 in {v4s32, v2s32};
+}
+
+# [C++:316-317]
+ruleset G_BUILD_VECTOR {
+    custom when t0 in {v4s32, v2s32} and t1 == s32;
+}
+
+# [C++:318-320]
+ruleset G_EXTRACT_VECTOR_ELT {
+    custom when t0 == s32 and t1 in {v4s32, v2s32} and t2 == s32;
+}
+
+# [C++:321-323]
+ruleset G_INSERT_VECTOR_ELT {
+    custom when t0 in {v4s32, v2s32} and t1 == s32 and t2 == s32;
+}
+
+# [C++:324-327] unsupported() is the fallback only when customIf does not match.
+ruleset G_SHUFFLE_VECTOR {
+    custom when t0 in {v4s32, v2s32} and t1 in {v4s32, v2s32};
+    unsupported;
+}
+
+# [C++:328-330]
+ruleset G_CONCAT_VECTORS {
+    custom when t0 == v4s32 and t1 == v2s32;
+    unsupported;
+}
+
+# [C++:331-333]
+ruleset G_EXTRACT_SUBVECTOR {
+    custom when t0 == v2s32 and t1 == v4s32;
+    unsupported;
+}
+
+# [C++:338-339]
+ruleset G_INTRINSIC, G_INTRINSIC_W_SIDE_EFFECTS {
+    always_legal;
+}
