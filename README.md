@@ -75,7 +75,7 @@ capabilities/             22 份 provider 契约（custom / libcall / lower 谁�
 claims/                   claims.json（43 条断言与哈希钉）、generated-evidence.json（generated/hand-only 分类）、claim-ledger.md、构造覆盖
 docs/                     命题、语法、模式、配置、决策记录；兼容性见 COMPATIBILITY.md
 examples/                 真实 MIR / LLVM IR 语料
-tests/                    377 个单元测试
+tests/                    392 个单元测试
 scripts/                  证据收集与批处理
 out/                      本地证据缓存（不入库，见第 6 节）
 ```
@@ -91,7 +91,7 @@ hand-only=6
 rules-files=22
 hand-queries=321627
 constructs=63/63     # LLVM builder 方法 → DSL 原语，全部归类
-tests=377
+tests=392
 ```
 
 这些数字由 `python -m legalizer_dsl.closure check` 从产物重新计算并比对；

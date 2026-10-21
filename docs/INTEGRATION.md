@@ -125,10 +125,14 @@ Useful options:
 --skip-reference   only compare the consumer with the Python interpreter
 --llvm-commit SHA  pin recorded in the report; defaults to claims/claims.json
                    (there is no "unknown" fallback: the smoke exits 2)
---llvm-dir DIR     override LLVMConfig.cmake discovery
---cxx PATH         override the C++ compiler
 --out PATH         report path (default out/integration-report.json)
 ```
+
+Compiler and LLVM discovery are environment-driven (there are no
+`--llvm-dir`/`--cxx` flags): set `LLVM_DIR` and `CXX` for a non-default
+toolchain, plus `LEGALIZER_DSL_LLVM_DIR` / `LEGALIZER_DSL_CXX` to override the
+smoke's search directly.  On Windows, `LEGALIZER_DSL_VCVARS` selects the
+`vcvars64.bat` used for the MSVC environment.
 
 Reports use schema `legalizer-dsl-integration-v2`. Besides the rules and query
 hashes, `provenance` pins the generator and LDSL-spec versions, the evaluator
@@ -146,12 +150,20 @@ Status semantics are deliberately narrow:
 - `SKIP`: the environment could not provide a compiler/LLVM, a reference
   binary is missing, or `--skip-reference` was passed. `SKIP` is never a pass.
 
-`scripts/check_integration_status.py` enforces the same contract: it requires
-schema v2, at least 100 queries, all three comparisons, artifact hashes that
-match the files on disk, `worktree_dirty=false`, `head_commit == HEAD`, and
-the current evaluator/codegen/LLVM pins. CI runs it with `--require-pass`, so a
-`SKIP` becomes a job failure. Generate reports only after committing the tree;
-a dirty worktree is reported as `worktree_dirty=true` and will be rejected.
+`scripts/check_integration_status.py` enforces the same contract. It requires
+schema v2, a `query_count` of at least 100 that equals the number of records in
+the hashed query file, `query_count <= query_limit` when a limit was recorded,
+all three comparisons with zero divergences and zero oracle errors, and
+artifact/generated-source hashes that match the files on disk. `inputs.rules`
+must be the rules file declared for that `target` (ToyCPU or AArch64 vector),
+so swapping in another rules file plus its hash cannot pass. The report must
+also record `worktree_dirty=false`, `head_commit == HEAD`, and the current
+generator, DSL-spec, evaluator, codegen, and LLVM pins.
+
+CI runs it with `--require-pass-if-env LLVM_DIR`: a hosted runner without LLVM
+leaves the reports as `SKIP`, while any job that provided `LLVM_DIR` turns
+`SKIP` into a failure. Generate reports only after committing the tree; a dirty
+worktree is reported as `worktree_dirty=true` and will be rejected.
 
 The script searches the current environment, then the local LLVM builds used
 by this repository. CI runners should set `LLVM_DIR`, `CXX`, and, on Windows,
@@ -162,10 +174,14 @@ by this repository. CI runners should set `LLVM_DIR`, `CXX`, and, on Windows,
 The smoke already performs the A/B when the oracle binaries exist:
 
 ```text
-out/oracle/legalizer-oracle.exe          # hand-written ToyCPU rules
-out/oracle/legalizer-oracle-gen.exe      # generated ToyCPU rules
+out/oracle/legalizer-oracle[.exe]        # hand-written ToyCPU rules
+out/oracle/legalizer-oracle-gen[.exe]    # generated ToyCPU rules
 out/oracle-aarch64/...                   # AArch64 counterparts
 ```
+
+The smoke appends the host executable suffix (`.exe` on Windows); oracle
+filenames in reports are therefore platform-relative, never hard-coded to a
+Windows path.
 
 Both are thin JSONL adapters over `LegalizerInfo::getAction`; they contain no
 policy of their own. If both have zero divergence against the Python

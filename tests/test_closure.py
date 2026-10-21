@@ -185,6 +185,24 @@ class GeneratedEvidenceTests(unittest.TestCase):
             problems,
         )
 
+    def test_non_object_manifest_is_a_problem_not_a_crash(self):
+        saved = (closure.RULES, closure.GENERATED_EVIDENCE)
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            rule_dir = root / "rules"
+            rule_dir.mkdir()
+            manifest = root / "generated-evidence.json"
+            manifest.write_text("[]\n", encoding="utf-8")
+            closure.RULES = rule_dir
+            closure.GENERATED_EVIDENCE = manifest
+            try:
+                _, problems = closure.generated_evidence([])
+            finally:
+                closure.RULES, closure.GENERATED_EVIDENCE = saved
+        self.assertTrue(
+            any("expected object" in problem for problem in problems), problems
+        )
+
     def test_hand_only_declaration_must_reference_a_real_rule_with_a_reason(self):
         _, problems = self._run(
             {"real.ldsl": ""},

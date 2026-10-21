@@ -461,6 +461,55 @@ def _write_docs(path: Path, report: dict) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
 
+def metric_snapshot(data: dict) -> dict:
+    corpus = data["corpus"]
+    coverage = data["coverage"]
+    return {
+        "ratio": coverage["ratio"],
+        "in_domain": corpus["in_domain"],
+        "queries": corpus["queries"],
+        "rules_matched": coverage["rules_matched"],
+        "rules_total": coverage["rules_total"],
+    }
+
+
+def ratchet_problems(
+    baseline_targets: dict, current_targets: dict
+) -> list[str]:
+    """Compare every pinned metric without shrinking a multi-target baseline.
+
+    A baseline may describe more targets than a single-target run reports.
+    Missing baseline entries fail; extra baseline entries do not.
+    """
+
+    problems: list[str] = []
+    missing = set(current_targets) - set(baseline_targets)
+    if missing:
+        problems.append(
+            "baseline has no entry for: " + ", ".join(sorted(missing))
+        )
+    for target, data in current_targets.items():
+        previous = baseline_targets.get(target)
+        if previous is None:
+            continue
+        if isinstance(previous, (int, float)):
+            previous = {"ratio": previous}
+        if not isinstance(previous, dict):
+            problems.append(f"{target}: baseline entry is not an object")
+            continue
+        current = metric_snapshot(data)
+        for key in ("ratio", "in_domain", "queries", "rules_matched", "rules_total"):
+            old_value = previous.get(key)
+            current_value = current.get(key)
+            if old_value is None or current_value is None:
+                continue
+            if current_value + 1e-12 < old_value:
+                problems.append(
+                    f"{target}: {key} {current_value} < baseline {old_value}"
+                )
+    return problems
+
+
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target", action="append", choices=sorted(TARGETS),
@@ -509,26 +558,54 @@ def main(argv: Optional[list[str]] = None) -> int:
             },
         )
 
-    def metric_snapshot(data: dict) -> dict:
-        corpus = data["corpus"]
-        coverage = data["coverage"]
-        return {
-            "ratio": coverage["ratio"],
-            "in_domain": corpus["in_domain"],
-            "queries": corpus["queries"],
-            "rules_matched": coverage["rules_matched"],
-            "rules_total": coverage["rules_total"],
-        }
-
     baseline_path = ROOT / args.baseline
     if args.update_baseline:
-        baseline = {
-            "schema": SCHEMA,
-            "targets": {
+        baseline_targets: dict = {}
+        if baseline_path.is_file():
+            try:
+                previous = json.loads(baseline_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError) as exc:
+                report["ratchet"]["status"] = "FAIL"
+                report["ratchet"]["problems"] = [
+                    f"baseline unreadable: {exc}"
+                ]
+                out_path = ROOT / args.out
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                out_path.write_text(
+                    json.dumps(report, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                    newline="\n",
+                )
+                print(f"ratchet: FAIL")
+                print(f"report: {_relative(out_path)}")
+                print(f"  ! baseline unreadable: {exc}")
+                return 1
+            if not isinstance(previous, dict) or not isinstance(
+                previous.get("targets"), dict
+            ):
+                report["ratchet"]["status"] = "FAIL"
+                report["ratchet"]["problems"] = [
+                    "baseline root or targets is not an object"
+                ]
+                out_path = ROOT / args.out
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                out_path.write_text(
+                    json.dumps(report, indent=2, sort_keys=True) + "\n",
+                    encoding="utf-8",
+                    newline="\n",
+                )
+                print("ratchet: FAIL")
+                print(f"report: {_relative(out_path)}")
+                print("  ! baseline root or targets is not an object")
+                return 1
+            baseline_targets.update(previous["targets"])
+        baseline_targets.update(
+            {
                 target: metric_snapshot(data)
                 for target, data in report["targets"].items()
-            },
-        }
+            }
+        )
+        baseline = {"schema": SCHEMA, "targets": baseline_targets}
         baseline_path.parent.mkdir(parents=True, exist_ok=True)
         baseline_path.write_text(
             json.dumps(baseline, indent=2, sort_keys=True) + "\n",
@@ -537,31 +614,42 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
         report["ratchet"]["status"] = "UPDATED"
     elif baseline_path.is_file():
-        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
-        baseline_targets = baseline.get("targets", {})
-        problems = []
-        if set(baseline_targets) != set(report["targets"]):
-            problems.append(
-                "target sets differ: baseline="
-                f"{sorted(baseline_targets)} report={sorted(report['targets'])}"
+        try:
+            baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            report["ratchet"]["status"] = "FAIL"
+            report["ratchet"]["problems"] = [f"baseline unreadable: {exc}"]
+            out_path = ROOT / args.out
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+                newline="\n",
             )
-        for target, data in report["targets"].items():
-            previous = baseline_targets.get(target)
-            if previous is None:
-                problems.append(f"{target}: no baseline entry")
-                continue
-            if isinstance(previous, (int, float)):
-                previous = {"ratio": previous}
-            current = metric_snapshot(data)
-            for key in ("ratio", "in_domain", "queries", "rules_matched", "rules_total"):
-                old_value = previous.get(key)
-                current_value = current.get(key)
-                if old_value is None or current_value is None:
-                    continue
-                if current_value + 1e-12 < old_value:
-                    problems.append(
-                        f"{target}: {key} {current_value} < baseline {old_value}"
-                    )
+            print("ratchet: FAIL")
+            print(f"report: {_relative(out_path)}")
+            print(f"  ! baseline unreadable: {exc}")
+            return 1
+        if not isinstance(baseline, dict):
+            report["ratchet"]["status"] = "FAIL"
+            report["ratchet"]["problems"] = [
+                f"baseline root is {type(baseline).__name__}, expected object"
+            ]
+            out_path = ROOT / args.out
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(
+                json.dumps(report, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+                newline="\n",
+            )
+            print("ratchet: FAIL")
+            print(f"report: {_relative(out_path)}")
+            print("  ! baseline root is not an object")
+            return 1
+        baseline_targets = baseline.get("targets", {})
+        if not isinstance(baseline_targets, dict):
+            baseline_targets = {}
+        problems = ratchet_problems(baseline_targets, report["targets"])
         report["ratchet"]["problems"] = problems
         if problems and not args.waiver:
             report["ratchet"]["status"] = "FAIL"

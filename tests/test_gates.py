@@ -77,6 +77,39 @@ class ExpectedSkipsTests(unittest.TestCase):
                 [{"test": "test_x.Case.test_a", "reason": " "}], "linux"
             )
 
+    def test_optional_skip_may_be_absent_but_unregistered_skip_still_fails(self):
+        entries = [
+            {
+                "test": "test_x.Case.test_a",
+                "reason": "oracle not built",
+                "optional": True,
+            }
+        ]
+        allowed = self.module.allowed_for_platform(entries, "linux")
+        optional = self.module.optional_for_platform(entries, "linux")
+        self.assertEqual(self.module.compare_skips({}, allowed, optional), [])
+        self.assertTrue(
+            any(
+                "unregistered skip" in problem
+                for problem in self.module.compare_skips(
+                    {"test_x.Case.test_b": "new skip"}, allowed, optional
+                )
+            )
+        )
+
+    def test_optional_must_be_a_boolean(self):
+        with self.assertRaises(ValueError):
+            self.module.allowed_for_platform(
+                [
+                    {
+                        "test": "test_x.Case.test_a",
+                        "reason": "no oracle",
+                        "optional": "yes",
+                    }
+                ],
+                "linux",
+            )
+
 
 class FinalVerificationTests(unittest.TestCase):
     def setUp(self):
@@ -161,6 +194,10 @@ class FinalVerificationTests(unittest.TestCase):
         text = (
             "final-verification: PASS mode=artifact-consistency gates=6/6 "
             "dirty=false tests=1 skipped=0\n"
+            "test_every_builder_method_is_classified "
+            "(test_constructs.ConstructCoverageTests."
+            "test_every_builder_method_is_classified) ... skipped "
+            "'LLVM source tree not available'\n"
             "Ran 375 tests in 61.405s\n"
             "OK (skipped=1)\n"
         )
@@ -175,6 +212,63 @@ class FinalVerificationTests(unittest.TestCase):
     def test_unittest_without_skips_parses_zero(self):
         text = "Ran 375 tests in 61.405s\nOK\n"
         self.assertEqual(self.module.parse_unittest_skips(text), 0)
+
+    def test_parse_ints_uses_the_last_summary(self):
+        text = "Ran 3 tests in 0.1s\nRan 375 tests in 61.405s\n"
+        self.assertEqual(
+            self.module.parse_ints(r"Ran (\d+) tests?", text), (375,)
+        )
+
+    def test_unittest_skip_ids_are_checked_against_the_manifest(self):
+        text = (
+            "test_x (test_constructs.Unknown.test_x) ... skipped 'new skip'\n"
+            "Ran 1 tests in 0.1s\n"
+            "OK (skipped=1)\n"
+        )
+        with mock.patch.object(
+            self.module, "run_gate", return_value=(self._gate("unit-tests"), text)
+        ):
+            gate, problems = self.module.gate_unit_tests(1, 1)
+        self.assertEqual(gate["skipped_tests"], ["test_constructs.Unknown.test_x"])
+        self.assertTrue(any("unregistered skip" in p for p in problems), problems)
+
+    def test_environment_null_is_a_problem_not_a_crash(self):
+        _environment, problems = self.module.collect_environment(
+            self.claims, [{"target": "toycpu", "environment": None}]
+        )
+        self.assertTrue(any("LLVM build" in p for p in problems), problems)
+
+    def test_gate_integration_tolerates_null_sections(self):
+        first = ROOT / "out" / "test-null-toycpu.json"
+        second = ROOT / "out" / "test-null-aarch64.json"
+        payload = {
+            "schema": "legalizer-dsl-integration-v2",
+            "status": "PASS",
+            "ok": True,
+            "target": "toycpu",
+            "environment": None,
+            "inputs": None,
+            "provenance": None,
+            "artifacts": None,
+            "comparisons": None,
+        }
+        for path, target in ((first, "toycpu"), (second, "aarch64-vector")):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                json.dumps({**payload, "target": target}), encoding="utf-8"
+            )
+            self.addCleanup(
+                lambda path=path: path.unlink() if path.exists() else None
+            )
+        with mock.patch.object(
+            self.module, "INTEGRATION_PATHS", (first, second)
+        ), mock.patch.object(
+            self.module, "run_gate", return_value=(self._gate("integration-status"), "")
+        ):
+            gate, reports, _loaded, problems = self.module.gate_integration({})
+        self.assertEqual(gate["status"], "FAIL")
+        self.assertTrue(problems)
+        self.assertEqual(len(reports), 2)
 
     def test_tests_and_skipped_flags_are_mandatory(self):
         self._patch()
@@ -219,10 +313,26 @@ class FinalVerificationTests(unittest.TestCase):
         artifact = self._artifact()
         self.assertEqual(artifact["result"], "PASS")
         self.assertEqual(artifact["verification_mode"], "artifact-consistency")
+        self.assertFalse(artifact["release_eligible"])
         self.assertEqual(artifact["execution"]["claims"], "hash-and-corpus-audit")
         self.assertEqual(artifact["execution"]["integration"], "existing-reports")
         self.assertTrue(artifact["limitations"])
         self.assertEqual(artifact["problems"], [])
+
+    def test_allow_dirty_is_diagnostic_not_pass(self):
+        self._patch(
+            repository=lambda base: (
+                dict(self.clean_repo, project_dirty=True, dirty=True),
+                [],
+            )
+        )
+        rc = self.module.main(
+            ["--tests", "1", "--skipped", "0", "--allow-dirty", "--out", self.out_rel]
+        )
+        artifact = self._artifact()
+        self.assertEqual(rc, 1)
+        self.assertEqual(artifact["result"], "DIAGNOSTIC")
+        self.assertFalse(artifact["release_eligible"])
 
     def test_integration_problems_propagate_to_the_result(self):
         self._patch(integration_problems=["report is stale"])

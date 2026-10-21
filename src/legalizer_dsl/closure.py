@@ -131,6 +131,12 @@ def generated_evidence(entries: list[dict]) -> tuple[dict, list[str]]:
     except (OSError, json.JSONDecodeError) as exc:
         problems.append(f"generated evidence manifest unreadable: {exc}")
         manifest = {}
+    if not isinstance(manifest, dict):
+        problems.append(
+            "generated evidence manifest root is "
+            f"{type(manifest).__name__}, expected object"
+        )
+        manifest = {}
     if manifest.get("schema") != "legalizer-dsl-generated-evidence-v1":
         problems.append(
             f"generated evidence schema is {manifest.get('schema')!r}"

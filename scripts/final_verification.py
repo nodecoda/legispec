@@ -36,6 +36,12 @@ for entry in (ROOT, ROOT / "src", ROOT / "scripts"):
         sys.path.insert(0, str(entry))
 
 from check_integration_status import validate_report  # noqa: E402
+from check_skips import (  # noqa: E402
+    allowed_for_platform,
+    compare_skips,
+    load_manifest,
+    optional_for_platform,
+)
 from legalizer_dsl import __version__ as GENERATOR_VERSION  # noqa: E402
 from legalizer_dsl.codegen import DSL_SPEC_VERSION  # noqa: E402
 from legalizer_dsl.fingerprint import codegen_sha256, hand_evaluator_sha256  # noqa: E402
@@ -110,10 +116,22 @@ def run_gate(name: str, args: list[str]) -> tuple[dict, str]:
 
 
 def parse_ints(pattern: str, text: str) -> Optional[tuple[int, ...]]:
-    match = re.search(pattern, text)
-    if not match:
+    """Return the last matching summary line.
+
+    Gate output can contain the text of nested runs (for example a test that
+    invokes this script).  The final match belongs to the run that produced the
+    gate, so scanning forward would accept an earlier, unrelated count.
+    """
+
+    matches = list(re.finditer(pattern, text, re.M))
+    if not matches:
         return None
-    return tuple(int(value) for value in match.groups())
+    return tuple(int(value) for value in matches[-1].groups())
+
+
+def _dict(value) -> dict:
+    return value if isinstance(value, dict) else {}
+
 
 def is_excluded_untracked(relative: str) -> bool:
     if relative == "AGENTS.md":
@@ -223,29 +241,38 @@ def collect_environment(claims: dict, reports: list[dict]) -> tuple[dict, list[s
     for claim in claims.get("claims", []):
         if not isinstance(claim, dict):
             continue
+        cid = str(claim.get("id", "?"))
         if claim.get("evaluator_sha256") != evaluator:
-            problems.append(f"{claim.get('id', '?')}: evaluator_sha256 is stale")
-        pin = claim.get("codegen_sha256")
-        if pin is not None and pin != codegen_sha256():
-            problems.append(f"{claim.get('id', '?')}: codegen_sha256 is stale")
+            problems.append(f"{cid}: evaluator_sha256 is stale")
+        # Hand-written claims record the codegen hash for provenance only; a
+        # codegen edit must not invalidate hand evidence.  Only generated
+        # claims assert that their oracle was built from this codegen.
+        if cid.endswith("-generated"):
+            pin = claim.get("codegen_sha256")
+            if not isinstance(pin, str) or not pin:
+                problems.append(f"{cid}: generated claim has no codegen_sha256")
+            elif pin != codegen_sha256():
+                problems.append(f"{cid}: codegen_sha256 is stale")
 
     llvm_builds = set()
+    toolchains: dict[str, dict] = {}
     for report in reports:
-        env = report.get("environment") if isinstance(report.get("environment"), dict) else {}
+        if not isinstance(report, dict):
+            problems.append("integration report is not an object")
+            continue
+        target = str(report.get("target", "?"))
+        env = _dict(report.get("environment"))
         if env.get("llvm_dir"):
             llvm_builds.add(env["llvm_dir"])
         if env.get("build_returncode") not in (0, None):
             problems.append(
-                f"integration build failed for {report.get('target', '?')}: "
+                f"integration build failed for {target}: "
                 f"build_returncode={env.get('build_returncode')}"
             )
-    toolchains = {
-        report.get("target", "?"): {
-            key: report.get("environment", {}).get(key)
+        toolchains[target] = {
+            key: env.get(key)
             for key in ("llvm_dir", "cxx", "linker", "cmake", "ninja")
         }
-        for report in reports
-    }
 
     environment = {
         "python": platform.python_version(),
@@ -263,30 +290,58 @@ def collect_environment(claims: dict, reports: list[dict]) -> tuple[dict, list[s
     return environment, problems
 
 def parse_unittest_skips(text: str) -> int:
-    """Read the skip count from unittest's own summary line.
+    """Read the skip count from unittest's own final summary line.
 
     The gate output can contain other ``skipped=`` text (for example this
-    script's own summary printed by a nested test), so a plain search would
-    pick up an earlier, unrelated count.
+    script's own summary printed by a nested test), so only the last
+    ``OK``/``FAILED`` line is authoritative.
     """
 
-    summary = re.search(r"^(?:OK|FAILED) \((.*)\)$", text, re.M)
-    if summary is None:
+    summaries = list(re.finditer(r"^(?:OK|FAILED) \((.*)\)$", text, re.M))
+    if not summaries:
         return 0
-    skipped = re.search(r"\bskipped=(\d+)", summary.group(1))
+    skipped = re.search(r"\bskipped=(\d+)", summaries[-1].group(1))
     return int(skipped.group(1)) if skipped else 0
+
+
+def parse_unittest_skip_ids(text: str) -> dict[str, str]:
+    """Read ``test (id) ... skipped 'reason'`` lines from verbose output."""
+
+    skipped: dict[str, str] = {}
+    pattern = re.compile(r"^.*? \(([^()]+)\) \.\.\. skipped '(.*)'$", re.M)
+    for match in pattern.finditer(text):
+        test_id = match.group(1)
+        if test_id.startswith("tests."):
+            test_id = test_id[len("tests.") :]
+        skipped[test_id] = match.group(2)
+    return skipped
+
+
+def _skip_manifest_problems(skipped: dict[str, str]) -> list[str]:
+    manifest = ROOT / "tests" / "expected-skips.json"
+    try:
+        entries = load_manifest(manifest)
+        system = platform.system().lower()
+        allowed = allowed_for_platform(entries, system)
+        optional = optional_for_platform(entries, system)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return [f"skip manifest is unusable: {exc}"]
+    return compare_skips(skipped, allowed, optional)
 
 
 def gate_unit_tests(expected_tests: Optional[int], expected_skipped: Optional[int]):
     gate, text = run_gate(
-        "unit-tests", ["-X", "utf8", "-m", "unittest", "discover", "-s", "tests"]
+        "unit-tests",
+        ["-X", "utf8", "-m", "unittest", "discover", "-s", "tests", "-v"],
     )
     problems: list[str] = []
     ran = parse_ints(r"Ran (\d+) tests?", text)
     tests = ran[0] if ran else None
     skip_count = parse_unittest_skips(text)
+    skip_ids = parse_unittest_skip_ids(text)
     gate["tests"] = tests
     gate["skipped"] = skip_count
+    gate["skipped_tests"] = sorted(skip_ids)
     if gate["exit_code"] != 0:
         problems.append(f"unit tests failed with exit {gate['exit_code']}")
     if tests is None:
@@ -295,6 +350,12 @@ def gate_unit_tests(expected_tests: Optional[int], expected_skipped: Optional[in
         problems.append(f"unit tests ran {tests}, expected {expected_tests}")
     if expected_skipped is not None and skip_count != expected_skipped:
         problems.append(f"unit tests skipped {skip_count}, expected {expected_skipped}")
+    if len(skip_ids) != skip_count:
+        problems.append(
+            f"unit test output reported {skip_count} skip(s) but "
+            f"{len(skip_ids)} skip id(s) were recoverable"
+        )
+    problems.extend(_skip_manifest_problems(skip_ids))
     return gate, problems
 
 
@@ -449,9 +510,9 @@ def gate_coverage():
             problems.append(f"coverage {name}: boundary count missing")
         elif in_domain is not None and in_domain + boundary != queries:
             problems.append(f"coverage {name}: in_domain + boundary != queries")
-        if corpus.get("parse_errors") not in (0, None):
+        if corpus.get("parse_errors") != 0:
             problems.append(f"coverage {name}: parse errors")
-        if coverage.get("observation_errors") not in (0, None):
+        if coverage.get("observation_errors") != 0:
             problems.append(f"coverage {name}: observation errors")
     if set(summary) != EXPECTED_TARGETS:
         problems.append(f"coverage targets {sorted(summary)} != {sorted(EXPECTED_TARGETS)}")
@@ -517,18 +578,33 @@ def gate_integration(expected: dict):
                 }
             )
             continue
+        if not isinstance(report, dict):
+            problems.append(
+                f"{relative}: report root is {type(report).__name__}, expected object"
+            )
+            report_gates.append(
+                {
+                    "name": f"integration-{path.stem}",
+                    "report": relative,
+                    "status": "FAIL",
+                    "exit_code": 1,
+                }
+            )
+            continue
         reports.append(report)
         target = str(report.get("target", "?"))
         targets.append(target)
+        inputs = _dict(report.get("inputs"))
+        provenance = _dict(report.get("provenance"))
         gate = {
             "name": f"integration-{target}",
             "report": relative,
             "report_sha256": sha256_file(path),
             "status": report.get("status"),
-            "query_count": report.get("inputs", {}).get("query_count"),
-            "rules": report.get("inputs", {}).get("rules"),
-            "rules_sha256": report.get("inputs", {}).get("rules_sha256"),
-            "provenance": report.get("provenance", {}),
+            "query_count": inputs.get("query_count"),
+            "rules": inputs.get("rules"),
+            "rules_sha256": inputs.get("rules_sha256"),
+            "provenance": provenance,
             "comparisons": {},
             "exit_code": 0,
         }
@@ -556,9 +632,11 @@ def gate_integration(expected: dict):
                 problems.append(f"{relative}: comparison {name} is not ok")
             if value.get("divergence_count") != 0:
                 problems.append(f"{relative}: comparison {name} diverged")
-            if value.get("oracle_errors") not in (0, None):
+            if value.get("oracle_errors") != 0:
                 problems.append(f"{relative}: comparison {name} had oracle errors")
-            if isinstance(queries, int) and value.get("queries") != queries:
+            if not isinstance(value.get("queries"), int):
+                problems.append(f"{relative}: comparison {name} has no query count")
+            elif isinstance(queries, int) and value.get("queries") != queries:
                 problems.append(
                     f"{relative}: comparison {name} queries != {queries}"
                 )
@@ -581,6 +659,13 @@ def gate_integration(expected: dict):
     status_gate["reports"] = len(INTEGRATION_PATHS)
     status_gate["status"] = "PASS" if not problems else "FAIL"
     return status_gate, report_gates, reports, problems
+
+
+def _display_path(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.resolve().as_posix()
 
 
 def boundaries(claims: dict) -> dict:
@@ -611,7 +696,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument(
         "--allow-dirty",
         action="store_true",
-        help="record, but do not fail on, a pre-existing project-dirty worktree",
+        help=(
+            "run the gates on a dirty worktree for diagnostics; the artifact "
+            "is DIAGNOSTIC, not PASS, and is not release-eligible"
+        ),
     )
     parser.add_argument(
         "--run-claims",
@@ -719,6 +807,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         head_commit = ""
         problems.append(str(exc))
     expected = {
+        "generator_version": GENERATOR_VERSION,
+        "dsl_spec_version": DSL_SPEC_VERSION,
         "evaluator_sha256": hand_evaluator_sha256(),
         "codegen_sha256": codegen_sha256(),
         "llvm_commit": claims.get("llvm_commit"),
@@ -782,10 +872,25 @@ def main(argv: Optional[list[str]] = None) -> int:
         )
 
     result = "PASS" if not problems else "FAIL"
+    dirty = bool(
+        repository_start.get("project_dirty") or repository_end.get("project_dirty")
+    )
+    if result == "PASS" and dirty:
+        # --allow-dirty is a diagnostic mode.  It may write an artifact for
+        # inspection, but it must never look like a release PASS.
+        result = "DIAGNOSTIC"
+        limitations.append(
+            "The worktree was dirty and --allow-dirty was used; this artifact "
+            "is diagnostic and is not release-eligible."
+        )
+    release_eligible = (
+        result == "PASS" and mode == "independent-execution" and not dirty
+    )
     artifact = {
         "schema": SCHEMA,
         "generated_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "result": result,
+        "release_eligible": release_eligible,
         "verification_mode": mode,
         "repository": repository_end,
         "repository_at_start": repository_start,
@@ -811,11 +916,12 @@ def main(argv: Optional[list[str]] = None) -> int:
     passed = sum(1 for gate in gates if gate.get("status") == "PASS")
     print(
         f"final-verification: {result} mode={mode} gates={passed}/{len(gates)} "
+        f"release_eligible={str(release_eligible).lower()} "
         f"dirty={str(repository_end['dirty']).lower()} "
         f"tests={unit_gate.get('tests')} skipped={unit_gate.get('skipped')}"
     )
     print(f"worktree: {repository_end['worktree_sha256']}")
-    print(f"report: {out_path.relative_to(ROOT).as_posix()}")
+    print(f"report: {_display_path(out_path)}")
     for problem in problems:
         print(f"  ! {problem}")
     return 0 if result == "PASS" else 1

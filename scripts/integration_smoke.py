@@ -58,8 +58,8 @@ TARGETS = {
     "toycpu": {
         "rules": "rules/toycpu.ldsl",
         "namespace": None,
-        "oracle": "out/oracle/legalizer-oracle.exe",
-        "generated_oracle": "out/oracle/legalizer-oracle-gen.exe",
+        "oracle": "out/oracle/legalizer-oracle",
+        "generated_oracle": "out/oracle/legalizer-oracle-gen",
         "extended_llt": False,
         "llvm_dirs": (
             "F:/llvm/build-toycpu/lib/cmake/llvm",
@@ -69,9 +69,9 @@ TARGETS = {
     "aarch64-vector": {
         "rules": "rules/aarch64-vector.ldsl",
         "namespace": None,
-        "oracle": "out/oracle-aarch64/legalizer-oracle-aarch64.exe",
+        "oracle": "out/oracle-aarch64/legalizer-oracle-aarch64",
         "generated_oracle": (
-            "out/oracle-aarch64/legalizer-oracle-aarch64-vector-gen.exe"
+            "out/oracle-aarch64/legalizer-oracle-aarch64-vector-gen"
         ),
         "extended_llt": True,
         "llvm_dirs": (
@@ -247,6 +247,15 @@ def _comparison_summary(report: ComparisonReport) -> dict:
     }
 
 
+def _binary(relative: str) -> Path:
+    """Resolve an oracle binary with the host executable suffix."""
+
+    path = ROOT / relative
+    if os.name == "nt":
+        path = path.with_name(path.name + ".exe")
+    return path
+
+
 def _consumer_path(build_dir: Path) -> Optional[Path]:
     for candidate in (
         build_dir / "legalizer-dsl-consumer.exe",
@@ -307,7 +316,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     codegen.generate(
         info,
         out_dir=generated_dir,
-        rules_rel=_relative_to_root(rules),
+        rules_rel=codegen._rules_label(rules),
         rules_sha=rules_sha,
         namespace=namespace,
         namespace_source="derived" if target["namespace"] is None else "explicit",
@@ -359,7 +368,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             "oracle_sha256": {},
         },
         "inputs": {
-            "rules": _relative_to_root(rules),
+            "rules": codegen._rules_label(rules),
             "rules_sha256": rules_sha,
             "query_source": "D",
             "query_count": query_count,
@@ -396,14 +405,22 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     consumer = _consumer_path(build_dir)
     if consumer is None:
-        report["status"] = "SKIP"
-        report["skip_reason"] = (
-            "consumer executable not found; pass --no-build only after a build"
-        )
+        # A successful build that produced no consumer is a broken build, not
+        # a missing environment.  Treating it as SKIP would make a red CI run
+        # look like an environmental no-op.
+        report["status"] = "FAIL"
+        report["ok"] = False
+        report["problems"] = [
+            "consumer executable not found after the build; "
+            "pass --no-build only after a successful build"
+        ]
         report["artifacts"]["consumer"] = None
         _write_report(report_path, report)
-        print(f"SKIP: environment: {report['skip_reason']}")
-        return 0
+        print(
+            "error: consumer executable not found after the build",
+            file=sys.stderr,
+        )
+        return 1
 
     report["artifacts"]["consumer"] = _relative_to_root(consumer)
     report["provenance"]["consumer_sha256"] = _sha256_file(consumer)
@@ -422,7 +439,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             ("hand_written_oracle", "oracle"),
             ("generated_oracle", "generated_oracle"),
         ):
-            path = ROOT / target[key]
+            path = _binary(target[key])
             if not path.is_file():
                 references_complete = False
                 missing_references.append(label)
@@ -589,8 +606,12 @@ def _git(*args: str) -> Optional[str]:
     return result.stdout.strip()
 
 
-def _project_dirty() -> bool:
+def _project_dirty() -> Optional[bool]:
     status = _git("status", "--porcelain")
+    if status is None:
+        # Cannot prove the tree is clean; record None so the status gate
+        # rejects the report instead of assuming a clean worktree.
+        return None
     if not status:
         return False
     for line in status.splitlines():

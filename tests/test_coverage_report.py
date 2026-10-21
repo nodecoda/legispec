@@ -74,6 +74,97 @@ class CoverageReportTests(unittest.TestCase):
                 )
             )
 
+    def test_ratchet_checks_every_metric(self):
+        module = _load_report()
+        def data(ratio=0.9, in_domain=10, queries=11, matched=9, total=10):
+            return {
+                "corpus": {
+                    "ratio": None,
+                    "in_domain": in_domain,
+                    "queries": queries,
+                },
+                "coverage": {
+                    "ratio": ratio,
+                    "rules_matched": matched,
+                    "rules_total": total,
+                },
+            }
+        baseline = {"toycpu": module.metric_snapshot(data())}
+        lowered = {
+            "ratio": 0.8,
+            "in_domain": 9,
+            "queries": 10,
+            "rules_matched": 8,
+            "rules_total": 9,
+        }
+        arguments = {
+            "ratio": "ratio",
+            "in_domain": "in_domain",
+            "queries": "queries",
+            "rules_matched": "matched",
+            "rules_total": "total",
+        }
+        for key in ("ratio", "in_domain", "queries", "rules_matched", "rules_total"):
+            with self.subTest(metric=key):
+                current = data(**{arguments[key]: lowered[key]})
+                problems = module.ratchet_problems(
+                    baseline, {"toycpu": current}
+                )
+                self.assertTrue(
+                    any(problem.startswith(f"toycpu: {key} ") for problem in problems),
+                    problems,
+                )
+
+    def test_subset_run_accepts_extra_baseline_targets(self):
+        module = _load_report()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            out = root / "report.json"
+            docs = root / "COVERAGE.md"
+            baseline = root / "baseline.json"
+            both = [
+                "--target", "toycpu",
+                "--target", "aarch64-vector",
+                "--out", str(out),
+                "--docs", str(docs),
+                "--baseline", str(baseline),
+            ]
+            toy = [
+                "--target", "toycpu",
+                "--out", str(out),
+                "--docs", str(docs),
+                "--baseline", str(baseline),
+            ]
+            self.assertEqual(module.main(both + ["--update-baseline"]), 0)
+            self.assertEqual(module.main(toy), 0)
+            report = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(report["ratchet"]["status"], "PASS")
+            self.assertEqual(set(report["targets"]), {"toycpu"})
+
+            self.assertEqual(module.main(toy + ["--update-baseline"]), 0)
+            saved = json.loads(baseline.read_text(encoding="utf-8"))
+            self.assertIn("aarch64-vector", saved["targets"])
+
+    def test_baseline_root_must_be_an_object(self):
+        module = _load_report()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            out = root / "report.json"
+            docs = root / "COVERAGE.md"
+            baseline = root / "baseline.json"
+            baseline.write_text("[]\n", encoding="utf-8")
+            rc = module.main(
+                [
+                    "--target", "toycpu",
+                    "--out", str(out),
+                    "--docs", str(docs),
+                    "--baseline", str(baseline),
+                ]
+            )
+            self.assertEqual(rc, 1)
+            report = json.loads(out.read_text(encoding="utf-8"))
+            self.assertEqual(report["ratchet"]["status"], "FAIL")
+
     def test_ratchet_fails_on_decrease_and_accepts_waiver(self):
         module = _load_report()
         with tempfile.TemporaryDirectory() as tmp:

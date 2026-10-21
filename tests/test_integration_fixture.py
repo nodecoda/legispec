@@ -17,6 +17,7 @@ import pathlib
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
@@ -98,28 +99,61 @@ class IntegrationFixtureTests(unittest.TestCase):
             report.write_text(json.dumps(data), encoding="utf-8")
             with _patched_root(checker, root):
                 self.assertEqual(checker.main([str(report), "--require-pass"]), 0)
+                # Relative report paths resolve against the repository root,
+                # not the caller's current directory.
+                self.assertEqual(checker.main(["pass.json", "--require-pass"]), 0)
 
     def test_status_gate_rejects_unpinned_or_overstated_reports(self):
         checker = _load_status()
         cases = {
-            "v1-schema": lambda data: data.update(
+            "v1-schema": lambda data, root: data.update(
                 schema="legalizer-dsl-integration-v1"
             ),
-            "small-sample": lambda data: data["inputs"].update(query_count=1),
-            "no-provenance": lambda data: data.pop("provenance"),
-            "no-generated-oracle": lambda data: data["comparisons"].pop(
+            "small-sample": lambda data, root: data["inputs"].update(
+                query_count=1
+            ),
+            "null-query-count": lambda data, root: data["inputs"].update(
+                query_count=None
+            ),
+            "no-provenance": lambda data, root: data.pop("provenance"),
+            "no-generated-oracle": lambda data, root: data["comparisons"].pop(
                 "generated_oracle"
             ),
-            "dirty-worktree": lambda data: data["provenance"].update(
+            "dirty-worktree": lambda data, root: data["provenance"].update(
                 worktree_dirty=True
             ),
-            "short-head": lambda data: data["provenance"].update(
+            "short-head": lambda data, root: data["provenance"].update(
                 head_commit="abc"
             ),
-            "null-consumer": lambda data: data["provenance"].update(
+            "stale-head": lambda data, root: data["provenance"].update(
+                head_commit="e" * 40
+            ),
+            "stale-generator": lambda data, root: data["provenance"].update(
+                generator_version="0.0.0-other"
+            ),
+            "stale-dsl-spec": lambda data, root: data["provenance"].update(
+                dsl_spec_version="999"
+            ),
+            "stale-evaluator": lambda data, root: data["provenance"].update(
+                evaluator_sha256="e" * 64
+            ),
+            "stale-codegen": lambda data, root: data["provenance"].update(
+                codegen_sha256="f" * 64
+            ),
+            "stale-llvm": lambda data, root: data["provenance"].update(
+                llvm_commit="e" * 40
+            ),
+            "no-query-limit": lambda data, root: data["inputs"].pop(
+                "query_limit"
+            ),
+            "overstated-query-count": _overstate_query_count,
+            "oracle-errors-null": lambda data, root: data["comparisons"][
+                "consumer"
+            ].update(oracle_errors=None),
+            "null-consumer": lambda data, root: data["provenance"].update(
                 consumer_sha256=None
             ),
-            "consumer-diverged": lambda data: data["comparisons"].update(
+            "consumer-diverged": lambda data, root: data["comparisons"].update(
                 consumer={
                     "ok": True,
                     "queries": 100,
@@ -133,13 +167,76 @@ class IntegrationFixtureTests(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as tmp:
                     root = pathlib.Path(tmp)
                     data = _fake_report(root)
-                    mutate(data)
+                    mutate(data, root)
                     report = root / "report.json"
                     report.write_text(json.dumps(data), encoding="utf-8")
                     with _patched_root(checker, root):
                         self.assertEqual(
                             checker.main([str(report), "--require-pass"]), 1
                         )
+
+    def test_status_gate_rejects_tampered_artifacts_and_unbound_rules(self):
+        checker = _load_status()
+        cases = {
+            "tampered-generated-header": _tamper_header,
+            "missing-generated-source": _remove_source,
+            "absolute-query-path": lambda data, root: data["artifacts"].update(
+                query_file=str((root / "artifacts" / "queries.jsonl").resolve())
+            ),
+            "escaping-query-path": lambda data, root: data["artifacts"].update(
+                query_file="../outside.jsonl"
+            ),
+            "rules-not-bound-to-target": _use_other_rules,
+        }
+        for name, mutate in cases.items():
+            with self.subTest(case=name):
+                with tempfile.TemporaryDirectory() as tmp:
+                    root = pathlib.Path(tmp)
+                    data = _fake_report(root)
+                    mutate(data, root)
+                    report = root / "report.json"
+                    report.write_text(json.dumps(data), encoding="utf-8")
+                    with _patched_root(checker, root):
+                        self.assertEqual(
+                            checker.main([str(report), "--require-pass"]), 1
+                        )
+
+    def test_status_gate_target_rules_match_smoke(self):
+        checker = _load_status()
+        smoke = _load_smoke()
+        self.assertEqual(
+            checker.TARGET_RULES,
+            {name: target["rules"] for name, target in smoke.TARGETS.items()},
+        )
+
+    def test_missing_consumer_after_build_is_a_failure(self):
+        smoke = _load_smoke()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            report = root / "report.json"
+            with mock.patch.object(smoke, "_consumer_path", return_value=None):
+                rc = smoke.main(
+                    [
+                        "--target",
+                        "toycpu",
+                        "--no-build",
+                        "--limit",
+                        "100",
+                        "--out-dir",
+                        str(root / "integration"),
+                        "--out",
+                        str(report),
+                    ]
+                )
+            self.assertEqual(rc, 1)
+            data = json.loads(report.read_text(encoding="utf-8"))
+            self.assertEqual(data["status"], "FAIL")
+            self.assertTrue(data["problems"])
+
+    def test_unknown_git_state_is_not_clean(self):
+        smoke = _load_smoke()
+        with mock.patch.object(smoke, "_git", return_value=None):
+            self.assertIsNone(smoke._project_dirty())
 
     def test_status_gate_rejects_skip_when_pass_is_required(self):
         checker = _load_status()
@@ -162,6 +259,41 @@ class IntegrationFixtureTests(unittest.TestCase):
                 self.assertEqual(checker.main([str(skip), "--require-pass"]), 1)
 
 
+EXPECTED_PINS = {
+    "generator_version": "test",
+    "dsl_spec_version": "1",
+    "evaluator_sha256": "a" * 64,
+    "codegen_sha256": "b" * 64,
+    "llvm_commit": "c" * 40,
+    "head_commit": "d" * 40,
+}
+
+
+def _overstate_query_count(data: dict, root: pathlib.Path) -> None:
+    data["inputs"]["query_count"] = 101
+    for value in data["comparisons"].values():
+        value["queries"] = 101
+
+
+def _tamper_header(data: dict, root: pathlib.Path) -> None:
+    relative = data["provenance"]["generated"]["header"]
+    (root / relative).write_text("// tampered\n", encoding="utf-8")
+
+
+def _remove_source(data: dict, root: pathlib.Path) -> None:
+    relative = data["provenance"]["generated"]["source"]
+    (root / relative).unlink()
+
+
+def _use_other_rules(data: dict, root: pathlib.Path) -> None:
+    other = root / "rules" / "other.ldsl"
+    other.write_text("ruleset G_Y { legal_for {s32}; }\n", encoding="utf-8")
+    digest = _sha(other)
+    data["inputs"]["rules"] = "rules/other.ldsl"
+    data["inputs"]["rules_sha256"] = digest
+    data["provenance"]["rules_sha256"] = digest
+
+
 def _sha(path: pathlib.Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -175,7 +307,13 @@ def _fake_report(root: pathlib.Path) -> dict:
     rules.parent.mkdir()
     rules.write_text("ruleset G_X { legal_for {s32}; }\n", encoding="utf-8")
     query_file = artifacts / "queries.jsonl"
-    query_file.write_text('{"opcode": "G_X"}\n', encoding="utf-8")
+    query_file.write_text(
+        "".join(
+            json.dumps({"opcode": "G_X", "index": index}) + "\n"
+            for index in range(100)
+        ),
+        encoding="utf-8",
+    )
     consumer = artifacts / "consumer.bin"
     consumer.write_bytes(b"consumer")
     hand_oracle = artifacts / "hand-oracle.bin"
@@ -195,12 +333,7 @@ def _fake_report(root: pathlib.Path) -> dict:
         "status": "PASS",
         "ok": True,
         "provenance": {
-            "generator_version": "test",
-            "dsl_spec_version": "1",
-            "evaluator_sha256": "a" * 64,
-            "codegen_sha256": "b" * 64,
-            "llvm_commit": "c" * 40,
-            "head_commit": "d" * 40,
+            **EXPECTED_PINS,
             "worktree_dirty": False,
             "rules_sha256": rules_sha,
             "query_sha256": query_sha,
@@ -220,6 +353,7 @@ def _fake_report(root: pathlib.Path) -> dict:
             "rules": rules.relative_to(root).as_posix(),
             "rules_sha256": rules_sha,
             "query_count": 100,
+            "query_limit": 0,
             "query_sha256": query_sha,
         },
         "artifacts": {
@@ -252,7 +386,7 @@ class _patched_root:
 
     def __enter__(self):
         self.module.ROOT = self.root
-        self.module.current_expected = lambda: {}
+        self.module.current_expected = lambda: dict(EXPECTED_PINS)
         return self.module
 
     def __exit__(self, *exc):

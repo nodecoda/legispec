@@ -45,16 +45,19 @@ def load_manifest(path: Path) -> list[dict]:
     return allowed
 
 
-def allowed_for_platform(entries: list[dict], system: str) -> dict[str, str]:
-    allowed: dict[str, str] = {}
+def _entries_for_platform(entries: list[dict], system: str) -> list[dict]:
+    selected: list[dict] = []
     for entry in entries:
         test = entry.get("test")
         reason = entry.get("reason")
         platforms = entry.get("platforms")
+        optional = entry.get("optional", False)
         if not isinstance(test, str) or not test:
             raise ValueError("expected-skips entry has no test id")
         if not isinstance(reason, str) or not reason.strip():
             raise ValueError(f"expected-skips entry has no reason: {test}")
+        if not isinstance(optional, bool):
+            raise ValueError(f"expected-skips optional must be a boolean: {test}")
         if platforms is not None:
             if not isinstance(platforms, list) or not all(
                 isinstance(value, str) for value in platforms
@@ -62,20 +65,48 @@ def allowed_for_platform(entries: list[dict], system: str) -> dict[str, str]:
                 raise ValueError(f"expected-skips platforms must be a list: {test}")
             if system not in platforms:
                 continue
+        selected.append(entry)
+    return selected
+
+
+def allowed_for_platform(entries: list[dict], system: str) -> dict[str, str]:
+    allowed: dict[str, str] = {}
+    for entry in _entries_for_platform(entries, system):
+        test = entry["test"]
         if test in allowed:
             raise ValueError(f"duplicate expected-skips entry: {test}")
-        allowed[test] = reason
+        allowed[test] = entry["reason"]
     return allowed
 
 
+def optional_for_platform(entries: list[dict], system: str) -> set[str]:
+    """Return tests whose skip may be absent on this platform.
+
+    Environment-dependent controls (for example oracle-backed tests) are
+    optional: when they run, that is strictly better than skipping, but a
+    skip must still be registered with a reason.
+    """
+
+    return {
+        entry["test"]
+        for entry in _entries_for_platform(entries, system)
+        if entry.get("optional", False)
+    }
+
+
 def compare_skips(
-    skipped: dict[str, str], allowed: dict[str, str]
+    skipped: dict[str, str],
+    allowed: dict[str, str],
+    optional: Optional[set[str]] = None,
 ) -> list[str]:
+    optional = optional or set()
     problems: list[str] = []
     for test, reason in sorted(skipped.items()):
         if test not in allowed:
             problems.append(f"unregistered skip: {test} ({reason})")
     for test in sorted(set(allowed) - set(skipped)):
+        if test in optional:
+            continue
         problems.append(
             f"registered skip did not happen: {test} "
             "(remove it from tests/expected-skips.json or fix the test)"
@@ -96,7 +127,9 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     try:
         entries = load_manifest(Path(args.manifest))
-        allowed = allowed_for_platform(entries, platform.system().lower())
+        system = platform.system().lower()
+        allowed = allowed_for_platform(entries, system)
+        optional = optional_for_platform(entries, system)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         print(f"check-skips: FAIL: {exc}", file=sys.stderr)
         return 1
@@ -109,7 +142,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         for test, reason in result.skipped
     }
 
-    problems = compare_skips(skipped, allowed)
+    problems = compare_skips(skipped, allowed, optional)
     if result.testsRun == 0:
         problems.append("no tests ran")
     for test, _ in result.failures:
@@ -123,11 +156,17 @@ def main(argv: Optional[list[str]] = None) -> int:
     print(
         f"check-skips: {status} tests={result.testsRun} "
         f"skipped={len(skipped)} allowed={len(allowed)} "
-        f"failures={len(result.failures)} errors={len(result.errors)}"
+        f"optional={len(optional)} "
+        f"failures={len(result.failures)} errors={len(result.errors)} "
+        f"expected_failures={len(result.expectedFailures)}"
     )
     for test, reason in sorted(skipped.items()):
         marker = "allowed" if test in allowed else "UNREGISTERED"
         print(f"  skip {test}: {marker} ({reason})")
+    for test, reason in sorted(
+        (test.id(), reason) for test, reason in result.expectedFailures
+    ):
+        print(f"  expected failure {test}: {reason}")
     for problem in problems:
         print(f"  ! {problem}")
     return 0 if not problems else 1

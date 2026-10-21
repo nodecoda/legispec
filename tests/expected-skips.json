@@ -1,37 +1,30 @@
 {
+  "schema": "legalizer-dsl-expected-skips-v1",
   "allowed": [
     {
-      "platforms": [
-        "linux",
-        "darwin"
-      ],
-      "reason": "ToyCPU oracle is not built on hosted Linux runners",
-      "test": "test_mutation_controls.ToyCPUObservationMutations.test_changed_action_is_detected_by_oracle"
+      "test": "test_constructs.ConstructCoverageTests.test_every_builder_method_is_classified",
+      "reason": "requires an LLVM source tree (LEGALIZER_DSL_LLVM_SRC or a local checkout)",
+      "optional": true
     },
     {
-      "platforms": [
-        "linux",
-        "darwin"
-      ],
-      "reason": "ToyCPU oracle is not built on hosted Linux runners",
-      "test": "test_mutation_controls.ToyCPUObservationMutations.test_removed_clamp_max_is_detected_by_oracle"
+      "test": "test_mutation_controls.ToyCPUObservationMutations.test_changed_action_is_detected_by_oracle",
+      "reason": "ToyCPU oracle is not built on this machine",
+      "optional": true
     },
     {
-      "platforms": [
-        "linux",
-        "darwin"
-      ],
-      "reason": "ToyCPU oracle is not built on hosted Linux runners",
-      "test": "test_mutation_controls.ToyCPUObservationMutations.test_rule_order_swap_is_detected_by_oracle"
+      "test": "test_mutation_controls.ToyCPUObservationMutations.test_removed_clamp_max_is_detected_by_oracle",
+      "reason": "ToyCPU oracle is not built on this machine",
+      "optional": true
     },
     {
-      "platforms": [
-        "linux",
-        "darwin"
-      ],
-      "reason": "RV64 oracle is not built on hosted Linux runners",
-      "test": "test_mutation_controls.ConfigGuardMutationTests.test_flipped_config_guard_is_detected"
+      "test": "test_mutation_controls.ToyCPUObservationMutations.test_rule_order_swap_is_detected_by_oracle",
+      "reason": "ToyCPU oracle is not built on this machine",
+      "optional": true
+    },
+    {
+      "test": "test_mutation_controls.ConfigGuardMutationTests.test_flipped_config_guard_is_detected",
+      "reason": "RV64 oracle is not built on this machine",
+      "optional": true
     }
-  ],
-  "schema": "legalizer-dsl-expected-skips-v1"
+  ]
 }

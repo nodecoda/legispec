@@ -20,10 +20,19 @@ Evidence storage and reproduction are in [`EVIDENCE.md`](EVIDENCE.md).
 
 An integration report is valid only when it was produced from this exact
 tree and toolchain. The status gate re-checks `head_commit == HEAD`,
-`worktree_dirty == false`, the evaluator/codegen fingerprints, the rules and
-query hashes, and the hashes of the generated sources, consumer, and both
-oracle binaries. A report from an older commit, a dirty worktree, or a
-different generator is stale even if its JSON shape looks valid.
+`worktree_dirty == false`, the generator/DSL-spec versions, the
+evaluator/codegen fingerprints, the rules and query hashes, and the hashes of
+the generated sources, consumer, and both oracle binaries. A report from an
+older commit, a dirty worktree, or a different generator is stale even if its
+JSON shape looks valid.
+
+The rules binding is target-specific: `inputs.rules` must equal the declared
+rules file for `target` (for example `rules/toycpu.ldsl` for `toycpu`), not
+just any file whose hash matches. `query_count` must equal the number of JSONL
+records in the hashed query file and must not exceed the recorded
+`query_limit` (when the limit is non-zero). Generated header/source paths are
+resolved inside the repository and re-hashed from disk, so a report cannot
+point at stale or external artifacts.
 
 A generated tree is valid only when its `codegen-manifest.json` agrees with
 all of the following:
@@ -113,23 +122,36 @@ smoke, but the report status is `SKIP`, not `PASS`. The same applies to a
 missing reference oracle or `--skip-reference`: the consumer can run, but the
 report cannot claim `PASS` without both `hand_written_oracle` and
 `generated_oracle` comparisons. CI runs `check_integration_status.py` on every
-report: `SKIP` is printed explicitly, and it becomes a job failure whenever
-`LLVM_DIR` was provided. The report is also uploaded so a skipped integration
-cannot be mistaken for a green one.
+report. CI invokes the gate with `--require-pass-if-env LLVM_DIR`, so `SKIP`
+is printed explicitly and becomes a job failure whenever `LLVM_DIR` was
+provided. The report is also uploaded so a skipped integration cannot be
+mistaken for a green one.
 
 GeneratedCpp equivalence is claimed only for rules that have a
 `*-generated` claim. The remaining rule files are listed with reasons in
 `claims/generated-evidence.json` (`hand_only`); for those slices the hand
 oracle proves the interpreter, not the generated C++ path. The closure gate
 fails if a new rule has neither a generated claim nor a reasoned hand-only
-declaration.
+declaration. It does not yet machine-enforce a generated-to-hand twin
+invariant for every slice; the per-claim reports and the integration fixture
+are the current evidence, and the hand-only split is explicit rather than
+silently counted as generated coverage.
 
 `python scripts/final_verification.py --tests N --skipped M` is the local or
 self-hosted release gate. It requires an explicit test/skip pin, a clean
 worktree, both integration reports, and records whether claims/integration
 were actually re-executed (`--run-claims --run-integration`) or only
-hash-audited. Hosted CI does not run it because it has neither the evidence
-directory nor the oracle binaries; CI's own jobs remain the per-push gates.
+hash-audited. The artifact carries `release_eligible`: it is true only for a
+`PASS` in `independent-execution` mode on a clean tree. An
+`artifact-consistency` run can still report `PASS`, but
+`release_eligible=false`. `--allow-dirty` produces `result=DIAGNOSTIC` (not
+`PASS`) and exits non-zero.
+
+The unit-test gate runs unittest verbosely, parses the actual skipped test ids,
+and checks them against `tests/expected-skips.json`; a skip-count-only match is
+not enough. Hosted CI does not run final verification because it has neither
+the evidence directory nor the oracle binaries; CI's own jobs remain the
+per-push gates.
 
 Domain-external queries are boundaries. They are recorded for coverage
 planning and excluded from the equivalence claim.
@@ -182,7 +204,10 @@ defaults:
 The integration smoke's built-in `F:/llvm/...` candidates are developer
 conveniences only. CI must not depend on them.
 
-`scripts/check_skips.py -p "test_mutation_controls.py"` makes host-specific
-skips explicit: every skipped test id must be registered with a reason in
-`tests/expected-skips.json`, and a registered skip that stops happening also
-fails. The CI mutation-controls job uses it instead of a plain unittest run.
+`scripts/check_skips.py` makes host-specific skips explicit: every skipped
+test id must be registered with a reason in `tests/expected-skips.json`, and a
+registered required skip that stops happening also fails. Entries marked
+`optional: true` may be absent (an environment-dependent control that ran is
+strictly better than one that skipped), but when they do skip the reason must
+still be registered. The CI unit-test job uses the full check, and the
+mutation-controls job uses `-p "test_mutation_controls.py"`.

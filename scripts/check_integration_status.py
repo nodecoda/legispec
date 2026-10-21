@@ -36,6 +36,8 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
+from legalizer_dsl import __version__ as GENERATOR_VERSION  # noqa: E402
+from legalizer_dsl.codegen import DSL_SPEC_VERSION  # noqa: E402
 from legalizer_dsl.fingerprint import (  # noqa: E402
     codegen_sha256,
     hand_evaluator_sha256,
@@ -44,6 +46,10 @@ from legalizer_dsl.fingerprint import (  # noqa: E402
 SCHEMA = "legalizer-dsl-integration-v2"
 MIN_QUERY_COUNT = 100
 REQUIRED_COMPARISONS = ("consumer", "hand_written_oracle", "generated_oracle")
+TARGET_RULES = {
+    "toycpu": "rules/toycpu.ldsl",
+    "aarch64-vector": "rules/aarch64-vector.ldsl",
+}
 HEX64 = re.compile(r"[0-9a-f]{64}")
 HEX40 = re.compile(r"[0-9a-f]{40}")
 
@@ -55,7 +61,7 @@ def _sha256(path: Path) -> str:
 def _load_claims() -> dict:
     try:
         data = json.loads(
-            (ROOT / "claims" / "claims.json").read_text(encoding="utf-8")
+            (ROOT / "claims" / "claims.json").read_text(encoding="utf-8-sig")
         )
     except (OSError, json.JSONDecodeError):
         return {}
@@ -66,10 +72,18 @@ def current_expected() -> dict:
     """Return the pins a report must match in this checkout."""
 
     expected: dict = {
+        "generator_version": GENERATOR_VERSION,
+        "dsl_spec_version": DSL_SPEC_VERSION,
         "evaluator_sha256": hand_evaluator_sha256(),
         "codegen_sha256": codegen_sha256(),
-        "llvm_commit": _load_claims().get("llvm_commit"),
+        # An empty pin is deliberate: reports then fail the comparison instead
+        # of silently skipping the check when the ledger or git is unavailable.
+        "llvm_commit": "",
+        "head_commit": "",
     }
+    llvm_commit = _load_claims().get("llvm_commit")
+    if isinstance(llvm_commit, str) and llvm_commit:
+        expected["llvm_commit"] = llvm_commit
     try:
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"],
@@ -83,7 +97,9 @@ def current_expected() -> dict:
     except OSError:
         result = None
     if result is not None and result.returncode == 0:
-        expected["head_commit"] = result.stdout.strip()
+        head = result.stdout.strip()
+        if head:
+            expected["head_commit"] = head
     return expected
 
 
@@ -93,6 +109,47 @@ def _require_hex(problems: list[str], value, name: str, length: int = 64) -> Non
         problems.append(f"{name} is not a {length}-character lowercase hex hash")
 
 
+def _repo_path(relative: str) -> Optional[Path]:
+    """Resolve a report-relative artifact path inside the repository.
+
+    Absolute paths and ``..`` escapes are rejected: evidence must live in the
+    tree that produced it.  Symlinks are resolved and must also stay inside.
+    """
+
+    candidate = Path(relative)
+    if candidate.is_absolute():
+        return None
+    root = ROOT.resolve()
+    try:
+        resolved = (root / candidate).resolve()
+        resolved.relative_to(root)
+    except (OSError, ValueError):
+        return None
+    return resolved
+
+
+def _check_path(
+    problems: list[str], relative, expected_sha: str, name: str
+) -> None:
+    if not isinstance(relative, str) or not relative:
+        problems.append(f"{name} is missing")
+        return
+    path = _repo_path(relative)
+    if path is None:
+        problems.append(f"{name} is absolute or escapes the repository: {relative}")
+        return
+    if not path.is_file():
+        problems.append(f"{name} does not exist: {relative}")
+        return
+    try:
+        actual = _sha256(path)
+    except OSError as exc:
+        problems.append(f"{name} is unreadable: {relative} ({exc})")
+        return
+    if actual != expected_sha:
+        problems.append(f"{name} sha256 is stale: {relative}")
+
+
 def _check_artifact(
     problems: list[str], artifacts: dict, key: str, expected_sha: str
 ) -> None:
@@ -100,11 +157,11 @@ def _check_artifact(
     if not isinstance(relative, str) or not relative:
         problems.append(f"artifacts.{key} is missing")
         return
-    path = ROOT / relative
-    if not path.is_file():
-        problems.append(f"artifacts.{key} does not exist: {relative}")
-    elif _sha256(path) != expected_sha:
-        problems.append(f"artifacts.{key} sha256 is stale: {relative}")
+    _check_path(problems, relative, expected_sha, f"artifacts.{key}")
+
+
+def _count_records(path: Path) -> int:
+    return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
 
 
 def validate_report(data: dict, expected: Optional[dict] = None) -> list[str]:
@@ -127,18 +184,28 @@ def validate_report(data: dict, expected: Optional[dict] = None) -> list[str]:
             f"query_count is below the {MIN_QUERY_COUNT}-query evidence floor: "
             f"{queries!r}"
         )
+    target = data.get("target")
+    expected_rules = TARGET_RULES.get(target) if isinstance(target, str) else None
+    if expected_rules is None:
+        problems.append(f"target {target!r} has no declared rules file")
+
     rules = inputs.get("rules")
     expected_rules_sha = inputs.get("rules_sha256")
     if not isinstance(rules, str) or not rules:
         problems.append("inputs.rules is missing")
-    elif not isinstance(expected_rules_sha, str) or not expected_rules_sha:
-        problems.append("inputs.rules_sha256 is missing")
     else:
-        path = ROOT / rules
-        if not path.is_file():
-            problems.append(f"rules file missing: {rules}")
-        elif _sha256(path) != expected_rules_sha:
-            problems.append(f"rules_sha256 is stale for {rules}")
+        if expected_rules is not None and rules != expected_rules:
+            problems.append(
+                f"inputs.rules {rules!r} != declared target rules {expected_rules!r}"
+            )
+        if not isinstance(expected_rules_sha, str) or not expected_rules_sha:
+            problems.append("inputs.rules_sha256 is missing")
+        else:
+            _check_path(problems, rules, expected_rules_sha, "rules")
+
+    query_limit = inputs.get("query_limit")
+    if not isinstance(query_limit, int) or query_limit < 0:
+        problems.append("inputs.query_limit is missing or negative")
 
     query_sha = inputs.get("query_sha256")
     _require_hex(problems, query_sha, "inputs.query_sha256")
@@ -149,6 +216,28 @@ def validate_report(data: dict, expected: Optional[dict] = None) -> list[str]:
         artifacts = {}
     if isinstance(query_sha, str) and HEX64.fullmatch(query_sha):
         _check_artifact(problems, artifacts, "query_file", query_sha)
+        query_file = artifacts.get("query_file")
+        if isinstance(query_file, str):
+            resolved = _repo_path(query_file)
+            if resolved is not None and resolved.is_file():
+                try:
+                    counted = _count_records(resolved)
+                except (OSError, UnicodeDecodeError) as exc:
+                    problems.append(f"query file is unreadable: {query_file} ({exc})")
+                    counted = None
+                if counted is not None and isinstance(queries, int) and counted != queries:
+                    problems.append(
+                        f"query file has {counted} records but query_count is {queries}"
+                    )
+                if (
+                    isinstance(queries, int)
+                    and isinstance(query_limit, int)
+                    and query_limit > 0
+                    and queries > query_limit
+                ):
+                    problems.append(
+                        f"query_count {queries} exceeds query_limit {query_limit}"
+                    )
 
     provenance = data.get("provenance")
     if not isinstance(provenance, dict):
@@ -176,13 +265,14 @@ def validate_report(data: dict, expected: Optional[dict] = None) -> list[str]:
         problems.append("provenance.generated is missing")
         generated = {}
     for key in ("header", "source"):
+        name = f"provenance.generated.{key}"
         if not isinstance(generated.get(key), str) or not generated[key]:
-            problems.append(f"provenance.generated.{key} is missing")
-        _require_hex(
-            problems,
-            generated.get(f"{key}_sha256"),
-            f"provenance.generated.{key}_sha256",
-        )
+            problems.append(f"{name} is missing")
+            continue
+        digest = generated.get(f"{key}_sha256")
+        _require_hex(problems, digest, f"{name}_sha256")
+        if isinstance(digest, str) and HEX64.fullmatch(digest):
+            _check_path(problems, generated[key], digest, name)
 
     consumer_sha = provenance.get("consumer_sha256")
     _require_hex(problems, consumer_sha, "provenance.consumer_sha256")
@@ -202,7 +292,14 @@ def validate_report(data: dict, expected: Optional[dict] = None) -> list[str]:
         if isinstance(value, str) and HEX64.fullmatch(value):
             _check_artifact(problems, artifacts_oracles, label, value)
 
-    for key in ("evaluator_sha256", "codegen_sha256", "llvm_commit", "head_commit"):
+    for key in (
+        "generator_version",
+        "dsl_spec_version",
+        "evaluator_sha256",
+        "codegen_sha256",
+        "llvm_commit",
+        "head_commit",
+    ):
         wanted = expected.get(key)
         if wanted is None:
             continue
@@ -223,9 +320,11 @@ def validate_report(data: dict, expected: Optional[dict] = None) -> list[str]:
             problems.append(f"comparison {name} ok is not true")
         if value.get("divergence_count") != 0:
             problems.append(f"comparison {name} has divergences")
-        if value.get("oracle_errors") not in (0, None):
+        if value.get("oracle_errors") != 0:
             problems.append(f"comparison {name} has oracle errors")
-        if isinstance(queries, int) and value.get("queries") != queries:
+        if not isinstance(value.get("queries"), int):
+            problems.append(f"comparison {name} has no query count")
+        elif isinstance(queries, int) and value.get("queries") != queries:
             problems.append(f"comparison {name} queries != {queries}")
     return problems
 
@@ -261,6 +360,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     statuses: list[str] = []
     for value in args.reports:
         path = Path(value)
+        if not path.is_absolute():
+            path = ROOT / path
         if not path.is_file():
             print(f"FAIL {value}: report missing")
             failures += 1
