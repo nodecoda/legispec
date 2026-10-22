@@ -38,13 +38,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
+          REPO: ${{ github.repository }}
         run: |
+          set -euo pipefail
           mkdir -p dist
           gh release download "$TAG" \
+            --repo "$REPO" \
             --dir dist \
             --pattern "*.whl" \
             --pattern "*.tar.gz" \
             --pattern "SHA256SUMS"
+          ls -l dist
       - name: Verify the released checksums
         working-directory: dist
         run: sha256sum -c SHA256SUMS
