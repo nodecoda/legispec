@@ -5,7 +5,7 @@ Status: PASS (scalar subset)
 
 ## 0. Result first
 
-The ToyCPU Legalizer DSL was pointed at a second, real GlobalISel target:
+The ToyCPU LegiSpec rules was pointed at a second, real GlobalISel target:
 **X86-64**.  The experiment is intentionally a **scalar subset**, not a model
 of all of X86.
 

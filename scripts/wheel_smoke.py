@@ -32,6 +32,22 @@ import tempfile
 REPO = pathlib.Path(__file__).resolve().parents[1]
 RULE_NAME = "toycpu.lspec"
 
+CANONICAL_SCRIPTS = (
+    "legispec",
+    "legispec-claims",
+    "legispec-constructs",
+    "legispec-closure",
+    "legispec-diff-oracles",
+)
+# Deprecated aliases kept until 1.0 (docs/BRAND.md).
+LEGACY_SCRIPTS = (
+    "legalizer-dsl",
+    "ldsl-claims",
+    "ldsl-constructs",
+    "ldsl-closure",
+    "ldsl-diff-oracles",
+)
+
 
 def run(
     command: list[str],
@@ -134,6 +150,29 @@ def run_strict_check(
     return run([sys.executable, "-c", code], cwd=cwd, env=_installed_env(site_dir))
 
 
+def check_entry_points(site_dir: pathlib.Path) -> int:
+    """Assert the wheel installs both the canonical and the legacy commands."""
+    manifests = sorted(site_dir.rglob("entry_points.txt"))
+    if not manifests:
+        print("error: no entry_points.txt in the installed wheel", file=sys.stderr)
+        return 1
+    text = manifests[0].read_text(encoding="utf-8")
+    missing = [
+        name
+        for name in CANONICAL_SCRIPTS + LEGACY_SCRIPTS
+        if f"{name} =" not in text
+    ]
+    if missing:
+        print(f"error: missing console scripts: {', '.join(missing)}", file=sys.stderr)
+        return 1
+    print(
+        f"entry points: {len(CANONICAL_SCRIPTS)} canonical + "
+        f"{len(LEGACY_SCRIPTS)} deprecated",
+        flush=True,
+    )
+    return 0
+
+
 def run_module(
     site_dir: pathlib.Path, cwd: pathlib.Path, module: str, *args: str
 ) -> int:
@@ -179,6 +218,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         print(f"data: {data_root}", flush=True)
         checks = [
+            ("console entry points", check_entry_points(site_dir), 0),
             ("strict check", run_strict_check(site_dir, data_root, temp_dir), 0),
             (
                 "constructs check",

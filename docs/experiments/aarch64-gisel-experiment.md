@@ -5,7 +5,7 @@ Status: PASS (scalar subset; generic and +cssc)
 
 ## 0. Result first
 
-The ToyCPU Legalizer DSL was pointed at a second real GlobalISel target:
+The ToyCPU LegiSpec rules was pointed at a second real GlobalISel target:
 **AArch64**.  This is intentionally a **scalar subset**, not a model of all
 of AArch64.
 
@@ -917,7 +917,7 @@ The highest-value next experiments are:
 
 ## 10. One-sentence conclusion
 
-> The ToyCPU Legalizer DSL generalizes to a second real target on the scalar
+> The ToyCPU LegiSpec rules generalizes to a second real target on the scalar
 > policy layer: 22 rulesets, 48 opcodes, 91 rules, 8,161 queries, zero
 > divergences -- and the exercise exposed two latent LLT totality assumptions
 > in AArch64's own rule predicates.

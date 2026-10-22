@@ -1,4 +1,4 @@
-# Legalizer DSL — 项目收口
+# LegiSpec — 项目收口
 
 Date: 2026-10-21
 Status: **CLOSED**（范围冻结；新增能力必须走 §8 playbook，不得修改既有证明）
@@ -58,7 +58,7 @@ R = closure(Q0) 在 D 内的一步 legalize 后继
 | `closure.py` | 收口审计：pinned 数字 vs 产物 | 文档数字或资产清单漂移时 |
 | `cli.py` / `legalizer-dsl` | `check` / `codegen` / `conform` / `witness` | 日常入口 |
 | `rules/*.lspec` | 22 份规则转写 | 证明对象 |
-| `tests/` | 395 个单元测试 | 改任何实现前先跑 |
+| `tests/` | 398 个单元测试 | 改任何实现前先跑 |
 | `witness/` | 每片的固定证据 | 回归 |
 | `*capabilities.json` | custom/libcall/lower 的 provider 契约 | strict check |
 
@@ -73,7 +73,7 @@ hand-only=6
 rules-files=22
 hand-queries=321627
 constructs=63
-tests=395
+tests=398
 <!-- /closure:pinned -->
 
 这些数字由 `closure.py check` 从 `claims.json`、`rules/`、`construct-coverage.json`、
@@ -253,7 +253,7 @@ python -X utf8 -m legalizer_dsl --rules rules/aarch64-concat-vectors.lspec codeg
 
 ```text
 claims=43 proven=43 failed=0
-395 tests OK（1 个环境相关 skip）
+398 tests OK（1 个环境相关 skip）
 strict rules sweep 22/22
 codegen contract PASS（22 份规则、24 个 config 变体）
 integration smoke PASS（ToyCPU 全 D、AArch64 vector；SKIP 不算通过）

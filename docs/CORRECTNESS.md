@@ -1,6 +1,6 @@
 # 正确性契约
 
-> 本文件定义 Legalizer DSL **在什么条件下可以声称正确**。
+> 本文件定义 LegiSpec **在什么条件下可以声称正确**。
 > 它是规范性说明；机器可读形态见 `claims/claim-schema.json`，可执行检查见
 > `legalizer_dsl.claims.validate_contract` 与 `legalizer_dsl.closure`。
 > 与代码冲突时，以代码和实际证据为准，并应修正本文件或代码中的一方。

@@ -6,7 +6,7 @@
 #
 # ===----------------------------------------------------------------------===##
 
-"""Project closure audit for the Legalizer DSL.
+"""Project closure audit for LegiSpec.
 
 `claims.py verify` proves each claim.  This tool checks that the *project story*
 is internally consistent and that the pinned numbers in CLOSURE.md still match

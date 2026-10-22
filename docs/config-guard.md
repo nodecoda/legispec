@@ -1,4 +1,4 @@
-# Legalizer DSL: configuration guards vs query predicates
+# LegiSpec: configuration guards vs query predicates
 
 Date: 2026-10-20
 

@@ -195,7 +195,7 @@ RV32 那 1 条未命中规则是刻意的：C++ 的
 它并在 witness 里登记 unreachable——两种写法决策函数相同，区别是后者保留了
 "C++ 里有一张死规则"这个事实。
 
-细节见 `notes/legalizer-dsl-config-guard.md`。
+细节见 `docs/config-guard.md`。
 
 
 ## 4. 如果要把它们做"完整"，要付出什么
@@ -403,7 +403,7 @@ notes/riscv64-mzb-experiment.md
 notes/riscv32-gisel-experiment.md
 notes/riscv32-mzb-experiment.md
 notes/riscv32-pointer-experiment.md
-notes/legalizer-dsl-config-guard.md
+docs/config-guard.md
 notes/claim-ledger.md
 notes/construct-coverage.md
 ```

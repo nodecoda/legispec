@@ -6,7 +6,7 @@
 #
 # ===----------------------------------------------------------------------===##
 
-"""Command-line front end for the Legalizer rule DSL.
+"""Command-line front end for LegiSpec DSL.
 
 Examples
 --------
@@ -54,8 +54,12 @@ def _parse_mem(spec: str) -> MemDesc:
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="legalizer-dsl",
+        prog="legispec",
         description="Parse and evaluate LLVM GlobalISel legality rules.",
+        epilog=(
+            "deprecated: use legispec; the legalizer-dsl entry point is kept "
+            "as an alias until 1.0 (see docs/BRAND.md)."
+        ),
     )
     parser.add_argument(
         "--rules",

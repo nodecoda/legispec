@@ -2,7 +2,7 @@
 
 ## Evidence verification in CI
 
-Normal CI runs the strict rules sweep (`python scripts/check_all_rules.py`) and structural closure (`ldsl-closure check --skip-evidence`). Structural mode still fails on a ledger entry marked `ok=false` or with non-zero divergences, but it cannot prove the artifacts. Full evidence verification is manual: trigger `workflow_dispatch`, set `evidence_dir` to a directory on a self-hosted runner labelled by `evidence_runner`, and the workflow uploads that directory as the `legalizer-evidence` artifact. A hosted `windows-latest` job downloads the artifact, copies it with `scripts/collect_evidence.py`, then runs `ldsl-claims verify --verify-corpus` (re-enumerates D union R and compares each report's corpus hash) and `ldsl-closure check`.
+Normal CI runs the strict rules sweep (`python scripts/check_all_rules.py`) and structural closure (`legispec-closure check --skip-evidence`). Structural mode still fails on a ledger entry marked `ok=false` or with non-zero divergences, but it cannot prove the artifacts. Full evidence verification is manual: trigger `workflow_dispatch`, set `evidence_dir` to a directory on a self-hosted runner labelled by `evidence_runner`, and the workflow uploads that directory as the `legalizer-evidence` artifact. A hosted `windows-latest` job downloads the artifact, copies it with `scripts/collect_evidence.py`, then runs `legispec-claims verify --verify-corpus` (re-enumerates D union R and compares each report's corpus hash) and `legispec-closure check`.
 
 `claims/claims.json` 里 43 条断言，每一条都钉住三样东西：
 
@@ -83,7 +83,7 @@ python -m legalizer_dsl.claims verify                    # 断言仍然成立
    所以它注定跟随 target 后端，不在本仓库内：
 
    ```powershell
-   legalizer-dsl --rules rules/aarch64-vector.lspec codegen --out-dir out/codegen
+   legispec --rules rules/aarch64-vector.lspec codegen --out-dir out/codegen
    # out/codegen/*.cpp + <target>/tools/oracle/main.cpp + 该 target 的 CodeGen 库
    #   -> out/oracle-aarch64/legalizer-oracle-aarch64.exe
    ```

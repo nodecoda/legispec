@@ -1,7 +1,7 @@
-# LDSL 规范 v0.1（Legalizer Rule DSL）
+# LegiSpec 规范 v0.1（LDSL）
 
 > 地位：本文件是**规范文本（spec）**。`ToyCPULegalizerInfo.cpp` 是参考实现（reference implementation），不是规范来源。
-> 方法论：`../spec-methodology.md`（立法 / 派生 / 证伪）。
+> 方法论：立法 / 派生 / 证伪。
 > 适用范围：GlobalISel Legalizer 的 **policy 层**，即 `LegalityQuery -> LegalizeActionStep`。
 > 明确出界：`LegalizerHelper` 的 MIR 重写、硬件语义、真实 LLT 全域。
 >

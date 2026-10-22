@@ -9,7 +9,7 @@
 
 相关文档：
 
-- [Legalizer DSL 与复杂规则走读](walkthrough.md) —— 五条真实规则的调用链
+- [LegiSpec 与复杂规则走读](walkthrough.md) —— 五条真实规则的调用链
 - [LegalizerInfo 规则表与算法](legalizerinfo-legalizeinstrstep.md) —— 完整数据模型
 
 ---

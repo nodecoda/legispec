@@ -1,4 +1,4 @@
-# Conformance Declaration — Legalizer DSL
+# Conformance Declaration — LegiSpec
 
 > 本文件冻结“与参考实现一致”的**定义**：参考版本、观测函数、定义域、等价关系、排除项。
 > 没有这份文件，“与 C++ 一致”只是一句无法复查的话。
@@ -9,7 +9,7 @@
 
 | 项 | 状态 |
 |---|---|
-| Spec 冻结 | v0.1.1（`spec/ldsl-v0.1.md`，含 `T011` v1 修正） |
+| Spec 冻结 | v0.1.1（`docs/ldsl-v0.1.md`，含 `T011` v1 修正） |
 | 域定义 | `spec/domain.md`（28 LLTs） |
 | Witness 语料 | 205 条（114 正例 / 89 负例 / 2 unreachable） |
 | Python 解释器对 witness | **0 失败**（2026-10-19） |

@@ -13,7 +13,7 @@ deliberately independent from the C++ implementation: each witness records
 what the *specification* intends, then the Python evaluator is asked whether
 that intent still holds.
 
-Witness format (see ``witness/toycpu.witness`` and ``spec/ldsl-v0.1.md``)::
+Witness format (see ``witness/toycpu.witness`` and ``docs/ldsl-v0.1.md``)::
 
     witness name {
         query       = (G_ADD, [s16])

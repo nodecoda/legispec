@@ -5,7 +5,7 @@ Status: PASS (RV64 scalar subset, generic-rv64)
 
 ## 0. Result first
 
-The ToyCPU Legalizer DSL was pointed at a third real GlobalISel target:
+The ToyCPU LegiSpec rules was pointed at a third real GlobalISel target:
 **RISC-V**, fixed to RV64 and the `generic-rv64` CPU.  This is a scalar
 subset, not a model of all of RISC-V.
 
@@ -310,5 +310,5 @@ the Zmmul overflow path).
 
 `rules/riscv-scalar-conditional.lspec` 用 `--define` 把这份配置与另一个
 XLen 配置写在同一份源码里；决策函数与本文件逐查询等价。见
-`notes/legalizer-dsl-config-guard.md`，一键验证：
+`docs/config-guard.md`，一键验证：
 `toycpu/scripts/check-riscv-conditional.ps1`。

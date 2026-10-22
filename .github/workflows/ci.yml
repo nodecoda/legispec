@@ -63,11 +63,11 @@ jobs:
       - name: Wheel install smoke
         run: python scripts/wheel_smoke.py
       - name: Strict rule check (ToyCPU)
-        run: legalizer-dsl --rules rules/toycpu.lspec check --strict
+        run: legispec --rules rules/toycpu.lspec check --strict
       - name: Construct coverage (committed LLVM header snapshot)
-        run: ldsl-constructs check
+        run: legispec-constructs check
       - name: Closure (structure and pinned numbers only)
-        run: ldsl-closure check --skip-evidence
+        run: legispec-closure check --skip-evidence
 
   codegen-contract:
     name: codegen contract (determinism + provenance)
@@ -185,6 +185,6 @@ jobs:
       - name: Collect evidence
         run: python scripts/collect_evidence.py --from evidence
       - name: Claim ledger vs reports and oracles
-        run: ldsl-claims verify --verify-corpus
+        run: legispec-claims verify --verify-corpus
       - name: Full closure (claims audited)
-        run: ldsl-closure check
+        run: legispec-closure check

@@ -53,7 +53,7 @@ class CodegenContractTests(unittest.TestCase):
             self.assertEqual(manifest["version"], 1)
             self.assertEqual(manifest["source"], REL)
             self.assertEqual(manifest["rules_sha256"], _sha(RULES.read_bytes()))
-            self.assertEqual(manifest["generator_version"], "0.2.0")
+            self.assertEqual(manifest["generator_version"], "0.3.0")
             self.assertEqual(
                 manifest["dsl_spec_version"], codegen.DSL_SPEC_VERSION
             )

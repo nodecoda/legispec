@@ -6,7 +6,7 @@
 #
 # ===----------------------------------------------------------------------===##
 
-"""Compile-time configuration guards for the Legalizer DSL.
+"""Compile-time configuration guards for LegiSpec.
 
 These tests pin the distinction between a query predicate and a
 construction-time boolean such as LLVM's legalFor(bool, ...):

@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "legalizer-dsl"
-version = "0.2.0"
-description = "External DSL, checker and C++ generator for LLVM GlobalISel LegalizerInfo rule tables"
+version = "0.3.0"
+description = "LegiSpec: executable legality specification, checker and C++ generator for LLVM GlobalISel rule tables"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "Apache-2.0 WITH LLVM-exception" }
-authors = [{ name = "Legalizer DSL contributors" }]
-keywords = ["llvm", "globalisel", "legalizer", "tablegen", "compiler"]
+authors = [{ name = "LegiSpec contributors" }]
+keywords = ["llvm", "globalisel", "legalizer", "legalization", "legispec", "specification", "tablegen", "compiler"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -20,6 +20,12 @@ classifiers = [
 dependencies = []
 
 [project.scripts]
+legispec = "legalizer_dsl.cli:main"
+legispec-claims = "legalizer_dsl.claims:main"
+legispec-constructs = "legalizer_dsl.constructs:main"
+legispec-closure = "legalizer_dsl.closure:main"
+legispec-diff-oracles = "legalizer_dsl.diff_oracles:main"
+# Deprecated aliases, removed in 1.0.  See docs/BRAND.md.
 legalizer-dsl = "legalizer_dsl.cli:main"
 ldsl-claims = "legalizer_dsl.claims:main"
 ldsl-constructs = "legalizer_dsl.constructs:main"

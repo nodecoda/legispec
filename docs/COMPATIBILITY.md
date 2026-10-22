@@ -10,7 +10,7 @@ Evidence storage and reproduction are in [`EVIDENCE.md`](EVIDENCE.md).
 
 | Component | Pinned value | Source of truth |
 |---|---|---|
-| Generator version | `0.2.0` | `pyproject.toml`, `legalizer_dsl.__version__` |
+| Generator version | `0.3.0` | `pyproject.toml`, `legalizer_dsl.__version__` |
 | LDSL specification | `1.0` | `codegen.DSL_SPEC_VERSION` |
 | Claim contract | `1` | `claims.CLAIM_CONTRACT_VERSION` |
 | Claim schema | `claims/claim-schema.json` | `claims.validate_contract` |
@@ -122,8 +122,8 @@ The project distinguishes four states. They are not interchangeable.
 
 | State | Command | What it proves | What it does not prove |
 |---|---|---|---|
-| `STRUCTURAL_ONLY` | `ldsl-closure check --skip-evidence` | structure, contract, pinned counts, ledger shape | report bytes, oracle identity, corpus freshness |
-| `EVIDENCE_VERIFIED` | `ldsl-claims verify --verify-corpus` + `ldsl-closure check` | all 43 claims audited; report/oracle/rules/corpus pins match | that the generated C++ links |
+| `STRUCTURAL_ONLY` | `legispec-closure check --skip-evidence` | structure, contract, pinned counts, ledger shape | report bytes, oracle identity, corpus freshness |
+| `EVIDENCE_VERIFIED` | `legispec-claims verify --verify-corpus` + `legispec-closure check` | all 43 claims audited; report/oracle/rules/corpus pins match | that the generated C++ links |
 | `INTEGRATION_VERIFIED` | `scripts/integration_smoke.py` status `PASS` | generated C++ compiles, links, runs, and matches available oracles | rules are semantically valid for the ISA |
 | `UNKNOWN` | ledger `status=UNKNOWN` or smoke `SKIP` | nothing | must never be counted as a pass |
 

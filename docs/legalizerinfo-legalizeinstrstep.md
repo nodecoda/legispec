@@ -11,7 +11,7 @@
 > 行号以当前 `F:\llvm\llvm-project` 工作区为准。
 >
 > 相关文档（本仓库）：
-> - [Legalizer DSL 与复杂规则走读](walkthrough.md)
+> - [LegiSpec 与复杂规则走读](walkthrough.md)
 > - [LDSL v0.1 语言定义](ldsl-v0.1.md)
 > - [规则表设计](design.md)
 >

@@ -43,7 +43,7 @@
         }
       ],
       "witness": "toycpu.witness",
-      "witness_sha256": "9154c9780e03176ba19f583aec8843eaaebd61101739cd5b22c4c605fdeabf48"
+      "witness_sha256": "7b9fda4c005369ce639a5f6aa9717127a431985557be0c8bd52d22a1a59929ad"
     },
     {
       "codegen_sha256": "67dd1f08083c47ad040f44d6f699f273c36502aa66da0e144e8185c6bf8e0b7c",
@@ -86,7 +86,7 @@
         }
       ],
       "witness": "toycpu.witness",
-      "witness_sha256": "9154c9780e03176ba19f583aec8843eaaebd61101739cd5b22c4c605fdeabf48"
+      "witness_sha256": "7b9fda4c005369ce639a5f6aa9717127a431985557be0c8bd52d22a1a59929ad"
     },
     {
       "codegen_sha256": "67dd1f08083c47ad040f44d6f699f273c36502aa66da0e144e8185c6bf8e0b7c",

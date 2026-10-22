@@ -1,4 +1,4 @@
-# Legalizer DSL 与复杂规则走读
+# LegiSpec 与复杂规则走读
 
 > 目标：把 `LegalizerInfo` 当成一门小语言来学，而不是当成一堆 API。
 > 方法：先看规则表，再跟 `legalizeInstrStep`，最后看 helper 如何生成新 MIR。
@@ -10,7 +10,7 @@
 - `hardware-model-method.md` —— 硬件模型与证伪
 - `machineirbuilder-analysis.md` —— `MachineIRBuilder` 的构建算法
 - `irtranslator-translation-model.md` —— generic MIR 是怎么来的
-- `legalizer-dsl-design.md` —— 规则 DSL 语法、宏展开与 Python 实现
+- `docs/design.md` —— 规则 DSL 语法、宏展开与 Python 实现
 
 ---
 

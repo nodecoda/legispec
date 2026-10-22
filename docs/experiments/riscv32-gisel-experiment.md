@@ -250,5 +250,5 @@ single-axis model can show.
 
 `rules/riscv-scalar-conditional.lspec` 用 `--define` 把这份配置与另一个
 XLen 配置写在同一份源码里；决策函数与本文件逐查询等价。见
-`notes/legalizer-dsl-config-guard.md`，一键验证：
+`docs/config-guard.md`，一键验证：
 `toycpu/scripts/check-riscv-conditional.ps1`。
