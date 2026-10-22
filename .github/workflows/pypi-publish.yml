@@ -1,0 +1,55 @@
+name: pypi-publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing GitHub Release tag to publish"
+        required: true
+        default: "v1.0.0"
+        type: string
+      target:
+        description: "Package index"
+        required: true
+        default: "pypi"
+        type: choice
+        options:
+          - pypi
+          - testpypi
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-publish-${{ inputs.tag }}-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: publish ${{ inputs.tag }} to ${{ inputs.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.target }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Download the released artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          mkdir -p dist
+          gh release download "$TAG" \
+            --dir dist \
+            --pattern "*.whl" \
+            --pattern "*.tar.gz" \
+            --pattern "SHA256SUMS"
+      - name: Verify the released checksums
+        working-directory: dist
+        run: sha256sum -c SHA256SUMS
+      - name: Publish to the selected index
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2
+        with:
+          packages-dir: dist
+          repository-url: ${{ inputs.target == 'testpypi' && 'https://test.pypi.org/legacy/' || 'https://upload.pypi.org/legacy/' }}
