@@ -4,7 +4,7 @@
 
 本项目是 **LLVM 生态的下游工具**：
 
-- 使用与 LLVM 完全相同的许可证（Apache-2.0 WITH LLVM-exception），
+- 使用 Apache License 2.0（`Apache-2.0`），
   这**不表示**本项目是 LLVM 官方项目，也不表示 LLVM 基金会背书；
 - 引用 LLVM 源码位置（`file:line`）与 commit 作为证据，不改动 LLVM 源码；
 - LLVM 上游行为变化时，本项目跟随，不反向要求上游对齐。

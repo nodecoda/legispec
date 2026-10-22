@@ -136,11 +136,11 @@ legispec-closure check                                      # 完整收口
 
 ## 7. 许可证
 
-[Apache License v2.0 with LLVM Exceptions](LICENSE.TXT)，与 LLVM 项目使用的许可证**逐字相同**。
+[Apache License v2.0](LICENSE.TXT)。
 每个源文件带 SPDX 头：
 
 ```text
-SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+SPDX-License-Identifier: Apache-2.0
 ```
 
 ## 8. 治理

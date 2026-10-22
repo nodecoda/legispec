@@ -8,7 +8,7 @@ version = "1.0.0"
 description = "LegiSpec: executable legality specification, checker and C++ generator for LLVM GlobalISel rule tables"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "Apache-2.0 WITH LLVM-exception" }
+license = { text = "Apache-2.0" }
 authors = [{ name = "LegiSpec contributors" }]
 keywords = ["llvm", "globalisel", "legalizer", "legalization", "legispec", "specification", "tablegen", "compiler"]
 classifiers = [
