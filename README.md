@@ -14,7 +14,7 @@ tables, not another legalizer.
 
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE.TXT)
 [![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](pyproject.toml)
-[![CI](https://github.com/<org>/legispec/actions/workflows/ci.yml/badge.svg)](https://github.com/<org>/legispec/actions/workflows/ci.yml)
+[![CI](https://github.com/nodecoda/legispec/actions/workflows/ci.yml/badge.svg)](https://github.com/nodecoda/legispec/actions/workflows/ci.yml)
 
 > **Status: 1.0.0, scope frozen.** The rules and claims in this release are a
 > finite-domain proof, not a claim of full LLVM semantic equivalence. See

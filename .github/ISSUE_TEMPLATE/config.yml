@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Security report
-    url: https://github.com/<org>/legispec/security/advisories/new
+    url: https://github.com/nodecoda/legispec/security/advisories/new
     about: Report vulnerabilities and evidence-tampering privately.
   - name: Evidence reproduction guide
-    url: https://github.com/<org>/legispec/blob/main/docs/EVIDENCE.md
+    url: https://github.com/nodecoda/legispec/blob/main/docs/EVIDENCE.md
     about: How to obtain, rebuild, and verify reports and oracle binaries.

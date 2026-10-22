@@ -1,9 +1,9 @@
-# Replace <org> with the GitHub user or organization that owns the repository.
+# Canonical repository owner; update when the repository moves.
 # GitHub only accepts real users/teams here; an unreplaced placeholder is a
 # configuration warning, not a security boundary.
-* @<org>
-/.github/ @<org>
-/docs/ @<org>
-/src/ @<org>
-/rules/ @<org>
-/claims/ @<org>
+* @nodecoda
+/.github/ @nodecoda
+/docs/ @nodecoda
+/src/ @nodecoda
+/rules/ @nodecoda
+/claims/ @nodecoda

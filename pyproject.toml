@@ -25,11 +25,11 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://github.com/<org>/legispec"
-Repository = "https://github.com/<org>/legispec"
-Issues = "https://github.com/<org>/legispec/issues"
-Changelog = "https://github.com/<org>/legispec/blob/main/CHANGELOG.md"
-Documentation = "https://github.com/<org>/legispec/tree/main/docs"
+Homepage = "https://github.com/nodecoda/legispec"
+Repository = "https://github.com/nodecoda/legispec"
+Issues = "https://github.com/nodecoda/legispec/issues"
+Changelog = "https://github.com/nodecoda/legispec/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/nodecoda/legispec/tree/main/docs"
 
 [project.optional-dependencies]
 dev = ["build>=1.2", "twine>=5", "ruff>=0.6"]

@@ -7,7 +7,7 @@
 **不要开公开 issue。** 使用 GitHub 的私密漏洞报告入口：
 
 ```text
-https://github.com/<org>/legispec/security/advisories/new
+https://github.com/nodecoda/legispec/security/advisories/new
 ```
 
 仓库设置中的 *Private vulnerability reporting* 必须开启。若该入口暂不可用，请开一个

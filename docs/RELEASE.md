@@ -9,7 +9,7 @@ weakening a check.
 
 ## 0. One-time repository setup
 
-Replace every `<org>` placeholder before the first public push:
+Repository links are pinned to `https://github.com/nodecoda/legispec`. When creating a fork or renaming the repository, update:
 
 ```text
 README.md
@@ -49,7 +49,8 @@ Expected:
 
 - `git status --short` is empty.
 - No local agent configuration, `Status`, `.codex/`, or `out/` is tracked.
-- 400 tests pass (`OK (skipped=1)` is expected without local evidence).
+- 400 tests pass (`OK (skipped=17)` is expected without local evidence;
+  `OK (skipped=1)` is expected with a full local evidence cache).
 - The hygiene gate reports every tracked file clean.
 
 ## 2. Evidence gate

@@ -25,6 +25,66 @@
       "test": "test_mutation_controls.ConfigGuardMutationTests.test_flipped_config_guard_is_detected",
       "reason": "RV64 oracle is not built on this machine",
       "optional": true
+    },
+    {
+      "test": "test_claims.ClaimLedgerTests.test_changed_oracle_binary_invalidates_the_claim",
+      "reason": "claim evidence (reports + oracles) not collected; see docs/EVIDENCE.md",
+      "optional": true
+    },
+    {
+      "test": "test_claims.ClaimLedgerTests.test_changed_rules_file_invalidates_the_claim",
+      "reason": "claim evidence (reports + oracles) not collected; see docs/EVIDENCE.md",
+      "optional": true
+    },
+    {
+      "test": "test_claims.ClaimLedgerTests.test_claim_boundary_is_explicit",
+      "reason": "claim evidence (reports + oracles) not collected; see docs/EVIDENCE.md",
+      "optional": true
+    },
+    {
+      "test": "test_claims.ClaimLedgerTests.test_every_claim_is_proven",
+      "reason": "claim evidence (reports + oracles) not collected; see docs/EVIDENCE.md",
+      "optional": true
+    },
+    {
+      "test": "test_claims.ClaimLedgerTests.test_every_claim_pins_a_rules_hash",
+      "reason": "claim evidence (reports + oracles) not collected; see docs/EVIDENCE.md",
+      "optional": true
+    },
+    {
+      "test": "test_claims.ClaimLedgerTests.test_every_claim_pins_an_oracle_hash",
+      "reason": "claim evidence (reports + oracles) not collected; see docs/EVIDENCE.md",
+      "optional": true
+    },
+    {
+      "test": "test_claims.ClaimLedgerTests.test_report_with_stale_rules_content_is_not_proven",
+      "reason": "claim evidence (reports + oracles) not collected; see docs/EVIDENCE.md",
+      "optional": true
+    },
+    {
+      "test": "test_claims.ClaimLedgerTests.test_unpinned_report_is_not_proven",
+      "reason": "claim evidence (reports + oracles) not collected; see docs/EVIDENCE.md",
+      "optional": true
+    },
+    {
+      "test": "test_conformance.ReportDeterminismTests.test_report_bytes_do_not_depend_on_temp_directory_or_jsonl_path",
+      "reason": "toycpu oracle not collected; see docs/EVIDENCE.md",
+      "optional": true
+    },
+    {
+      "test": "test_harness_sensitivity.HarnessSensitivityTests.test_baseline_is_clean",
+      "reason": "RV64 oracle not built",
+      "optional": true
+    },
+    {
+      "test": "test_harness_sensitivity.HarnessSensitivityTests.test_mutated_action_is_detected",
+      "reason": "RV64 oracle not built",
+      "optional": true
+    },
+    {
+      "test": "test_harness_sensitivity.HarnessSensitivityTests.test_mutated_guard_is_detected",
+      "reason": "RV64 oracle not built",
+      "optional": true
     }
   ]
 }
