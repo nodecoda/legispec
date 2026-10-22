@@ -84,7 +84,7 @@ jobs:
             gh release create "$TAG" dist/* SHA256SUMS out/closure.json claims/claim-ledger.md --title "LegiSpec $TAG" --generate-notes
           fi
       - name: Upload build artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: legispec-dist
           path: |
@@ -120,7 +120,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ inputs.tag }}" out/closure.json --clobber
       - name: Upload full closure summary
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: legispec-full-closure
           path: out/closure.json
