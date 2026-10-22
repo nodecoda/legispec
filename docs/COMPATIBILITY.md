@@ -10,23 +10,21 @@ Evidence storage and reproduction are in [`EVIDENCE.md`](EVIDENCE.md).
 
 | Component | Pinned value | Source of truth |
 |---|---|---|
-| Generator version | `0.3.0` | `pyproject.toml`, `legalizer_dsl.__version__` |
-| LDSL specification | `1.0` | `codegen.DSL_SPEC_VERSION` |
+| Generator version | `1.0.0` | `pyproject.toml`, `legispec.__version__` |
+| LegiSpec specification | `1.0` | `codegen.DSL_SPEC_VERSION` |
 | Claim contract | `1` | `claims.CLAIM_CONTRACT_VERSION` |
 | Claim schema | `claims/claim-schema.json` | `claims.validate_contract` |
 | LLVM commit | `d855d9e48067026317998cbff734004f328f833d` | `claims/claims.json` |
 | Python | `>=3.10` | `pyproject.toml` |
-| Evidence schema | `legalizer-dsl-conformance-v1`, `legalizer-dsl-integration-v2` | `conformance.py`, `integration_smoke.py` |
+| Evidence schema | `legispec-conformance-v1`, `legispec-integration-v2` | `conformance.py`, `integration_smoke.py` |
 
 ### Rule-file suffix
 
-`.lspec` is the canonical rule-file suffix. The 0.2.0 tree renamed every
-`rules/*.ldsl` asset to `rules/*.lspec` without changing rule bodies; the only
-textual change inside the assets is the cross-reference in a comment. Discovery
-(`paths.iter_rule_files`) is suffix-driven and returns `.lspec` only, so a
-stale `.ldsl` file left in a working tree is never picked up. The parser itself
-is suffix-agnostic, so an explicit `--rules old.ldsl` still parses; that is a
-migration escape hatch, not a supported packaging layout.
+`.lspec` is the canonical rule-file suffix. Discovery
+(`paths.iter_rule_files`) is suffix-driven and returns `.lspec` only, so a rule
+file with any other suffix is never picked up implicitly. The parser itself is
+suffix-agnostic, so an explicitly named file still parses; packaging and
+repository tooling only recognize `.lspec`.
 
 An integration report is valid only when it was produced from this exact
 tree and toolchain. The status gate re-checks `head_commit == HEAD`,
@@ -48,7 +46,7 @@ A generated tree is valid only when its `codegen-manifest.json` agrees with
 all of the following:
 
 ```text
-generator_version == legalizer_dsl.__version__
+generator_version == legispec.__version__
 dsl_spec_version  == codegen.DSL_SPEC_VERSION
 llvm_commit       == the claim/consumer pin
 rules_sha256      == sha256 of the committed rules file
@@ -179,9 +177,9 @@ Use this sequence for an LLVM bump or a generator change.
    python scripts/integration_smoke.py --target aarch64-vector --limit 0
 6. python scripts/refresh_evidence.py --all --require-all
 7. python scripts/refresh_evidence.py --all --write-ledger
-8. python -m legalizer_dsl.claims verify --verify-corpus
+8. python -m legispec.claims verify --verify-corpus
 9. python scripts/coverage_report.py --corpus examples --out out/coverage-report.json
-10. python -m legalizer_dsl.closure check
+10. python -m legispec.closure check
 11. Update pinned tests/claims numbers in README.md and docs/CLOSURE.md.
 ```
 
@@ -206,10 +204,10 @@ defaults:
 |---|---|
 | `LLVM_DIR` | directory containing `LLVMConfig.cmake` |
 | `CXX` | C++ compiler used by the integration fixture |
-| `LEGALIZER_DSL_VCVARS` | Windows `vcvars64.bat` used to obtain the MSVC environment |
-| `LEGALIZER_DSL_OUT` | report/oracle directory (default `out/`) |
-| `LEGALIZER_DSL_LLVM_BUILD` | LLVM build directory recorded in reports |
-| `LEGALIZER_DSL_LLVM_SRC` | LLVM source tree for construct coverage |
+| `LEGISPEC_VCVARS` | Windows `vcvars64.bat` used to obtain the MSVC environment |
+| `LEGISPEC_OUT` | report/oracle directory (default `out/`) |
+| `LEGISPEC_LLVM_BUILD` | LLVM build directory recorded in reports |
+| `LEGISPEC_LLVM_SRC` | LLVM source tree for construct coverage |
 
 The integration smoke's built-in `F:/llvm/...` candidates are developer
 conveniences only. CI must not depend on them.

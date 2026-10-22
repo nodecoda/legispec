@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -45,14 +45,14 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from legalizer_dsl import DslError, Query, parse, parse_llt
-from legalizer_dsl.checker import run_checks
-from legalizer_dsl.claims import Claim
-from legalizer_dsl import claims
-from legalizer_dsl import cli, codegen
-from legalizer_dsl.coverage import run_coverage
-from legalizer_dsl.diagnostics import Severity
-from legalizer_dsl.model import (
+from legispec import DslError, Query, parse, parse_llt
+from legispec.checker import run_checks
+from legispec.claims import Claim
+from legispec import claims
+from legispec import cli, codegen
+from legispec.coverage import run_coverage
+from legispec.diagnostics import Severity
+from legispec.model import (
     Action,
     Always,
     BitsCmp,
@@ -380,7 +380,7 @@ class CliSurfaceTests(unittest.TestCase):
                 "rules/toycpu.lspec",
                 "conform",
                 "--oracle",
-                "out/oracle/legalizer-oracle.exe",
+                "out/oracle/legispec-oracle.exe",
                 "--out",
                 "out/review-conform.json",
             ],
@@ -412,7 +412,7 @@ class ProgrammaticZeroDivisorTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "T019")
 
     def test_analysis_reports_arithmetic_failures_as_m006(self):
-        from legalizer_dsl.checker.analysis import _mutation_issue
+        from legispec.checker.analysis import _mutation_issue
 
         class Boom(TypeExpr):
             idx = 0

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(legalizer_dsl_integration LANGUAGES CXX)
+project(legispec_integration LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,58 +14,58 @@ if(NOT DEFINED LLVM_DIR AND NOT DEFINED ENV{LLVM_DIR})
 endif()
 find_package(LLVM CONFIG REQUIRED)
 
-if(NOT DEFINED LDSL_WIRING_DIR)
-  message(FATAL_ERROR "LDSL_WIRING_DIR is required (output of --emit-wiring)")
+if(NOT DEFINED LEGISPEC_WIRING_DIR)
+  message(FATAL_ERROR "LEGISPEC_WIRING_DIR is required (output of --emit-wiring)")
 endif()
-if(NOT DEFINED LDSL_GENERATED_STEM)
-  set(LDSL_GENERATED_STEM "toycpu_rules_gen")
+if(NOT DEFINED LEGISPEC_GENERATED_STEM)
+  set(LEGISPEC_GENERATED_STEM "toycpu_rules_gen")
 endif()
 
-include("${LDSL_WIRING_DIR}/legalizer-rules.cmake")
-set(LDSL_GENERATED_TARGET "legalizer_dsl_${LDSL_GENERATED_STEM}")
-if(NOT TARGET ${LDSL_GENERATED_TARGET})
+include("${LEGISPEC_WIRING_DIR}/legalizer-rules.cmake")
+set(LEGISPEC_GENERATED_TARGET "legispec_${LEGISPEC_GENERATED_STEM}")
+if(NOT TARGET ${LEGISPEC_GENERATED_TARGET})
   message(FATAL_ERROR
-    "legalizer-rules.cmake did not create target ${LDSL_GENERATED_TARGET}")
+    "legalizer-rules.cmake did not create target ${LEGISPEC_GENERATED_TARGET}")
 endif()
 
-add_executable(legalizer-dsl-consumer main.cpp)
-target_include_directories(legalizer-dsl-consumer PRIVATE
+add_executable(legispec-consumer main.cpp)
+target_include_directories(legispec-consumer PRIVATE
   ${LLVM_INCLUDE_DIRS}
-  "${LDSL_WIRING_DIR}"
-  "${LEGALIZER_DSL_GENERATED_DIR}")
+  "${LEGISPEC_WIRING_DIR}"
+  "${LEGISPEC_GENERATED_DIR}")
 
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND "${LLVM_DEFINITIONS}")
-target_compile_options(legalizer-dsl-consumer PRIVATE ${LLVM_DEFINITIONS_LIST})
-target_include_directories(${LDSL_GENERATED_TARGET} PRIVATE ${LLVM_INCLUDE_DIRS})
-target_compile_options(${LDSL_GENERATED_TARGET} PRIVATE ${LLVM_DEFINITIONS_LIST})
+target_compile_options(legispec-consumer PRIVATE ${LLVM_DEFINITIONS_LIST})
+target_include_directories(${LEGISPEC_GENERATED_TARGET} PRIVATE ${LLVM_INCLUDE_DIRS})
+target_compile_options(${LEGISPEC_GENERATED_TARGET} PRIVATE ${LLVM_DEFINITIONS_LIST})
 
 # LLVM is commonly built with assertions even in Release.  CMake's Release
 # flags define NDEBUG, which changes LegalizeRuleSet's debug-only members and
 # therefore LegalizerInfo's layout.  Both TUs must match LLVM's NDEBUG state.
 if(LLVM_ENABLE_ASSERTIONS)
   if(MSVC)
-    target_compile_options(legalizer-dsl-consumer PRIVATE /UNDEBUG)
-    target_compile_options(${LDSL_GENERATED_TARGET} PRIVATE /UNDEBUG)
+    target_compile_options(legispec-consumer PRIVATE /UNDEBUG)
+    target_compile_options(${LEGISPEC_GENERATED_TARGET} PRIVATE /UNDEBUG)
   else()
-    target_compile_options(legalizer-dsl-consumer PRIVATE -UNDEBUG)
-    target_compile_options(${LDSL_GENERATED_TARGET} PRIVATE -UNDEBUG)
+    target_compile_options(legispec-consumer PRIVATE -UNDEBUG)
+    target_compile_options(${LEGISPEC_GENERATED_TARGET} PRIVATE -UNDEBUG)
   endif()
 endif()
 
 if(MSVC)
-  target_compile_options(legalizer-dsl-consumer PRIVATE /W4 /permissive-)
-  target_compile_options(${LDSL_GENERATED_TARGET} PRIVATE /W4 /permissive-)
+  target_compile_options(legispec-consumer PRIVATE /W4 /permissive-)
+  target_compile_options(${LEGISPEC_GENERATED_TARGET} PRIVATE /W4 /permissive-)
 else()
-  target_compile_options(legalizer-dsl-consumer PRIVATE
+  target_compile_options(legispec-consumer PRIVATE
     -Wall -Wextra -Wno-unused-parameter)
-  target_compile_options(${LDSL_GENERATED_TARGET} PRIVATE
+  target_compile_options(${LEGISPEC_GENERATED_TARGET} PRIVATE
     -Wall -Wextra -Wno-unused-parameter)
 endif()
 
-option(LDSL_USE_EXTENDED_LLT
+option(LEGISPEC_USE_EXTENDED_LLT
   "Enable LLT::setUseExtended(true) for float-keyed targets such as AArch64" OFF)
-if(LDSL_USE_EXTENDED_LLT)
-  target_compile_definitions(legalizer-dsl-consumer PRIVATE LDSL_USE_EXTENDED_LLT)
+if(LEGISPEC_USE_EXTENDED_LLT)
+  target_compile_definitions(legispec-consumer PRIVATE LEGISPEC_USE_EXTENDED_LLT)
 endif()
 
-target_link_libraries(legalizer-dsl-consumer PRIVATE ${LDSL_GENERATED_TARGET})
+target_link_libraries(legispec-consumer PRIVATE ${LEGISPEC_GENERATED_TARGET})

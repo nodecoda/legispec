@@ -175,10 +175,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
 单独对拍：
 
 ```powershell
-python -X utf8 F:\llvm-study	oycpu	ools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study	oycpu	ools\legalizer_dsl
+python -X utf8 F:\llvm-study	oycpu	ools\legispec\conformance.py `
+  --rules F:\llvm-study	oycpu	ools\legispec
 ulesarch64-vector.lspec `
-  --oracle F:\llvm-study	oycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
+  --oracle F:\llvm-study	oycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe `
   --out F:\llvm-study	oycpu\outarch64-vector-conformance-report.json `
   --llvm-build F:/llvm/build
 ```

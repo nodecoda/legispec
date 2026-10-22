@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -50,8 +50,8 @@ class SafeJoinTests(unittest.TestCase):
     def test_accepts_a_normal_relative_path(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = pathlib.Path(tmp)
-            joined = collect_evidence.safe_join(base, "oracle/legalizer-oracle.exe")
-        self.assertEqual(joined, (base / "oracle" / "legalizer-oracle.exe").resolve())
+            joined = collect_evidence.safe_join(base, "oracle/legispec-oracle.exe")
+        self.assertEqual(joined, (base / "oracle" / "legispec-oracle.exe").resolve())
 
     def test_rejects_parent_traversal(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -247,7 +247,7 @@ class ReproduceOracleDirectoryTests(unittest.TestCase):
         claim = {
             "id": "x",
             "rules": "toycpu.lspec",
-            "oracle": "oracle/legalizer-oracle.exe",
+            "oracle": "oracle/legispec-oracle.exe",
             "report": "report.json",
             "config": {},
         }

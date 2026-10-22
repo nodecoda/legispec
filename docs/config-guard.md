@@ -123,8 +123,8 @@ ruleset G_CONSTANT {
 
 | configuration | oracle | queries | divergences | rules matched |
 | --- | --- | ---: | ---: | ---: |
-| RV64 | `legalizer-oracle-riscv.exe` | 9 | 0 | 4/4 |
-| RV32 | `legalizer-oracle-riscv32.exe` | 9 | 0 | 4/4 |
+| RV64 | `legispec-oracle-riscv.exe` | 9 | 0 | 4/4 |
+| RV32 | `legispec-oracle-riscv32.exe` | 9 | 0 | 4/4 |
 
 ### 5.2 Full scalar subset
 
@@ -133,8 +133,8 @@ ruleset G_CONSTANT {
 
 | configuration | rules | static check | oracle | queries | divergences |
 | --- | ---: | --- | --- | ---: | ---: |
-| RV64 | 108 | errors=0 warnings=168 | `legalizer-oracle-riscv.exe` | 7861 | 0 |
-| RV32 | 101 | errors=0 warnings=163 | `legalizer-oracle-riscv32.exe` | 7861 | 0 |
+| RV64 | 108 | errors=0 warnings=168 | `legispec-oracle-riscv.exe` | 7861 | 0 |
+| RV32 | 101 | errors=0 warnings=163 | `legispec-oracle-riscv32.exe` | 7861 | 0 |
 
 RV32 reports `rules=100/101`: one rule never matches, and that is correct.
 `G_SEXT_INREG`'s first rule is the transcription of

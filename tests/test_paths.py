@@ -1,12 +1,12 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # ===----------------------------------------------------------------------===##
 
-"""Tests for the central data-location resolver in ``legalizer_dsl.paths``."""
+"""Tests for the central data-location resolver in ``legispec.paths``."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ import sysconfig
 import tempfile
 import unittest
 
-from legalizer_dsl import fingerprint, paths
+from legispec import fingerprint, paths
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 
@@ -29,20 +29,20 @@ class DataRootTests(unittest.TestCase):
             override = root / "shared-data"
             (repo / "rules").mkdir(parents=True)
             resolved = paths.data_root(
-                repo_root=repo, env={"LEGALIZER_DSL_DATA": str(override)}
+                repo_root=repo, env={"LEGISPEC_DATA": str(override)}
             )
         self.assertEqual(resolved, override)
 
-    def test_legacy_root_alias_is_accepted(self):
+    def test_root_alias_is_accepted(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             override = root / "legacy-data"
             resolved = paths.data_root(
-                repo_root=root / "repo", env={"LEGALIZER_DSL_ROOT": str(override)}
+                repo_root=root / "repo", env={"LEGISPEC_ROOT": str(override)}
             )
         self.assertEqual(resolved, override)
 
-    def test_data_env_takes_precedence_over_legacy_alias(self):
+    def test_data_env_takes_precedence_over_root_alias(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             primary = root / "primary"
@@ -50,8 +50,8 @@ class DataRootTests(unittest.TestCase):
             resolved = paths.data_root(
                 repo_root=root / "repo",
                 env={
-                    "LEGALIZER_DSL_DATA": str(primary),
-                    "LEGALIZER_DSL_ROOT": str(legacy),
+                    "LEGISPEC_DATA": str(primary),
+                    "LEGISPEC_ROOT": str(legacy),
                 },
             )
         self.assertEqual(resolved, primary)
@@ -67,9 +67,9 @@ class DataRootTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             repo = pathlib.Path(tmp)
             resolved = paths.data_root(repo_root=repo, env={})
-        expected = pathlib.Path(sysconfig.get_path("data")) / "share" / "legalizer-dsl"
+        expected = pathlib.Path(sysconfig.get_path("data")) / "share" / "legispec"
         self.assertEqual(resolved, expected)
-        self.assertEqual(resolved.parts[-2:], ("share", "legalizer-dsl"))
+        self.assertEqual(resolved.parts[-2:], ("share", "legispec"))
 
 
 class OutRootTests(unittest.TestCase):
@@ -79,7 +79,7 @@ class OutRootTests(unittest.TestCase):
             data = root / "data"
             custom = root / "custom-out"
             resolved = paths.out_root(
-                data_root=data, env={"LEGALIZER_DSL_OUT": str(custom)}
+                data_root=data, env={"LEGISPEC_OUT": str(custom)}
             )
         self.assertEqual(resolved, custom)
 
@@ -95,11 +95,11 @@ class PyprojectDataFilesTests(unittest.TestCase):
         text = (REPO / "pyproject.toml").read_text(encoding="utf-8")
         self.assertIn("[tool.setuptools.data-files]", text)
         for key in (
-            '"share/legalizer-dsl/rules" = ["rules/*.lspec"]',
-            '"share/legalizer-dsl/witness" = ["witness/*.witness"]',
-            '"share/legalizer-dsl/capabilities" = ["capabilities/*.json"]',
-            '"share/legalizer-dsl/claims" = ["claims/*.json", "claims/*.md", "claims/*.txt"]',
-            '"share/legalizer-dsl/docs" = ["docs/CLOSURE.md", "docs/COMPATIBILITY.md", "docs/CORRECTNESS.md", "docs/COVERAGE.md", "docs/EVIDENCE.md", "docs/INTEGRATION.md"]',
+            '"share/legispec/rules" = ["rules/*.lspec"]',
+            '"share/legispec/witness" = ["witness/*.witness"]',
+            '"share/legispec/capabilities" = ["capabilities/*.json"]',
+            '"share/legispec/claims" = ["claims/*.json", "claims/*.md", "claims/*.txt"]',
+            '"share/legispec/docs" = ["docs/CLOSURE.md", "docs/COMPATIBILITY.md", "docs/CORRECTNESS.md", "docs/COVERAGE.md", "docs/EVIDENCE.md", "docs/INTEGRATION.md"]',
         ):
             with self.subTest(key=key):
                 self.assertIn(key, text)
@@ -118,11 +118,11 @@ class RuleExtensionTests(unittest.TestCase):
             [path.name for path in rules],
         )
 
-    def test_legacy_suffix_is_never_discovered(self):
+    def test_noncanonical_suffix_is_never_discovered(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
             (root / "toycpu.lspec").write_text("", encoding="utf-8")
-            (root / "legacy.ldsl").write_text("", encoding="utf-8")
+            (root / "legacy.rules").write_text("", encoding="utf-8")
             discovered = paths.iter_rule_files(root)
         self.assertEqual([path.name for path in discovered], ["toycpu.lspec"])
 

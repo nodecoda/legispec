@@ -1,7 +1,7 @@
 # ToyCPU witness corpus, spec v0.1
 #
 # 地位：这些证人是【意图】的载体，先于实现输出冻结。
-# 推导来源：docs/ldsl-v0.1.md 的语法、宏展开与 first-match-wins 规则。
+# 推导来源：docs/legispec-v1.0.md 的语法、宏展开与 first-match-wins 规则。
 # 未参考解释器输出来编造期望；解释器只用于事后交叉验证。
 #
 # 格式

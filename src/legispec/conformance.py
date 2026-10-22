@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # ===----------------------------------------------------------------------===##
 
-"""Differential conformance runner for the Legalizer DSL.
+"""Differential conformance runner for the LegiSpec.
 
 The oracle is the real ToyCPU C++ implementation.  This runner observes only
 one step:
@@ -17,7 +17,7 @@ one step:
 It never reimplements LegalizerHelper rewrites.
 
 Definitions:
-    D = finite domain declared by the LDSL ``domain`` block, enumerated for
+    D = finite domain declared by the LegiSpec ``domain`` block, enumerated for
         every opcode aliased into each ruleset.
     R = closure(Q0) under one-step legalize actions.
 
@@ -41,20 +41,20 @@ TOOLS_DIR = Path(__file__).resolve().parent.parent
 if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
-from legalizer_dsl import paths  # noqa: E402
-from legalizer_dsl.fingerprint import (  # noqa: E402
+from legispec import paths  # noqa: E402
+from legispec.fingerprint import (  # noqa: E402
     codegen_sha256,
     hand_evaluator_sha256,
 )
-from legalizer_dsl.model import LegalizerInfo, Query  # noqa: E402
-from legalizer_dsl.parser import parse_defines, parse_file  # noqa: E402
-from legalizer_dsl.checker.analysis import shape  # noqa: E402
-from legalizer_dsl.diagnostics import DslError  # noqa: E402
-from legalizer_dsl.interp import TERMINAL_ACTIONS  # noqa: E402
+from legispec.model import LegalizerInfo, Query  # noqa: E402
+from legispec.parser import parse_defines, parse_file  # noqa: E402
+from legispec.checker.analysis import shape  # noqa: E402
+from legispec.diagnostics import DslError  # noqa: E402
+from legispec.interp import TERMINAL_ACTIONS  # noqa: E402
 from itertools import product  # noqa: E402
 
 
-SCHEMA = "legalizer-dsl-conformance-v1"
+SCHEMA = "legispec-conformance-v1"
 MAX_DIVERGENCES = 200
 
 
@@ -460,12 +460,12 @@ def build_report(
     closure_outside: list[Query],
     closure_boundary: list[Query],
     comparison: ComparisonReport,
-    llvm_build: str = os.environ.get("LEGALIZER_DSL_LLVM_BUILD", "F:/llvm/build-toycpu"),
+    llvm_build: str = os.environ.get("LEGISPEC_LLVM_BUILD", "F:/llvm/build-toycpu"),
     config: Optional[dict[str, object]] = None,
 ) -> dict:
     matched_count, missing_rules = _rule_coverage(info, comparison.rules_matched)
     total_rules = sum(len(ruleset.rules) for ruleset in info.rulesets)
-    llvm_src = os.environ.get("LEGALIZER_DSL_LLVM_SRC", "F:/llvm/llvm-project")
+    llvm_src = os.environ.get("LEGISPEC_LLVM_SRC", "F:/llvm/llvm-project")
     return {
         "schema": SCHEMA,
         "evaluator_sha256": hand_evaluator_sha256(),
@@ -523,11 +523,11 @@ def build_report(
 
 def main(argv: Optional[list[str]] = None) -> int:
     default_rules = paths.RULES / "toycpu.lspec"
-    default_oracle = paths.OUT / "oracle" / "legalizer-oracle.exe"
+    default_oracle = paths.OUT / "oracle" / "legispec-oracle.exe"
     default_out = paths.OUT / "conformance-report.json"
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--rules", default=str(default_rules), help="LDSL rules file")
+    parser.add_argument("--rules", default=str(default_rules), help="LegiSpec rules file")
     parser.add_argument(
         "--define",
         action="append",
@@ -552,7 +552,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--limit", type=int, default=0, help="limit queries for smoke runs")
     parser.add_argument(
         "--llvm-build",
-        default=os.environ.get("LEGALIZER_DSL_LLVM_BUILD", "F:/llvm/build-toycpu"),
+        default=os.environ.get("LEGISPEC_LLVM_BUILD", "F:/llvm/build-toycpu"),
         help="LLVM build directory recorded in the report metadata",
     )
     args = parser.parse_args(argv)
@@ -592,7 +592,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             return iter(limited_queries)
         return _combined_queries(info, closure, outside)
 
-    with tempfile.TemporaryDirectory(prefix="legalizer-conformance-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="legispec-conformance-") as temp_dir:
         input_path = Path(temp_dir) / "queries.jsonl"
         query_count, input_sha256 = _write_input(input_path, make_queries())
         comparison = ComparisonReport()

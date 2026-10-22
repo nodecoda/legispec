@@ -2,7 +2,7 @@
 
 > 本文件定义 LegiSpec **在什么条件下可以声称正确**。
 > 它是规范性说明；机器可读形态见 `claims/claim-schema.json`，可执行检查见
-> `legalizer_dsl.claims.validate_contract` 与 `legalizer_dsl.closure`。
+> `legispec.claims.validate_contract` 与 `legispec.closure`。
 > 与代码冲突时，以代码和实际证据为准，并应修正本文件或代码中的一方。
 
 ## 0. 一句话
@@ -23,7 +23,7 @@ Claim = (P, G, Ref, k, D, R, U, Obs, ≈, E)
 
 | 符号 | 含义 |
 |---|---|
-| `P` | LDSL 程序：规则 + `domain` + config |
+| `P` | LegiSpec 程序：规则 + `domain` + config |
 | `G` | 由 `P` 生成的 C++（codegen 产物） |
 | `Ref` | 固定 LLVM commit / build / target 的参考实现 |
 | `k` | triple、CPU、features、指针宽度、`is64bit`、`sXLen` 等配置 |
@@ -101,7 +101,7 @@ U  = 显式登记的 UNKNOWN
 
 | 层 | 命题 | 主要证据 | 典型失败 |
 |---|---|---|---|
-| L0 语法 | LDSL 可解析 | parser、EBNF、诊断 | token/宏写错 |
+| L0 语法 | LegiSpec 可解析 | parser、EBNF、诊断 | token/宏写错 |
 | L1 静态语义 | 规则表自洽 | wellformed/arity/mutation/termination | 负索引、非法 mutation |
 | L2 elaboration | 宏/别名/config 展开忠实 | 展开测试、guard 测试 | clamp 少展开一半 |
 | L3 codegen 结构 | AST -> builder 调用序列忠实 | structure manifest、golden tests | 顺序/别名错误 |
@@ -128,7 +128,7 @@ UNKNOWN  -- 证据缺失、环境不可用、或存在显式 U
 任何规则/实现/参考之间的差异必须归入且仅归入：
 
 ```text
-spec-wrong     -- LDSL 规范或实现写错
+spec-wrong     -- LegiSpec 规范或实现写错
 cxx-wrong      -- 参考实现/目标后端写错
 unspecified    -- 当前规范未定义，登记为 UNKNOWN 或补充规范
 ```
@@ -141,7 +141,7 @@ unspecified    -- 当前规范未定义，登记为 UNKNOWN 或补充规范
 
 | 字段 | 含义 |
 |---|---|
-| `schema` | 固定为 `legalizer-dsl-claims-v1` |
+| `schema` | 固定为 `legispec-claims-v1` |
 | `claim_contract_version` | 本契约版本，当前为 `1` |
 | `llvm_commit` | 40 位小写 hex 的参考 commit |
 | `boundary` | 全局证明边界 |
@@ -169,8 +169,8 @@ declared_unreachable, declared_shadowed
 校验入口：
 
 ```powershell
-python -m legalizer_dsl.closure check --skip-evidence  # 结构 + 契约 + pinned 数字
-python -m legalizer_dsl.claims verify --verify-corpus   # 完整证据
+python -m legispec.closure check --skip-evidence  # 结构 + 契约 + pinned 数字
+python -m legispec.claims verify --verify-corpus   # 完整证据
 ```
 
 ## 7. 明确不证明的内容
@@ -184,4 +184,4 @@ python -m legalizer_dsl.claims verify --verify-corpus   # 完整证据
 
 一句话：
 
-> **LDSL 是决策函数的完整规格，是改写函数的接口契约，不是完整语义规范。**
+> **LegiSpec 是决策函数的完整规格，是改写函数的接口契约，不是完整语义规范。**

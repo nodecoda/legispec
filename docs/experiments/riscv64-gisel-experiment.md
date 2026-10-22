@@ -25,7 +25,7 @@ subset, not a model of all of RISC-V.
 
 The claim proven here is narrow and concrete:
 
-> On the declared finite RV64 scalar domain, the Python LDSL model and the
+> On the declared finite RV64 scalar domain, the Python LegiSpec model and the
 > real `RISCVLegalizerInfo::getAction(LegalityQuery)` agree on every observed
 > step.
 
@@ -75,8 +75,8 @@ DSL spec must name the configuration, not just the target.
 Added:
 
 ```text
-toycpu/tools/legalizer_dsl/rules/riscv64-scalar.lspec
-toycpu/tools/legalizer_dsl/riscv64-scalar-capabilities.json
+toycpu/tools/legispec/rules/riscv64-scalar.lspec
+toycpu/tools/legispec/riscv64-scalar-capabilities.json
 toycpu/out/riscv64-scalar-conformance-report.json
 toycpu/out/riscv64-scalar-check.txt
 toycpu/notes/riscv64-gisel-experiment.md
@@ -88,7 +88,7 @@ Changed:
 toycpu/tools/oracle/main.cpp        RISCV_ORACLE branch
 toycpu/tools/oracle/CMakeLists.txt  fifth executable, ORACLE_WITH_RISCV
 toycpu/tools/oracle/build.ps1       -WithRiscv
-toycpu/tools/legalizer_dsl/...      same_size_as / scalar_bits /
+toycpu/tools/legispec/...      same_size_as / scalar_bits /
                                     widen_to_next_pow2_or_min, exact
                                     termination state graph
 ```
@@ -246,18 +246,18 @@ Static check:
 
 ```powershell
 cd F:\llvm-study\toycpu\tools
-python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.lspec `
+python -m legispec `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv64-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-scalar-capabilities.json
+  --capabilities F:\llvm-study\toycpu\tools\legispec\riscv64-scalar-capabilities.json
 ```
 
 Differential conformance:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv.exe `
+python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv64-scalar.lspec `
+  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legispec-oracle-riscv.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv64-scalar-conformance-report.json `
   --llvm-build F:/llvm/build

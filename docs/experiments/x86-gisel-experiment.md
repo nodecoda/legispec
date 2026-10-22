@@ -25,7 +25,7 @@ of all of X86.
 
 The claim proven here is narrow and concrete:
 
-> On the declared finite scalar domain, the Python LDSL model and the real
+> On the declared finite scalar domain, the Python LegiSpec model and the real
 > `X86LegalizerInfo::getAction(LegalityQuery)` agree on every observed step.
 
 It does **not** prove that the DSL models all of X86, vector legalization,
@@ -66,9 +66,9 @@ p0          = pointer(0, 64)
 Added:
 
 ```text
-toycpu/tools/legalizer_dsl/rules/x86-scalar.lspec
-toycpu/tools/legalizer_dsl/x86-scalar-capabilities.json
-toycpu/tools/oracle/... -> legalizer-oracle-x86.exe
+toycpu/tools/legispec/rules/x86-scalar.lspec
+toycpu/tools/legispec/x86-scalar-capabilities.json
+toycpu/tools/oracle/... -> legispec-oracle-x86.exe
 toycpu/out/x86-scalar-conformance-report.json
 toycpu/notes/x86-gisel-experiment.md
 ```
@@ -79,7 +79,7 @@ Changed:
 toycpu/tools/oracle/main.cpp        X86_ORACLE branch; shared subtarget probe
 toycpu/tools/oracle/CMakeLists.txt  third executable
 toycpu/tools/oracle/build.ps1       verify the third executable exists
-toycpu/tools/legalizer_dsl/cli.py   rules-stem witness/capability discovery
+toycpu/tools/legispec/cli.py   rules-stem witness/capability discovery
 ```
 
 The `cli.py` change generalizes auto-discovery from a hard-coded
@@ -135,7 +135,7 @@ widenScalarToNextPow2(0, 8)
 clampScalar(0, s8, sMaxScalar)
 ```
 
-On x86-64, `p0` is the 64-bit pointer, written as `p0:64` in LDSL.
+On x86-64, `p0` is the 64-bit pointer, written as `p0:64` in LegiSpec.
 
 ### 3.3 Division/remainder
 
@@ -149,7 +149,7 @@ clampScalar(0, s8, sMaxScalar)
 
 On x86-64, `libcallFor({s64})` is **shadowed** by the preceding
 `legalFor(Is64Bit, {s64})` because `LegalizeRuleSet::apply()` returns the
-first matching rule.  The LDSL model therefore contains no `libcall_for`
+first matching rule.  The LegiSpec model therefore contains no `libcall_for`
 rule for this configuration; a comment records the dead C++ rule.
 
 ### 3.4 Shifts
@@ -273,7 +273,7 @@ G_SEXT, G_ZEXT:
   ... same trailing rules
 ```
 
-`legalFor` only constrains `t0`, so the corresponding LDSL rule is:
+`legalFor` only constrains `t0`, so the corresponding LegiSpec rule is:
 
 ```text
 legal when t0 in {s8, s16, s32, s64, s128};
@@ -311,7 +311,7 @@ Q0 seeds (one or more per ruleset) are in the `domain` block of
 
 ## 5. Oracle
 
-`legalizer-oracle-x86.exe` is the same JSONL front end as the ToyCPU
+`legispec-oracle-x86.exe` is the same JSONL front end as the ToyCPU
 oracle.  It differs only in target initialization:
 
 ```cpp
@@ -379,7 +379,7 @@ Every subtlety below follows from that one fact.
 ### 7.2 `clamp_scalar` is two ordered rules
 
 `clampScalar(TypeIdx, Min, Max)` expands to `minScalar` followed by
-`maxScalar`.  The LDSL expands it the same way, which is why the checker
+`maxScalar`.  The LegiSpec expands it the same way, which is why the checker
 reports many `K001/K002` order-sensitive overlaps.  Those warnings are not
 noise: they identify exactly where the C++ rule set depends on order.
 
@@ -405,7 +405,7 @@ silently accepted.
 ### 7.6 The current DSL covers the scalar skeleton, not X86
 
 X86's legalizer is vector-heavy.  The following C++ constructs are outside
-the current LDSL surface:
+the current LegiSpec surface:
 
 ```text
 clampMinNumElements / clampMaxNumElements
@@ -431,17 +431,17 @@ Static check:
 
 ```powershell
 cd F:\llvm-study\toycpu\tools
-python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\x86-scalar.lspec `
+python -m legispec `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\x86-scalar.lspec `
   check --strict
 ```
 
 Differential conformance:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\x86-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle\legalizer-oracle-x86.exe `
+python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\x86-scalar.lspec `
+  --oracle F:\llvm-study\toycpu\out\oracle\legispec-oracle-x86.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\x86-scalar-conformance-report.json
 ```
@@ -456,7 +456,7 @@ ToyCPU regression gate:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-legalizer-dsl.ps1
+  F:\llvm-study\toycpu\scripts\check-legispec.ps1
 ```
 
 Last run: `RESULT: PASS elapsed=40.3s`, 101 tests, 243,714 queries,
@@ -468,7 +468,7 @@ Proven:
 
 ```text
 finite scalar domain D, closure R, 7,591 observations
-Python LDSL policy == real X86 getAction
+Python LegiSpec policy == real X86 getAction
 ```
 
 Not proven:
@@ -491,5 +491,5 @@ If this line continues, the highest-value next experiments are:
 3. Model `G_GLOBAL_VALUE` custom legalization and extend the capability
    manifest mechanism to X86.
 4. Build AArch64 or RISCV in a separate LLVM build and repeat the same
-   scalar subset protocol.  Those targets would test whether the LDSL
+   scalar subset protocol.  Those targets would test whether the LegiSpec
    primitives generalize beyond the scalar X86/ToyCPU shape.

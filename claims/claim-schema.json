@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://legalizer-dsl.invalid/claim-schema.json",
-  "title": "Legalizer DSL claim ledger contract",
-  "description": "Machine-readable shape of claims/claims.json. The executable checker is legalizer_dsl.claims.validate_contract.",
+  "$id": "https://legispec.invalid/claim-schema.json",
+  "title": "LegiSpec claim ledger contract",
+  "description": "Machine-readable shape of claims/claims.json. The executable checker is legispec.claims.validate_contract.",
   "type": "object",
   "required": [
     "schema",
@@ -14,7 +14,7 @@
     "claims"
   ],
   "properties": {
-    "schema": { "const": "legalizer-dsl-claims-v1" },
+    "schema": { "const": "legispec-claims-v1" },
     "claim_contract_version": { "const": 1 },
     "llvm_commit": { "$ref": "#/$defs/commit" },
     "boundary": { "type": "string", "minLength": 1 },

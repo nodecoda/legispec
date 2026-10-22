@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -36,30 +36,30 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
-from legalizer_dsl import __version__ as GENERATOR_VERSION  # noqa: E402
-from legalizer_dsl import codegen  # noqa: E402
-from legalizer_dsl.codegen import DSL_SPEC_VERSION  # noqa: E402
-from legalizer_dsl.conformance import (  # noqa: E402
+from legispec import __version__ as GENERATOR_VERSION  # noqa: E402
+from legispec import codegen  # noqa: E402
+from legispec.codegen import DSL_SPEC_VERSION  # noqa: E402
+from legispec.conformance import (  # noqa: E402
     ComparisonReport,
     _write_input,
     compare,
     iter_d_queries,
 )
-from legalizer_dsl.fingerprint import (  # noqa: E402
+from legispec.fingerprint import (  # noqa: E402
     codegen_sha256,
     hand_evaluator_sha256,
 )
-from legalizer_dsl.model import Query  # noqa: E402
-from legalizer_dsl.parser import parse_file  # noqa: E402
+from legispec.model import Query  # noqa: E402
+from legispec.parser import parse_file  # noqa: E402
 
-SCHEMA = "legalizer-dsl-integration-v2"
+SCHEMA = "legispec-integration-v2"
 
 TARGETS = {
     "toycpu": {
         "rules": "rules/toycpu.lspec",
         "namespace": None,
-        "oracle": "out/oracle/legalizer-oracle",
-        "generated_oracle": "out/oracle/legalizer-oracle-gen",
+        "oracle": "out/oracle/legispec-oracle",
+        "generated_oracle": "out/oracle/legispec-oracle-gen",
         "extended_llt": False,
         "llvm_dirs": (
             "F:/llvm/build-toycpu/lib/cmake/llvm",
@@ -69,9 +69,9 @@ TARGETS = {
     "aarch64-vector": {
         "rules": "rules/aarch64-vector.lspec",
         "namespace": None,
-        "oracle": "out/oracle-aarch64/legalizer-oracle-aarch64",
+        "oracle": "out/oracle-aarch64/legispec-oracle-aarch64",
         "generated_oracle": (
-            "out/oracle-aarch64/legalizer-oracle-aarch64-vector-gen"
+            "out/oracle-aarch64/legispec-oracle-aarch64-vector-gen"
         ),
         "extended_llt": True,
         "llvm_dirs": (
@@ -94,14 +94,14 @@ def _first_existing(*paths: Iterable[Optional[str]]) -> Optional[Path]:
 
 def _find_cmake() -> Optional[Path]:
     return _first_existing(
-        os.environ.get("LEGALIZER_DSL_CMAKE"),
+        os.environ.get("LEGISPEC_CMAKE"),
         shutil.which("cmake"),
         "C:/Program Files/CMake/bin/cmake.exe",
     )
 
 
 def _find_llvm_dir(target: dict) -> Optional[Path]:
-    explicit = os.environ.get("LEGALIZER_DSL_LLVM_DIR")
+    explicit = os.environ.get("LEGISPEC_LLVM_DIR")
     if explicit:
         path = Path(explicit)
         return path if path.is_dir() else None
@@ -117,7 +117,7 @@ def _find_llvm_dir(target: dict) -> Optional[Path]:
 
 def _find_cxx() -> Optional[Path]:
     return _first_existing(
-        os.environ.get("LEGALIZER_DSL_CXX"),
+        os.environ.get("LEGISPEC_CXX"),
         os.environ.get("CXX"),
         shutil.which("clang++"),
         "F:/llvm/install/bin/clang++.exe",
@@ -132,7 +132,7 @@ def _find_linker(cxx: Optional[Path]) -> Optional[Path]:
     if "clang" not in cxx.name.lower():
         return None
     return _first_existing(
-        os.environ.get("LEGALIZER_DSL_LINKER"),
+        os.environ.get("LEGISPEC_LINKER"),
         "F:/llvm/install/bin/lld-link.exe",
         shutil.which("lld-link"),
     )
@@ -140,7 +140,7 @@ def _find_linker(cxx: Optional[Path]) -> Optional[Path]:
 
 def _find_ninja() -> Optional[Path]:
     return _first_existing(
-        os.environ.get("LEGALIZER_DSL_NINJA"),
+        os.environ.get("LEGISPEC_NINJA"),
         shutil.which("ninja"),
         "D:/VStudio/2022/Enterprise/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe",
         "F:/llvm/tools/ninja.exe",
@@ -149,7 +149,7 @@ def _find_ninja() -> Optional[Path]:
 
 def _find_vcvars() -> Optional[Path]:
     return _first_existing(
-        os.environ.get("LEGALIZER_DSL_VCVARS"),
+        os.environ.get("LEGISPEC_VCVARS"),
         "D:/VStudio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
         "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
         "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/Auxiliary/Build/vcvars64.bat",
@@ -258,10 +258,10 @@ def _binary(relative: str) -> Path:
 
 def _consumer_path(build_dir: Path) -> Optional[Path]:
     for candidate in (
-        build_dir / "legalizer-dsl-consumer.exe",
-        build_dir / "legalizer-dsl-consumer",
-        build_dir / "Release" / "legalizer-dsl-consumer.exe",
-        build_dir / "Debug" / "legalizer-dsl-consumer.exe",
+        build_dir / "legispec-consumer.exe",
+        build_dir / "legispec-consumer",
+        build_dir / "Release" / "legispec-consumer.exe",
+        build_dir / "Debug" / "legispec-consumer.exe",
     ):
         if candidate.is_file():
             return candidate
@@ -271,7 +271,7 @@ def _consumer_path(build_dir: Path) -> Optional[Path]:
 def main(argv: Optional[list[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--target", default="toycpu", choices=sorted(TARGETS))
-    parser.add_argument("--rules", help="override the target's LDSL file")
+    parser.add_argument("--rules", help="override the target's LegiSpec file")
     parser.add_argument("--out-dir", default="out/integration")
     parser.add_argument("--out", default="out/integration-report.json")
     parser.add_argument("--limit", type=int, default=20000,
@@ -525,8 +525,8 @@ def _build_consumer(
         str(build_dir),
         "-DCMAKE_BUILD_TYPE=Release",
         f"-DLLVM_DIR={llvm_dir.as_posix()}",
-        f"-DLDSL_WIRING_DIR={wiring_dir.as_posix()}",
-        f"-DLDSL_GENERATED_STEM={stem}",
+        f"-DLEGISPEC_WIRING_DIR={wiring_dir.as_posix()}",
+        f"-DLEGISPEC_GENERATED_STEM={stem}",
         f"-DCMAKE_CXX_COMPILER={cxx.as_posix()}",
     ]
     if ninja is not None:
@@ -534,7 +534,7 @@ def _build_consumer(
     if linker is not None:
         configure.append(f"-DCMAKE_LINKER={linker.as_posix()}")
     if target["extended_llt"]:
-        configure.append("-DLDSL_USE_EXTENDED_LLT=ON")
+        configure.append("-DLEGISPEC_USE_EXTENDED_LLT=ON")
 
     build = [str(cmake), "--build", str(build_dir), "--config", "Release"]
 

@@ -3,7 +3,7 @@
 This document describes the **policy-layer** integration boundary:
 
 ```text
-LDSL rules -> generated LegalizerInfo builders -> target/consumer TU
+LegiSpec rules -> generated LegalizerInfo builders -> target/consumer TU
 ```
 
 It does **not** cover `LegalizerHelper` rewrites, custom/libcall/lower
@@ -33,7 +33,7 @@ domain. Domain-external queries remain `UNKNOWN`; they are not evidence.
 ## 2. Generate the artifacts
 
 ```text
-python -m legalizer_dsl --rules rules/toycpu.lspec codegen \
+python -m legispec --rules rules/toycpu.lspec codegen \
   --out-dir out/integration/toycpu/generated \
   --emit-wiring out/integration/toycpu/wiring \
   --llvm-commit <commit>
@@ -53,7 +53,7 @@ out/integration/toycpu/wiring/wiring.md
 `--check` verifies all of these artifacts without writing:
 
 ```text
-python -m legalizer_dsl --rules rules/toycpu.lspec codegen \
+python -m legispec --rules rules/toycpu.lspec codegen \
   --out-dir out/integration/toycpu/generated \
   --emit-wiring out/integration/toycpu/wiring \
   --llvm-commit <commit> --check
@@ -83,7 +83,7 @@ find_package(LLVM CONFIG REQUIRED)
 include("path/to/out/integration/toycpu/wiring/legalizer-rules.cmake")
 
 add_executable(my-consumer main.cpp)
-target_link_libraries(my-consumer PRIVATE legalizer_dsl_toycpu_rules_gen)
+target_link_libraries(my-consumer PRIVATE legispec_toycpu_rules_gen)
 ```
 
 The generated target exposes the generated directory and the wiring directory
@@ -97,7 +97,7 @@ In C++:
 #include "wiring.cpp.inc"
 
 llvm::LegalizerInfo LI;
-LEGALIZER_DSL_APPLY_RULES(LI);
+LEGISPEC_APPLY_RULES(LI);
 ```
 
 `wiring.cpp.inc` includes the generated header itself. Include it once in the
@@ -106,7 +106,7 @@ translation unit that owns the `LegalizerInfo`. Do not copy the generated
 separate static library so regeneration cannot overwrite upstream source.
 
 For float-keyed targets such as AArch64, configure the consumer with
-`-DLDSL_USE_EXTENDED_LLT=ON`. AArch64's `TargetMachine` normally enables
+`-DLEGISPEC_USE_EXTENDED_LLT=ON`. AArch64's `TargetMachine` normally enables
 extended LLTs; a generated consumer has no `TargetMachine`, so it must enable
 the same interpretation explicitly before applying the rules.
 
@@ -130,12 +130,12 @@ Useful options:
 
 Compiler and LLVM discovery are environment-driven (there are no
 `--llvm-dir`/`--cxx` flags): set `LLVM_DIR` and `CXX` for a non-default
-toolchain, plus `LEGALIZER_DSL_LLVM_DIR` / `LEGALIZER_DSL_CXX` to override the
-smoke's search directly.  On Windows, `LEGALIZER_DSL_VCVARS` selects the
+toolchain, plus `LEGISPEC_LLVM_DIR` / `LEGISPEC_CXX` to override the
+smoke's search directly.  On Windows, `LEGISPEC_VCVARS` selects the
 `vcvars64.bat` used for the MSVC environment.
 
-Reports use schema `legalizer-dsl-integration-v2`. Besides the rules and query
-hashes, `provenance` pins the generator and LDSL-spec versions, the evaluator
+Reports use schema `legispec-integration-v2`. Besides the rules and query
+hashes, `provenance` pins the generator and LegiSpec-spec versions, the evaluator
 and codegen fingerprints, the LLVM commit, the git `head_commit`, whether the
 worktree was dirty, the generated header/source hashes, and the consumer and
 oracle binary hashes. `artifacts` names the query file and every binary so the
@@ -167,15 +167,15 @@ worktree is reported as `worktree_dirty=true` and will be rejected.
 
 The script searches the current environment, then the local LLVM builds used
 by this repository. CI runners should set `LLVM_DIR`, `CXX`, and, on Windows,
-`LEGALIZER_DSL_VCVARS` explicitly.
+`LEGISPEC_VCVARS` explicitly.
 
 ## 6. A/B against the hand-written rules
 
 The smoke already performs the A/B when the oracle binaries exist:
 
 ```text
-out/oracle/legalizer-oracle[.exe]        # hand-written ToyCPU rules
-out/oracle/legalizer-oracle-gen[.exe]    # generated ToyCPU rules
+out/oracle/legispec-oracle[.exe]        # hand-written ToyCPU rules
+out/oracle/legispec-oracle-gen[.exe]    # generated ToyCPU rules
 out/oracle-aarch64/...                   # AArch64 counterparts
 ```
 
@@ -191,8 +191,8 @@ domain.
 For a manual A/B, feed the same JSONL to both:
 
 ```text
-out/oracle/legalizer-oracle.exe --input queries.jsonl > hand.jsonl
-out/oracle/legalizer-oracle-gen.exe --input queries.jsonl > gen.jsonl
+out/oracle/legispec-oracle.exe --input queries.jsonl > hand.jsonl
+out/oracle/legispec-oracle-gen.exe --input queries.jsonl > gen.jsonl
 ```
 
 A non-zero diff is a policy divergence. It is not automatically a bug in the

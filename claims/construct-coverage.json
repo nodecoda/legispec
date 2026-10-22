@@ -386,6 +386,6 @@
       "status": "none"
     }
   ],
-  "schema": "legalizer-dsl-construct-coverage-v1",
+  "schema": "legispec-construct-coverage-v1",
   "source": "F:/llvm/llvm-project/llvm/include/llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 }

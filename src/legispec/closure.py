@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -137,7 +137,7 @@ def generated_evidence(entries: list[dict]) -> tuple[dict, list[str]]:
             f"{type(manifest).__name__}, expected object"
         )
         manifest = {}
-    if manifest.get("schema") != "legalizer-dsl-generated-evidence-v1":
+    if manifest.get("schema") != "legispec-generated-evidence-v1":
         problems.append(
             f"generated evidence schema is {manifest.get('schema')!r}"
         )
@@ -164,7 +164,7 @@ def generated_evidence(entries: list[dict]) -> tuple[dict, list[str]]:
             + ", ".join(sorted(missing))
         )
     summary = {
-        "schema": "legalizer-dsl-generated-evidence-summary-v1",
+        "schema": "legispec-generated-evidence-summary-v1",
         "rules": len(on_disk),
         "generated": sorted(generated),
         "generated_covered": len(generated),
@@ -274,7 +274,7 @@ def audit(write: bool, skip_evidence: bool = False, skip_tests: bool = False) ->
             problems.append(f"pinned {key}={pinned[key]} but computed {computed[key]}")
 
     report = {
-        "schema": "legalizer-dsl-closure-v1",
+        "schema": "legispec-closure-v1",
         "llvm_commit": ledger.get("llvm_commit"),
         "boundary": ledger.get("boundary"),
         "computed": computed,

@@ -2,7 +2,7 @@
 
 ## Evidence verification in CI
 
-Normal CI runs the strict rules sweep (`python scripts/check_all_rules.py`) and structural closure (`legispec-closure check --skip-evidence`). Structural mode still fails on a ledger entry marked `ok=false` or with non-zero divergences, but it cannot prove the artifacts. Full evidence verification is manual: trigger `workflow_dispatch`, set `evidence_dir` to a directory on a self-hosted runner labelled by `evidence_runner`, and the workflow uploads that directory as the `legalizer-evidence` artifact. A hosted `windows-latest` job downloads the artifact, copies it with `scripts/collect_evidence.py`, then runs `legispec-claims verify --verify-corpus` (re-enumerates D union R and compares each report's corpus hash) and `legispec-closure check`.
+Normal CI runs the strict rules sweep (`python scripts/check_all_rules.py`) and structural closure (`legispec-closure check --skip-evidence`). Structural mode still fails on a ledger entry marked `ok=false` or with non-zero divergences, but it cannot prove the artifacts. Full evidence verification is manual: trigger `workflow_dispatch`, set `evidence_dir` to a directory on a self-hosted runner labelled by `evidence_runner`, and the workflow uploads that directory as the `legispec-evidence` artifact. A hosted `windows-latest` job downloads the artifact, copies it with `scripts/collect_evidence.py`, then runs `legispec-claims verify --verify-corpus` (re-enumerates D union R and compares each report's corpus hash) and `legispec-closure check`.
 
 `claims/claims.json` 里 43 条断言，每一条都钉住三样东西：
 
@@ -23,18 +23,18 @@ out/<oracle>.exe           内容哈希（oracle_sha256）—— 不入库
 证据目录默认是仓库根下的 `out/`，可用环境变量改：
 
 ```powershell
-$env:LEGALIZER_DSL_OUT = 'D:\evidence\legalizer-dsl'
+$env:LEGISPEC_OUT = 'D:\evidence\legispec'
 ```
 
 同一套变量作用于 `claims` / `conformance` / `closure` / `codegen`：
 
 | 变量 | 作用 |
 |---|---|
-| `LEGALIZER_DSL_OUT` | 报告与 oracle 所在目录 |
-| `LEGALIZER_DSL_LLVM_SRC` | LLVM 源码树（`constructs check` 读 `LegalizerInfo.h`） |
-| `LEGALIZER_DSL_LLVM_BUILD` | LLVM 构建目录（写进报告元数据、claims 期望值） |
-| `LEGALIZER_DSL_TOYCPU_BUILD` | ToyCPU 构建目录（toycpu 断言的期望值） |
-| `LEGALIZER_DSL_LLC` | `llc` 路径（MIR 形状审计） |
+| `LEGISPEC_OUT` | 报告与 oracle 所在目录 |
+| `LEGISPEC_LLVM_SRC` | LLVM 源码树（`constructs check` 读 `LegalizerInfo.h`） |
+| `LEGISPEC_LLVM_BUILD` | LLVM 构建目录（写进报告元数据、claims 期望值） |
+| `LEGISPEC_TOYCPU_BUILD` | ToyCPU 构建目录（toycpu 断言的期望值） |
+| `LEGISPEC_LLC` | `llc` 路径（MIR 形状审计） |
 
 ## 2. 三种拿到证据的方式
 
@@ -42,7 +42,7 @@ $env:LEGALIZER_DSL_OUT = 'D:\evidence\legalizer-dsl'
 
 ```powershell
 python scripts/collect_evidence.py --from <含 report 与 oracle 的 out 目录>
-python -m legalizer_dsl.claims verify
+python -m legispec.claims verify
 ```
 
 脚本只复制 `claims.json` 点名的文件，并且在复制前逐份校验 `oracle_sha256`；
@@ -53,7 +53,7 @@ python -m legalizer_dsl.claims verify
 ```powershell
 python scripts/reproduce_claims.py --only aarch64-scalar
 python scripts/reproduce_claims.py                       # 全部 43 条
-python -m legalizer_dsl.claims verify                    # 断言仍然成立
+python -m legispec.claims verify                    # 断言仍然成立
 ```
 
 每条断言用自己的 `config`（`is64bit` / `sXLen` / `sDoubleXLen` …）作 `--define`，
@@ -85,7 +85,7 @@ python -m legalizer_dsl.claims verify                    # 断言仍然成立
    ```powershell
    legispec --rules rules/aarch64-vector.lspec codegen --out-dir out/codegen
    # out/codegen/*.cpp + <target>/tools/oracle/main.cpp + 该 target 的 CodeGen 库
-   #   -> out/oracle-aarch64/legalizer-oracle-aarch64.exe
+   #   -> out/oracle-aarch64/legispec-oracle-aarch64.exe
    ```
 
    本仓库负责规则、证明与账本；target 后端与 oracle 构建属于外部依赖，
@@ -95,7 +95,7 @@ python -m legalizer_dsl.claims verify                    # 断言仍然成立
 
    ```powershell
    python scripts/reproduce_claims.py --llvm-build <你的构建目录>
-   python -m legalizer_dsl.claims verify --llvm-build <build-dir> --write --allow-report-change
+   python -m legispec.claims verify --llvm-build <build-dir> --write --allow-report-change
    ```
 
    `--write` 会把新的 `oracle_sha256` / `oracle_size` / `rules_sha256` 写回账本。
@@ -106,7 +106,7 @@ python -m legalizer_dsl.claims verify                    # 断言仍然成立
 不会静默变绿，也不会伪装成“通过”：
 
 ```text
-$ python -m legalizer_dsl.claims verify
+$ python -m legispec.claims verify
 toycpu   FAIL   ! report missing: out/conformance-report.json
 claims=43 proven=0 failed=43
 ```
@@ -127,9 +127,9 @@ out/
   conformance-report.json                       ToyCPU 全量
   aarch64-vector-conformance-report.json        AArch64 向量
   riscv64-mzb-scalar-conformance-report.json    RISC-V M/Zbb
-  oracle/legalizer-oracle.exe                   ToyCPU oracle
-  oracle-aarch64/legalizer-oracle-aarch64.exe
-  oracle-riscv/legalizer-oracle-riscv32.exe
+  oracle/legispec-oracle.exe                   ToyCPU oracle
+  oracle-aarch64/legispec-oracle-aarch64.exe
+  oracle-riscv/legispec-oracle-riscv32.exe
   ...
 ```
 
@@ -152,7 +152,7 @@ A report produced by an older evaluator is a FAIL, and `--write` refuses to
 bless it. After regenerating the reports, refresh the pins explicitly:
 
 ```powershell
-python -m legalizer_dsl.claims verify --write --allow-evaluator-change
+python -m legispec.claims verify --write --allow-evaluator-change
 ```
 
 The canonical report hash excludes checkout-dependent metadata (`rules`,

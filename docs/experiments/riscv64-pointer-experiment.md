@@ -25,7 +25,7 @@ domain contains the legal 64-bit pointer shape `p0:64`.
 
 The claim proven here:
 
-> On the declared finite RV64 pointer domain, the Python LDSL model and the
+> On the declared finite RV64 pointer domain, the Python LegiSpec model and the
 > real `RISCVLegalizerInfo::getAction(LegalityQuery)` agree on every observed
 > step.
 
@@ -54,8 +54,8 @@ notation means a **32-bit** pointer, which is not an RV64 pointer.
 Added:
 
 ```text
-toycpu/tools/legalizer_dsl/rules/riscv64-pointer.lspec
-toycpu/tools/legalizer_dsl/riscv64-pointer-capabilities.json
+toycpu/tools/legispec/rules/riscv64-pointer.lspec
+toycpu/tools/legispec/riscv64-pointer-capabilities.json
 toycpu/out/riscv64-pointer-conformance-report.json
 toycpu/out/riscv64-pointer-check.txt
 toycpu/notes/riscv64-pointer-experiment.md
@@ -115,7 +115,7 @@ G_SELECT:              (s32,s64), (p0:64,s64), (s64,s64) Legal; clamps
 ## 5. Why some opcodes appear in both RISC-V files
 
 `G_CONSTANT`, `G_PHI`, `G_ICMP` and `G_SELECT` have rulesets that mention
-both scalar and pointer shapes.  The LDSL parser rejects duplicate opcodes
+both scalar and pointer shapes.  The LegiSpec parser rejects duplicate opcodes
 inside one file, but the two files are separate experiments and are never
 loaded together.  The scalar file models only the scalar domain; the pointer
 file re-states these four rulesets with `p0:64` in the domain so the pointer
@@ -126,14 +126,14 @@ out in both file headers.
 
 ```powershell
 cd F:\llvm-study\toycpu\tools
-python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-pointer.lspec `
+python -m legispec `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv64-pointer.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-pointer-capabilities.json
+  --capabilities F:\llvm-study\toycpu\tools\legispec\riscv64-pointer-capabilities.json
 
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-pointer.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv.exe `
+python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv64-pointer.lspec `
+  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legispec-oracle-riscv.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv64-pointer-conformance-report.json `
   --llvm-build F:/llvm/build

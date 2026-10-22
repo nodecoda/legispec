@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -12,13 +12,13 @@ Examples
 --------
 Explain the expanded rules for one opcode::
 
-    python legalizer-dsl.py --rules rules/toycpu.lspec explain G_ICMP
+    python -m legispec --rules rules/toycpu.lspec explain G_ICMP
 
 Trace first-match evaluation for a query::
 
-    python legalizer-dsl.py --rules rules/toycpu.lspec trace G_ADD --type s64
-    python legalizer-dsl.py --rules rules/toycpu.lspec trace G_ICMP --type v4s1 --type v4s32
-    python legalizer-dsl.py --rules rules/toycpu.lspec trace G_LOAD --type s8 --type p0 --mem s8:8
+    python -m legispec --rules rules/toycpu.lspec trace G_ADD --type s64
+    python -m legispec --rules rules/toycpu.lspec trace G_ICMP --type v4s1 --type v4s32
+    python -m legispec --rules rules/toycpu.lspec trace G_LOAD --type s8 --type p0 --mem s8:8
 
 The ``trace`` command prints every rule in order, whether it matched, and the
 resulting ``LegalizeActionStep``.
@@ -56,10 +56,6 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="legispec",
         description="Parse and evaluate LLVM GlobalISel legality rules.",
-        epilog=(
-            "deprecated: use legispec; the legalizer-dsl entry point is kept "
-            "as an alias until 1.0 (see docs/BRAND.md)."
-        ),
     )
     parser.add_argument(
         "--rules",
@@ -185,7 +181,7 @@ def _build_parser() -> argparse.ArgumentParser:
     codegen_cmd.add_argument(
         "--dsl-spec-version",
         default=None,
-        help="LDSL specification version pinned in the manifest",
+        help="LegiSpec specification version pinned in the manifest",
     )
     codegen_cmd.add_argument(
         "--emit-wiring",
@@ -204,7 +200,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     conform.add_argument(
         "--oracle",
-        default="out/oracle/legalizer-oracle.exe",
+        default="out/oracle/legispec-oracle.exe",
         help="oracle executable",
     )
     conform.add_argument(

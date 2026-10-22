@@ -25,7 +25,7 @@ of AArch64.
 
 The claim proven here is narrow and concrete:
 
-> On the declared finite scalar domain, the Python LDSL model and the real
+> On the declared finite scalar domain, the Python LegiSpec model and the real
 > `AArch64LegalizerInfo::getAction(LegalityQuery)` agree on every observed
 > step.
 
@@ -83,7 +83,7 @@ This file is the `generic` (CSSC off) point.  The `+cssc` point is
 (`G_SMIN/G_SMAX/G_UMIN/G_UMAX`, `G_ABS`, `G_CTPOP`, `G_CTTZ`).
 
 The `NEON`/`FPARMv8` gate is a **target-model precondition**, not a legality
-rule.  If it is false, every ruleset below is absent.  The LDSL file records
+rule.  If it is false, every ruleset below is absent.  The LegiSpec file records
 the chosen configuration in its header and in
 `aarch64-scalar-capabilities.json`.
 
@@ -92,10 +92,10 @@ the chosen configuration in its header and in
 Added:
 
 ```text
-toycpu/tools/legalizer_dsl/rules/aarch64-scalar.lspec
-toycpu/tools/legalizer_dsl/aarch64-scalar-capabilities.json
-toycpu/tools/legalizer_dsl/rules/aarch64-cssc-scalar.lspec
-toycpu/tools/legalizer_dsl/aarch64-cssc-scalar-capabilities.json
+toycpu/tools/legispec/rules/aarch64-scalar.lspec
+toycpu/tools/legispec/aarch64-scalar-capabilities.json
+toycpu/tools/legispec/rules/aarch64-cssc-scalar.lspec
+toycpu/tools/legispec/aarch64-cssc-scalar-capabilities.json
 toycpu/out/aarch64-scalar-conformance-report.json
 toycpu/out/aarch64-scalar-check.txt
 toycpu/out/aarch64-cssc-scalar-conformance-report.json
@@ -110,7 +110,7 @@ Changed:
 toycpu/tools/oracle/main.cpp        AARCH64_ORACLE branch
 toycpu/tools/oracle/CMakeLists.txt  fourth executable, ORACLE_WITH_AARCH64
 toycpu/tools/oracle/build.ps1       -WithAArch64 switch and artifact check
-toycpu/tools/legalizer_dsl/conformance.py
+toycpu/tools/legispec/conformance.py
                                     --llvm-build metadata option
 ```
 
@@ -154,7 +154,7 @@ F:\llvm\llvm-project\llvm\lib\Target\AArch64\GISel\AArch64LegalizerInfo.cpp
 | `G_BR` | every type | `alwaysLegal()` |
 | `G_BRCOND` | `s32` | clamp `s32..s32` |
 
-The table is a summary.  The LDSL file records each rule in source order.
+The table is a summary.  The LegiSpec file records each rule in source order.
 
 ### 3.2 Constants
 
@@ -263,7 +263,7 @@ getActionDefinitionsBuilder({G_SHL, G_ASHR, G_LSHR})
     .maxScalarEltSameAsIf(...);
 ```
 
-The LDSL model:
+The LegiSpec model:
 
 ```text
 custom when bits(t0) == 32 and bits(t1) == 32;
@@ -426,7 +426,7 @@ clamp_scalar 0, s64, s64;
 `ExtLegalFunc` does **not** check that the destination is at least as wide as
 the source.  A direct query `G_ANYEXT [s64, s128]` is therefore Legal.  This
 may be unreachable for valid IR, but it is what `getAction` says, and the
-LDSL records the code rather than the comment's intent.  Probes:
+LegiSpec records the code rather than the comment's intent.  Probes:
 `G_ZEXT [s32,s8] -> Legal`, `[s32,s64] -> Legal`, `[s64,s128] -> Legal`,
 `[s128,s8] -> Narrow s64`.
 
@@ -571,7 +571,7 @@ CSSC axis, so their arity is defined and they participate in closure.
 
 ## 5. Oracle
 
-`legalizer-oracle-aarch64.exe` is the same JSONL front end as the ToyCPU and
+`legispec-oracle-aarch64.exe` is the same JSONL front end as the ToyCPU and
 X86 oracles.  Its target initialization is:
 
 ```cpp
@@ -612,7 +612,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
 Expected artifact:
 
 ```text
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe
+F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe
 ```
 
 ## 6. What the experiment found
@@ -659,7 +659,7 @@ already caught non-vectors.  That assumption is not a total-function
 guarantee; a direct `getAction` query with a pointer reaches the predicate and
 aborts.
 
-The LDSL has no exception/abort term, so the only honest model is a domain
+The LegiSpec has no exception/abort term, so the only honest model is a domain
 that excludes those inputs.  This is a general lesson for the method: **a
 rule table transcribed from C++ is only as total as the C++ predicate chain,
 and `getAction` is not a total function over arbitrary LLTs.**
@@ -704,7 +704,7 @@ closure_outside_d  = 0
 never compares them.  Consequently `G_ZEXT [s64, s128]` is Legal.  The
 in-source comment says "We shouldn't be allowing anything through which is
 wider than the destination in the first place", but the predicate does not
-enforce it.  The LDSL follows the predicate, and the oracle confirms it.
+enforce it.  The LegiSpec follows the predicate, and the oracle confirms it.
 
 This is a good example of the method's value: the spec is extracted from the
 implementation and then falsified against it, not from what the comment says
@@ -721,7 +721,7 @@ a genuine target policy, not a modeling shortcut.
 The remainder family has no rule above `s128`.  `lowerFor` stops at `i64`,
 `libcallFor` is only `i128`, the pow2/min rules do not change `s256`, and
 `scalarize` is a no-op for scalars.  `getAction` therefore returns
-`Unsupported` for `G_SREM [s256]`.  The LDSL models this by falling through to
+`Unsupported` for `G_SREM [s256]`.  The LegiSpec models this by falling through to
 the default, and the oracle confirms it.
 
 This matters because "the DSL does not model X" and "the target returns
@@ -835,17 +835,17 @@ Static check:
 
 ```powershell
 cd F:\llvm-study\toycpu\tools
-python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
+python -m legispec `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-scalar.lspec `
   check --strict
 ```
 
 Differential conformance:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
+python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-scalar.lspec `
+  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\aarch64-scalar-conformance-report.json `
   --llvm-build F:/llvm/build
@@ -861,7 +861,7 @@ ToyCPU regression gate:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-legalizer-dsl.ps1
+  F:\llvm-study\toycpu\scripts\check-legispec.ps1
 ```
 
 ## 9. Limits and next steps
@@ -870,7 +870,7 @@ Proven:
 
 ```text
 finite scalar domain D, closure R, 8,161 observations
-Python LDSL policy == real AArch64 getAction
+Python LegiSpec policy == real AArch64 getAction
 ```
 
 Not proven:
@@ -905,7 +905,7 @@ The highest-value next experiments are:
    add/mul/logic.  This is where most of AArch64's legalizer complexity lives.
 3. **Feature parameterization.**  CSSC is done: `aarch64-cssc-scalar.lspec`
    flips four rulesets and is differentially tested against a separate
-   `+cssc` oracle.  Remaining: `HasSVE` and `HasFP16` variants.  The LDSL still
+   `+cssc` oracle.  Remaining: `HasSVE` and `HasFP16` variants.  The LegiSpec still
    records one fixed subtarget configuration per file by design.
 4. **Memory descriptors.** Extend the domain with `mems` and model
    `G_LOAD/G_STORE` legality, including the `legalForTypesWithMemDesc` shape.

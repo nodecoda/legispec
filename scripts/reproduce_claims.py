@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -23,8 +23,8 @@ temporary JSONL name, so two identical runs produce the same canonical hash.
 
 A full run ends with the canonical claim audit:
 
-    python -m legalizer_dsl.claims verify
-    python -m legalizer_dsl.claims verify --write   # refresh the ledger pins
+    python -m legispec.claims verify
+    python -m legispec.claims verify --write   # refresh the ledger pins
 
 Refreshing after an evaluator change also needs
 ``--allow-evaluator-change``; the reports must already carry the new
@@ -100,7 +100,7 @@ def run_claim(
     limit: int,
 ) -> int:
     cmd = [
-        sys.executable, "-X", "utf8", "-m", "legalizer_dsl.conformance",
+        sys.executable, "-X", "utf8", "-m", "legispec.conformance",
         "--rules", str(REPO / "rules" / claim["rules"]),
         "--oracle", str(oracle_dir / claim["oracle"]),
         "--out", str(out_dir / claim["report"]),
@@ -114,11 +114,11 @@ def run_claim(
 
 def run_audit(out_dir: pathlib.Path, llvm_build: str | None = None) -> int:
     """Audit the reports just rewritten, with the canonical verifier."""
-    os.environ["LEGALIZER_DSL_OUT"] = str(pathlib.Path(out_dir).resolve())
+    os.environ["LEGISPEC_OUT"] = str(pathlib.Path(out_dir).resolve())
     src = REPO / "src"
     if str(src) not in sys.path:
         sys.path.insert(0, str(src))
-    from legalizer_dsl import claims
+    from legispec import claims
 
     claims.OUT = pathlib.Path(out_dir).resolve()
     argv = ["verify"]

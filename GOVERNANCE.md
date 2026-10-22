@@ -49,7 +49,7 @@ LLVM commit:
 
 ## 5. 版本与兼容
 
-- 包版本（`pyproject.toml`）与 LDSL 语言版本（`docs/ldsl-v0.1.md`）**分开**；
+- 包版本（`pyproject.toml`）与 LegiSpec 语言版本（`docs/legispec-v1.0.md`）**分开**；
 - `0.x` 期间语言不承诺向后兼容，但每次破坏性改动必须在 `docs/decisions.md` 记录迁移方式；
 - 规则文件的兼容性由 `rules/` 内的语法版本声明保证，不靠“记得改”。
 

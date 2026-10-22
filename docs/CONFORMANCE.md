@@ -9,7 +9,7 @@
 
 | 项 | 状态 |
 |---|---|
-| Spec 冻结 | v0.1.1（`docs/ldsl-v0.1.md`，含 `T011` v1 修正） |
+| Spec 冻结 | v1.0（`docs/legispec-v1.0.md`，含 `T011` v1 修正） |
 | 域定义 | `spec/domain.md`（28 LLTs） |
 | Witness 语料 | 205 条（114 正例 / 89 负例 / 2 unreachable） |
 | Python 解释器对 witness | **0 失败**（2026-10-19） |
@@ -20,7 +20,7 @@
 | Phase 5 C++ oracle | ✅ 手写规则 oracle + 生成规则 oracle |
 | Phase 5 差分 | ✅ 243,714 条 query × 2，**0 分歧**，0 oracle error |
 | Phase 6 codegen | ✅ `toycpu_rules_gen.{h,cpp}` + manifest；能力清单检查 |
-| Phase 7 门禁 | ✅ `scripts/check-legalizer-dsl.ps1`（含重建 oracle 36.9 s） |
+| Phase 7 门禁 | ✅ `scripts/check-legispec.ps1`（含重建 oracle 36.9 s） |
 | 规则覆盖 | 87 / 89；未命中的 2 条是已登记的死规则（`bits < 1`） |
 | 结论 | **声明 conformance（双 oracle，范围 = D ∪ R，排除项见 §6）** |
 
@@ -152,28 +152,28 @@ Conformant(spec, cxx) ≡
 
 ```powershell
 # 1. 回归（101 tests）
-python -m unittest discover -s F:\llvm-study\toycpu\tools\legalizer_dsl\tests -v
+python -m unittest discover -s F:\llvm-study\toycpu\tools\legispec\tests -v
 
 # 2. 静态检查与 witness
-python F:\llvm-study\toycpu\tools\legalizer-dsl.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\toycpu.lspec check --strict
-python F:\llvm-study\toycpu\tools\legalizer-dsl.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\toycpu.lspec witness `
-  F:\llvm-study\toycpu\tools\legalizer_dsl\witness\toycpu.witness
+python -m legispec `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\toycpu.lspec check --strict
+python -m legispec `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\toycpu.lspec witness `
+  F:\llvm-study\toycpu\tools\legispec\witness\toycpu.witness
 
 # 3. 构建 C++ oracle（自动选择 VS2022 / 可用 Windows SDK）
 powershell -NoProfile -ExecutionPolicy Bypass -File `
   F:\llvm-study\toycpu\tools\oracle\build.ps1
 
 # 4. 全量差分：手写规则 oracle
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --oracle F:\llvm-study\toycpu\out\oracle\legalizer-oracle.exe `
+python F:\llvm-study\toycpu\tools\legispec\conformance.py `
+  --oracle F:\llvm-study\toycpu\out\oracle\legispec-oracle.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\conformance-report.json
 
-# 5. 全量差分：由 LDSL codegen 生成的规则 oracle
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --oracle F:\llvm-study\toycpu\out\oracle\legalizer-oracle-gen.exe `
+# 5. 全量差分：由 LegiSpec codegen 生成的规则 oracle
+python F:\llvm-study\toycpu\tools\legispec\conformance.py `
+  --oracle F:\llvm-study\toycpu\out\oracle\legispec-oracle-gen.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\conformance-gen-report.json
 ```

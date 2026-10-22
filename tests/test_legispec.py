@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -27,7 +27,7 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from legalizer_dsl import (
+from legispec import (
     Action,
     DslError,
     LLT,
@@ -397,7 +397,7 @@ class LLTRepresentabilityTests(unittest.TestCase):
 
 class CliMainGuardTests(unittest.TestCase):
     def test_cli_module_has_main_guard(self):
-        import legalizer_dsl.cli as cli
+        import legispec.cli as cli
 
         source = pathlib.Path(cli.__file__).read_text(encoding="utf-8")
         self.assertIn('if __name__ == "__main__":', source)

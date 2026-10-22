@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -27,8 +27,8 @@ import unittest
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 RULES = REPO / "rules" / "riscv-conditional-gconstant.lspec"
-CONFORMANCE = REPO / "src" / "legalizer_dsl" / "conformance.py"
-ORACLE = REPO / "out" / "oracle-riscv" / "legalizer-oracle-riscv.exe"
+CONFORMANCE = REPO / "src" / "legispec" / "conformance.py"
+ORACLE = REPO / "out" / "oracle-riscv" / "legispec-oracle-riscv.exe"
 DEFINES = [
     "--define",
     "is64bit=true",

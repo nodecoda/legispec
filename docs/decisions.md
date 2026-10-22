@@ -100,7 +100,7 @@ context   = llvm/include/llvm/CodeGenTypes/LowLevelType.h:123-130
 
 1. `model.LLT.vector` 拒绝 `lanes == 1`，稳定诊断码 `T011`；
 2. 从 `rules/toycpu.lspec` 的 `domain.types` 删除全部 `v1*`；
-3. `docs/ldsl-v0.1.md` §2.7 写明结论约束；
+3. `docs/legispec-v1.0.md` §2.7 写明结论约束；
 4. D 的规模从 33 个 LLT 降为 28 个，conformance query 从 381,944 降为 243,714；
 5. 保留 `v2/v4/v8`，它们仍是合法 LLT；
 6. C++ oracle 的 JSONL 解析在构造 LLT 前拒绝 `lanes < 2`，返回稳定 error，而不是触发断言。

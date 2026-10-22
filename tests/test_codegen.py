@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -20,9 +20,9 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from legalizer_dsl import codegen
-from legalizer_dsl.checker.capability import required_capabilities
-from legalizer_dsl.parser import parse, parse_file
+from legispec import codegen
+from legispec.checker.capability import required_capabilities
+from legispec.parser import parse, parse_file
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
 RULES = HERE / "rules" / "toycpu.lspec"
@@ -53,7 +53,7 @@ class CodegenContractTests(unittest.TestCase):
             self.assertEqual(manifest["version"], 1)
             self.assertEqual(manifest["source"], REL)
             self.assertEqual(manifest["rules_sha256"], _sha(RULES.read_bytes()))
-            self.assertEqual(manifest["generator_version"], "0.3.0")
+            self.assertEqual(manifest["generator_version"], "1.0.0")
             self.assertEqual(
                 manifest["dsl_spec_version"], codegen.DSL_SPEC_VERSION
             )
@@ -427,12 +427,12 @@ class WiringContractTests(unittest.TestCase):
 
             cmake = first['legalizer-rules.cmake'].decode('utf-8')
             inc = first['wiring.cpp.inc'].decode('utf-8')
-            self.assertIn('legalizer_dsl_toycpu_rules_gen', cmake)
-            self.assertIn('LEGALIZER_DSL_GENERATED_DIR', cmake)
-            self.assertIn('LEGALIZER_DSL_HEADER_GUARD', cmake)
+            self.assertIn('legispec_toycpu_rules_gen', cmake)
+            self.assertIn('LEGISPEC_GENERATED_DIR', cmake)
+            self.assertIn('LEGISPEC_HEADER_GUARD', cmake)
             self.assertIn('TOYCPU_TOYCPU_RULES_GEN_H', cmake)
             self.assertIn('#include "toycpu_rules_gen.h"', inc)
-            self.assertIn('LEGALIZER_DSL_APPLY_RULES', inc)
+            self.assertIn('LEGISPEC_APPLY_RULES', inc)
             self.assertIn(
                 'applyGeneratedLegalizerRulesForConsumer_toycpu_rules_gen', inc
             )
@@ -495,8 +495,8 @@ class WiringContractTests(unittest.TestCase):
                 )
                 texts.append((wiring / 'wiring.cpp.inc').read_text(encoding='utf-8'))
             self.assertNotEqual(
-                texts[0].split('LEGALIZER_DSL_APPLY_RULES')[-1],
-                texts[1].split('LEGALIZER_DSL_APPLY_RULES')[-1],
+                texts[0].split('LEGISPEC_APPLY_RULES')[-1],
+                texts[1].split('LEGISPEC_APPLY_RULES')[-1],
             )
             self.assertIn('applyGeneratedLegalizerRulesForConsumer_toycpu_rules_gen', texts[0])
             self.assertIn(

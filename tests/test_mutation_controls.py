@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -25,20 +25,20 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from legalizer_dsl import codegen  # noqa: E402
-from legalizer_dsl.conformance import (  # noqa: E402
+from legispec import codegen  # noqa: E402
+from legispec.conformance import (  # noqa: E402
     ComparisonReport,
     _write_input,
     compare,
     python_observation,
 )
-from legalizer_dsl.model import Query, parse_llt  # noqa: E402
-from legalizer_dsl.parser import parse, parse_defines, parse_file  # noqa: E402
+from legispec.model import Query, parse_llt  # noqa: E402
+from legispec.parser import parse, parse_defines, parse_file  # noqa: E402
 
 TOY_RULES = ROOT / "rules" / "toycpu.lspec"
-TOY_ORACLE = ROOT / "out" / "oracle" / "legalizer-oracle.exe"
+TOY_ORACLE = ROOT / "out" / "oracle" / "legispec-oracle.exe"
 RISCV_RULES = ROOT / "rules" / "riscv-conditional-gconstant.lspec"
-RISCV_ORACLE = ROOT / "out" / "oracle-riscv" / "legalizer-oracle-riscv.exe"
+RISCV_ORACLE = ROOT / "out" / "oracle-riscv" / "legispec-oracle-riscv.exe"
 
 
 def _observation(info, query):
@@ -233,8 +233,8 @@ class ProvenanceMutationTests(unittest.TestCase):
             cmake = wiring / "legalizer-rules.cmake"
             text = cmake.read_text(encoding="utf-8")
             mutated = text.replace(
-                'set(LEGALIZER_DSL_HEADER_GUARD "TOYCPU_TOYCPU_RULES_GEN_H")',
-                'set(LEGALIZER_DSL_HEADER_GUARD "TOYCPU_TOYCPU_RULES_GEN_TAMPERED_H")',
+                'set(LEGISPEC_HEADER_GUARD "TOYCPU_TOYCPU_RULES_GEN_H")',
+                'set(LEGISPEC_HEADER_GUARD "TOYCPU_TOYCPU_RULES_GEN_TAMPERED_H")',
                 1,
             )
             self.assertNotEqual(mutated, text, "wiring guard anchor not found")

@@ -1,4 +1,4 @@
-# 为什么 AArch64 / RISC-V / X86 的 LDSL 文件和 ToyCPU 差不多大？
+# 为什么 AArch64 / RISC-V / X86 的 LegiSpec 文件和 ToyCPU 差不多大？
 
 Date: 2026-10-20
 Status: 说明文档（回答"处理得不完整？"）
@@ -20,7 +20,7 @@ Status: 说明文档（回答"处理得不完整？"）
 
 ## 1. 硬数据
 
-### 1.1 C++ 源文件 vs LDSL 模型
+### 1.1 C++ 源文件 vs LegiSpec 模型
 
 | Target | C++ 行数 | C++ 字节 | builder 调用 | C++ 中 `G_*` opcode | DSL rulesets | DSL opcodes | 展开后规则 | 对拍查询 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -128,7 +128,7 @@ ToyCPU 的 243,714 条查询远大于其他实验的 7–8k，因为 ToyCPU 的�
 - 立即数；
 - 所有 opcode 的所有类型组合。
 
-真实 target 的 LDSL 文件只声明了 scalar/pointer 的有限域，所以查询数小。**这是域的选择，不是规则数量的选择。**
+真实 target 的 LegiSpec 文件只声明了 scalar/pointer 的有限域，所以查询数小。**这是域的选择，不是规则数量的选择。**
 
 ## 3. 每个实验到底证明了什么
 
@@ -136,7 +136,7 @@ ToyCPU 的 243,714 条查询远大于其他实验的 7–8k，因为 ToyCPU 的�
 
 ```text
 在声明的有限域 D 上，
-Python LDSL 模型与真实 LegalizerInfo::getAction()
+Python LegiSpec 模型与真实 LegalizerInfo::getAction()
 对 D ∪ R 中每个查询的 (Action, TypeIdx, NewType) 完全一致。
 ```
 

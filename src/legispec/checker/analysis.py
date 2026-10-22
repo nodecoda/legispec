@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -8,7 +8,7 @@
 
 """Shared finite-domain enumeration for all checker modules.
 
-The domain is the one declared in LDSL: Q0 fixes each ruleset's observed type
+The domain is the one declared in LegiSpec: Q0 fixes each ruleset's observed type
 and immediate arity.  Enumeration is deterministic (domain order is source
 order), so every diagnostic can be reproduced.
 """

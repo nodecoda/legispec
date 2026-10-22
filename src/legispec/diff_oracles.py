@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # ===----------------------------------------------------------------------===##
 
-"""Compare two legalizer oracle binaries over one LDSL-derived query corpus.
+"""Compare two legalizer oracle binaries over one LegiSpec-derived query corpus.
 
 This is the feature-axis companion to ``conformance.py``:
 
-    conformance.py   LDSL policy  vs  one oracle
+    conformance.py   LegiSpec policy  vs  one oracle
     diff_oracles.py  oracle A     vs  oracle B
 
 The query corpus is the same ``D union R`` set used by conformance, derived
@@ -37,8 +37,8 @@ TOOLS_DIR = Path(__file__).resolve().parent.parent
 if str(TOOLS_DIR) not in sys.path:
     sys.path.insert(0, str(TOOLS_DIR))
 
-from legalizer_dsl import conformance as C  # noqa: E402
-from legalizer_dsl.parser import parse_defines, parse_file  # noqa: E402
+from legispec import conformance as C  # noqa: E402
+from legispec.parser import parse_defines, parse_file  # noqa: E402
 
 
 def _run_oracle(path: Path, query_file: Path) -> dict[int, dict]:
@@ -77,7 +77,7 @@ def _detail(rows: Iterable[dict]) -> dict[str, dict[str, int]]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--rules", required=True, help="LDSL rules file defining the corpus")
+    parser.add_argument("--rules", required=True, help="LegiSpec rules file defining the corpus")
     parser.add_argument(
         "--define",
         action="append",
@@ -98,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
     outside = C._closure_outside_d(info, closure)
     queries = list(C._combined_queries(info, closure, outside))
 
-    with tempfile.TemporaryDirectory(prefix="legalizer-diff-") as temp_dir:
+    with tempfile.TemporaryDirectory(prefix="legispec-diff-") as temp_dir:
         query_file = Path(temp_dir) / "queries.jsonl"
         count, digest = C._write_input(query_file, queries)
         left = _run_oracle(Path(args.oracle_left), query_file)
@@ -128,7 +128,7 @@ def main(argv: list[str] | None = None) -> int:
     by_opcode = Counter(row["opcode"] for row in differences)
     by_action = Counter((row["left"][0], row["right"][0]) for row in differences)
     report = {
-        "schema": "legalizer-dsl-oracle-diff-v1",
+        "schema": "legispec-oracle-diff-v1",
         "inputs": {
             "rules": str(Path(args.rules).resolve()),
             "left": {"label": args.label_left, "oracle": str(Path(args.oracle_left).resolve())},

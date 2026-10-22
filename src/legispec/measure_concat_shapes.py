@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -16,7 +16,7 @@ records every `Legalizing: ... G_CONCAT_VECTORS ...` event together with:
   * dst/src LLTs and the recovered k = lanes(dst) / lanes(src)
   * whether the n-ary opcode contract holds
   * the action LLVM chose
-  * the action the LDSL rule table chooses for the same two type slots
+  * the action the LegiSpec rule table chooses for the same two type slots
 
 Every real event must be inside the declared domain; a k=1 or non-dividing
 shape is a contract violation, not an acceptable "boundary".
@@ -37,8 +37,8 @@ TOOLS = HERE.parent
 REPO = TOOLS.parent
 sys.path.insert(0, str(TOOLS))
 
-from legalizer_dsl import Query, parse_llt  # noqa: E402
-from legalizer_dsl.parser import parse_file  # noqa: E402
+from legispec import Query, parse_llt  # noqa: E402
+from legispec.parser import parse_file  # noqa: E402
 
 TRIPLE = "aarch64-unknown-linux-gnu"
 
@@ -311,7 +311,7 @@ def measure(rules: str, inputs: list[tuple[str, Path]], llc: str) -> dict:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--llc", default=os.environ.get("LEGALIZER_DSL_LLC", r"F:\llvm\build\bin\llc.exe")
+        "--llc", default=os.environ.get("LEGISPEC_LLC", r"F:\llvm\build\bin\llc.exe")
     )
     parser.add_argument("--rules", default=str(REPO / "rules" / "aarch64-concat-vectors.lspec"))
     parser.add_argument(

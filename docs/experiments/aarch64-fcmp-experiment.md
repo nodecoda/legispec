@@ -286,7 +286,7 @@ DSL 会把 `(f32, f32)` 误判成 Legal，而 C++ 返回 Unsupported。
 ```text
 tools/oracle/main.cpp   在 GENERATED_LEGALIZER_EXTENDED_LLT 下显式调用
                         LLT::setUseExtended(true)
-CMakeLists.txt          只给 legalizer-oracle-aarch64-fcmp-gen 加这个宏
+CMakeLists.txt          只给 legispec-oracle-aarch64-fcmp-gen 加这个宏
 ```
 
 只给 fcmp-gen 加宏，是为了不改变其它已钉 sha256 的 oracle 二进制。

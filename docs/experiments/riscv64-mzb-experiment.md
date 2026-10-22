@@ -27,7 +27,7 @@ extensions: **M, Zmmul, Zbb**.  It asks one question:
 
 The claim is narrow, as always:
 
-> On the declared finite RV64 scalar domain, the LDSL feature variant and the
+> On the declared finite RV64 scalar domain, the LegiSpec feature variant and the
 > real `RISCVLegalizerInfo::getAction` built with `+m,+zmmul,+zbb` agree on
 > every observed step.
 
@@ -41,7 +41,7 @@ file because the C++ really contains it.
 The variant is a separate executable so a report can never be attributed to
 the wrong binary.  The feature string is baked into
 `tools/oracle/riscv_mzb_features.cpp` and linked only into
-`legalizer-oracle-riscv-mzb.exe`.
+`legispec-oracle-riscv-mzb.exe`.
 
 ```text
 triple      = riscv64-unknown-linux-gnu
@@ -174,18 +174,18 @@ Static check:
 
 ```powershell
 cd F:\llvm-study\toycpu\tools
-python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-mzb-scalar.lspec `
+python -X utf8 -m legispec `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv64-mzb-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-mzb-scalar-capabilities.json
+  --capabilities F:\llvm-study\toycpu\tools\legispec\riscv64-mzb-scalar-capabilities.json
 ```
 
 Differential conformance:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-mzb-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv-mzb.exe `
+python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv64-mzb-scalar.lspec `
+  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legispec-oracle-riscv-mzb.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv64-mzb-scalar-conformance-report.json `
   --llvm-build F:/llvm/build

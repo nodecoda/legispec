@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -36,14 +36,14 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
-from legalizer_dsl import __version__ as GENERATOR_VERSION  # noqa: E402
-from legalizer_dsl.codegen import DSL_SPEC_VERSION  # noqa: E402
-from legalizer_dsl.fingerprint import (  # noqa: E402
+from legispec import __version__ as GENERATOR_VERSION  # noqa: E402
+from legispec.codegen import DSL_SPEC_VERSION  # noqa: E402
+from legispec.fingerprint import (  # noqa: E402
     codegen_sha256,
     hand_evaluator_sha256,
 )
 
-SCHEMA = "legalizer-dsl-integration-v2"
+SCHEMA = "legispec-integration-v2"
 MIN_QUERY_COUNT = 100
 REQUIRED_COMPARISONS = ("consumer", "hand_written_oracle", "generated_oracle")
 TARGET_RULES = {

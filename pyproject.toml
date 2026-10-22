@@ -3,8 +3,8 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "legalizer-dsl"
-version = "0.3.0"
+name = "legispec"
+version = "1.0.0"
 description = "LegiSpec: executable legality specification, checker and C++ generator for LLVM GlobalISel rule tables"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -12,7 +12,7 @@ license = { text = "Apache-2.0 WITH LLVM-exception" }
 authors = [{ name = "LegiSpec contributors" }]
 keywords = ["llvm", "globalisel", "legalizer", "legalization", "legispec", "specification", "tablegen", "compiler"]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
     "Topic :: Software Development :: Compilers",
@@ -20,17 +20,11 @@ classifiers = [
 dependencies = []
 
 [project.scripts]
-legispec = "legalizer_dsl.cli:main"
-legispec-claims = "legalizer_dsl.claims:main"
-legispec-constructs = "legalizer_dsl.constructs:main"
-legispec-closure = "legalizer_dsl.closure:main"
-legispec-diff-oracles = "legalizer_dsl.diff_oracles:main"
-# Deprecated aliases, removed in 1.0.  See docs/BRAND.md.
-legalizer-dsl = "legalizer_dsl.cli:main"
-ldsl-claims = "legalizer_dsl.claims:main"
-ldsl-constructs = "legalizer_dsl.constructs:main"
-ldsl-closure = "legalizer_dsl.closure:main"
-ldsl-diff-oracles = "legalizer_dsl.diff_oracles:main"
+legispec = "legispec.cli:main"
+legispec-claims = "legispec.claims:main"
+legispec-constructs = "legispec.constructs:main"
+legispec-closure = "legispec.closure:main"
+legispec-diff-oracles = "legispec.diff_oracles:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -39,11 +33,11 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.setuptools.data-files]
-"share/legalizer-dsl/rules" = ["rules/*.lspec"]
-"share/legalizer-dsl/witness" = ["witness/*.witness"]
-"share/legalizer-dsl/capabilities" = ["capabilities/*.json"]
-"share/legalizer-dsl/claims" = ["claims/*.json", "claims/*.md", "claims/*.txt"]
-"share/legalizer-dsl/docs" = ["docs/CLOSURE.md", "docs/COMPATIBILITY.md", "docs/CORRECTNESS.md", "docs/COVERAGE.md", "docs/EVIDENCE.md", "docs/INTEGRATION.md"]
+"share/legispec/rules" = ["rules/*.lspec"]
+"share/legispec/witness" = ["witness/*.witness"]
+"share/legispec/capabilities" = ["capabilities/*.json"]
+"share/legispec/claims" = ["claims/*.json", "claims/*.md", "claims/*.txt"]
+"share/legispec/docs" = ["docs/CLOSURE.md", "docs/COMPATIBILITY.md", "docs/CORRECTNESS.md", "docs/COVERAGE.md", "docs/EVIDENCE.md", "docs/INTEGRATION.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

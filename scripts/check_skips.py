@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -30,7 +30,7 @@ from typing import Optional
 ROOT = Path(__file__).resolve().parents[1]
 TESTS = ROOT / "tests"
 DEFAULT_MANIFEST = TESTS / "expected-skips.json"
-SCHEMA = "legalizer-dsl-expected-skips-v1"
+SCHEMA = "legispec-expected-skips-v1"
 
 
 def load_manifest(path: Path) -> list[dict]:

@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -25,9 +25,9 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from legalizer_dsl.checker import analysis, reachability
-from legalizer_dsl.parser import parse
-from legalizer_dsl.witness import parse_witness_text, run_witnesses
+from legispec.checker import analysis, reachability
+from legispec.parser import parse
+from legispec.witness import parse_witness_text, run_witnesses
 
 RULES = """
 domain {
@@ -80,7 +80,7 @@ class ShadowedWitnessTests(unittest.TestCase):
         )
 
     def test_unreachable_and_shadowed_are_mutually_exclusive(self):
-        from legalizer_dsl.diagnostics import DslError
+        from legispec.diagnostics import DslError
 
         with self.assertRaises(DslError):
             parse_witness_text(

@@ -1,9 +1,9 @@
 {
-  "schema": "legalizer-dsl-expected-skips-v1",
+  "schema": "legispec-expected-skips-v1",
   "allowed": [
     {
       "test": "test_constructs.ConstructCoverageTests.test_every_builder_method_is_classified",
-      "reason": "requires an LLVM source tree (LEGALIZER_DSL_LLVM_SRC or a local checkout)",
+      "reason": "requires an LLVM source tree (LEGISPEC_LLVM_SRC or a local checkout)",
       "optional": true
     },
     {

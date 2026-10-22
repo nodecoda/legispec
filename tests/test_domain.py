@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import os
 import pathlib
 import subprocess
 import sys
@@ -18,13 +19,14 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from legalizer_dsl.coverage import run_coverage
-from legalizer_dsl.diagnostics import DslError, Severity
-from legalizer_dsl.parser import parse, parse_file
+from legispec.coverage import run_coverage
+from legispec.diagnostics import DslError, Severity
+from legispec.parser import parse, parse_file
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
 RULES = HERE / "rules" / "toycpu.lspec"
-CLI = HERE / "legalizer-dsl.py"
+CLI = [sys.executable, "-m", "legispec"]
+CLI_ENV = {**os.environ, "PYTHONPATH": str(HERE / "src")}
 
 
 class DomainParseTests(unittest.TestCase):
@@ -127,20 +129,22 @@ class StrictModeTests(unittest.TestCase):
             path = pathlib.Path(tmp) / "no-domain.lspec"
             path.write_text(source, encoding="utf-8", newline="")
             result = subprocess.run(
-                [sys.executable, str(CLI), "--rules", str(path), "check", "--strict"],
+                CLI + ["--rules", str(path), "check", "--strict"],
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
+                env=CLI_ENV,
             )
         self.assertEqual(result.returncode, 1)
         self.assertIn("W014", result.stderr)
 
     def test_check_strict_accepts_toycpu_domain(self):
         result = subprocess.run(
-            [sys.executable, str(CLI), "--rules", str(RULES), "check", "--strict"],
+            CLI + ["--rules", str(RULES), "check", "--strict"],
             capture_output=True,
             text=True,
             encoding="utf-8",
+            env=CLI_ENV,
         )
         self.assertEqual(result.returncode, 0, msg=result.stderr)
         self.assertIn("rulesets=47", result.stdout)

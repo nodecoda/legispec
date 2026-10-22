@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -16,9 +16,9 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from legalizer_dsl.interp import legalize, verify_domain
-from legalizer_dsl.model import Query, parse_llt
-from legalizer_dsl.parser import parse, parse_file
+from legispec.interp import legalize, verify_domain
+from legispec.model import Query, parse_llt
+from legispec.parser import parse, parse_file
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
 RULES = HERE / "rules" / "toycpu.lspec"

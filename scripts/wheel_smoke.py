@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -38,14 +38,6 @@ CANONICAL_SCRIPTS = (
     "legispec-constructs",
     "legispec-closure",
     "legispec-diff-oracles",
-)
-# Deprecated aliases kept until 1.0 (docs/BRAND.md).
-LEGACY_SCRIPTS = (
-    "legalizer-dsl",
-    "ldsl-claims",
-    "ldsl-constructs",
-    "ldsl-closure",
-    "ldsl-diff-oracles",
 )
 
 
@@ -109,22 +101,22 @@ def install_wheel(wheel: pathlib.Path, site_dir: pathlib.Path) -> None:
 def find_data_root(
     temp_dir: pathlib.Path, site_dir: pathlib.Path
 ) -> pathlib.Path | None:
-    """Locate the installed ``share/legalizer-dsl`` tree.
+    """Locate the installed ``share/legispec`` tree.
 
     ``pip install --target`` places data-files in ``<target>/share`` on some
     schemes and beside the target on others, so accept either layout.
     """
     candidates = (
-        temp_dir / "share" / "legalizer-dsl",
-        site_dir.parent / "share" / "legalizer-dsl",
-        site_dir / "share" / "legalizer-dsl",
+        temp_dir / "share" / "legispec",
+        site_dir.parent / "share" / "legispec",
+        site_dir / "share" / "legispec",
     )
     for candidate in candidates:
         if (candidate / "rules" / RULE_NAME).is_file():
             return candidate
     for base in (temp_dir, site_dir.parent):
         for path in sorted(base.rglob(RULE_NAME)):
-            if path.parent.name == "rules" and path.parent.parent.name == "legalizer-dsl":
+            if path.parent.name == "rules" and path.parent.parent.name == "legispec":
                 return path.parent.parent
     return None
 
@@ -132,9 +124,9 @@ def find_data_root(
 def _installed_env(site_dir: pathlib.Path) -> dict[str, str]:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(site_dir)
-    env.pop("LEGALIZER_DSL_ROOT", None)
-    env.pop("LEGALIZER_DSL_OUT", None)
-    env.pop("LEGALIZER_DSL_DATA", None)
+    env.pop("LEGISPEC_ROOT", None)
+    env.pop("LEGISPEC_OUT", None)
+    env.pop("LEGISPEC_DATA", None)
     return env
 
 
@@ -144,32 +136,24 @@ def run_strict_check(
     rules = data_root / "rules" / RULE_NAME
     code = (
         "import sys; "
-        "from legalizer_dsl.cli import main; "
+        "from legispec.cli import main; "
         f"sys.exit(main(['--rules', {str(rules)!r}, 'check', '--strict']))"
     )
     return run([sys.executable, "-c", code], cwd=cwd, env=_installed_env(site_dir))
 
 
 def check_entry_points(site_dir: pathlib.Path) -> int:
-    """Assert the wheel installs both the canonical and the legacy commands."""
+    """Assert the wheel installs exactly the canonical commands."""
     manifests = sorted(site_dir.rglob("entry_points.txt"))
     if not manifests:
         print("error: no entry_points.txt in the installed wheel", file=sys.stderr)
         return 1
     text = manifests[0].read_text(encoding="utf-8")
-    missing = [
-        name
-        for name in CANONICAL_SCRIPTS + LEGACY_SCRIPTS
-        if f"{name} =" not in text
-    ]
+    missing = [name for name in CANONICAL_SCRIPTS if f"{name} =" not in text]
     if missing:
         print(f"error: missing console scripts: {', '.join(missing)}", file=sys.stderr)
         return 1
-    print(
-        f"entry points: {len(CANONICAL_SCRIPTS)} canonical + "
-        f"{len(LEGACY_SCRIPTS)} deprecated",
-        flush=True,
-    )
+    print(f"entry points: {len(CANONICAL_SCRIPTS)} canonical", flush=True)
     return 0
 
 
@@ -194,11 +178,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.keep:
         temp_dir = pathlib.Path(
-            tempfile.mkdtemp(prefix="legalizer-wheel-smoke-")
+            tempfile.mkdtemp(prefix="legispec-wheel-smoke-")
         )
         cleanup = False
     else:
-        _temp = tempfile.TemporaryDirectory(prefix="legalizer-wheel-smoke-")
+        _temp = tempfile.TemporaryDirectory(prefix="legispec-wheel-smoke-")
         temp_dir = pathlib.Path(_temp.name)
         cleanup = True
 
@@ -211,7 +195,7 @@ def main(argv: list[str] | None = None) -> int:
         data_root = find_data_root(temp_dir, site_dir)
         if data_root is None:
             print(
-                f"error: no share/legalizer-dsl with rules/{RULE_NAME} found under "
+                f"error: no share/legispec with rules/{RULE_NAME} found under "
                 f"{temp_dir}",
                 file=sys.stderr,
             )
@@ -222,7 +206,7 @@ def main(argv: list[str] | None = None) -> int:
             ("strict check", run_strict_check(site_dir, data_root, temp_dir), 0),
             (
                 "constructs check",
-                run_module(site_dir, temp_dir, "legalizer_dsl.constructs", "check"),
+                run_module(site_dir, temp_dir, "legispec.constructs", "check"),
                 0,
             ),
             (
@@ -230,7 +214,7 @@ def main(argv: list[str] | None = None) -> int:
                 run_module(
                     site_dir,
                     temp_dir,
-                    "legalizer_dsl.closure",
+                    "legispec.closure",
                     "check",
                     "--skip-evidence",
                     "--skip-tests",
@@ -239,7 +223,7 @@ def main(argv: list[str] | None = None) -> int:
             ),
             (
                 "claims verify without evidence (expected clean failure)",
-                run_module(site_dir, temp_dir, "legalizer_dsl.claims", "verify"),
+                run_module(site_dir, temp_dir, "legispec.claims", "verify"),
                 1,
             ),
         ]

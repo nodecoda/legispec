@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "description": "Capabilities the ToyCPU legalizer policy assumes are provided by the target.  The checker verifies that every Custom/Libcall/Lower rule in the LDSL has a declaration here, and (optionally) that every Custom opcode has a case in ToyCPULegalizerInfo::legalizeCustom.",
+  "description": "Capabilities the ToyCPU legalizer policy assumes are provided by the target.  The checker verifies that every Custom/Libcall/Lower rule in the LegiSpec has a declaration here, and (optionally) that every Custom opcode has a case in ToyCPULegalizerInfo::legalizeCustom.",
   "custom": {
     "symbol": "ToyCPULegalizerInfo::legalizeCustom",
     "opcodes": [

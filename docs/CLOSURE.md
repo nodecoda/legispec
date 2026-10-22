@@ -43,7 +43,7 @@ R = closure(Q0) 在 D 内的一步 legalize 后继
 
 | 文件 | 职责 | 什么时候看它 |
 |---|---|---|
-| `grammar.ebnf` | LDSL 语法权威 | 想知道“这个写法合不合法” |
+| `grammar.ebnf` | LegiSpec 语法权威 | 想知道“这个写法合不合法” |
 | `model.py` | LLT / Query / Action / 谓词 / mutation / Domain AST 与求值 | 加原语、改语义 |
 | `parser.py` | 手写递归下降解析 + 诊断 | 语法错误、宏展开、config guard |
 | `codegen.py` | AST → C++ `getActionDefinitionsBuilder` | 生成端对不上手写端 |
@@ -56,9 +56,9 @@ R = closure(Q0) 在 D 内的一步 legalize 后继
 | `diagnostics.py` | T/K/C 诊断码 | 读懂报错 |
 | `measure_concat_shapes.py` | 真实 MIR 形状审计 | 域是否覆盖真实查询 |
 | `closure.py` | 收口审计：pinned 数字 vs 产物 | 文档数字或资产清单漂移时 |
-| `cli.py` / `legalizer-dsl` | `check` / `codegen` / `conform` / `witness` | 日常入口 |
+| `cli.py` / `legispec` | `check` / `codegen` / `conform` / `witness` | 日常入口 |
 | `rules/*.lspec` | 22 份规则转写 | 证明对象 |
-| `tests/` | 398 个单元测试 | 改任何实现前先跑 |
+| `tests/` | 400 个单元测试 | 改任何实现前先跑 |
 | `witness/` | 每片的固定证据 | 回归 |
 | `*capabilities.json` | custom/libcall/lower 的 provider 契约 | strict check |
 
@@ -73,7 +73,7 @@ hand-only=6
 rules-files=22
 hand-queries=321627
 constructs=63
-tests=398
+tests=400
 <!-- /closure:pinned -->
 
 这些数字由 `closure.py check` 从 `claims.json`、`rules/`、`construct-coverage.json`、
@@ -162,7 +162,7 @@ rules/*.lspec
 
 - 给一个新的 target/opcode 切片，在有限域内证明策略与 LLVM 等价；
 - 快速回答“这个 `(opcode, types)` LLVM 会返回什么 Action”；
-- 从 LDSL 生成可编译的 `LegalizerInfo` 子集；
+- 从 LegiSpec 生成可编译的 `LegalizerInfo` 子集；
 - 用 witness 固定顺序依赖、重叠、遮蔽；
 - 用 `measure_concat_shapes.py` 把“域”从论证变成测量。
 
@@ -179,7 +179,7 @@ rules/*.lspec
 1. **选点**：一个 opcode + 一个固定配置（triple/cpu/features/pointer）。
 2. **读 C++**：把 builder 展开成有序规则，记录文件与行号。
 3. **写 domain**：types/imms/mems/q0 + filter；filter 的依据必须是 opcode 契约。
-4. **写 LDSL**：`rules/<target>-<slice>.lspec`，跑 `check --strict`。
+4. **写 LegiSpec**：`rules/<target>-<slice>.lspec`，跑 `check --strict`。
 5. **写 capabilities**：custom/libcall/lower 的 symbol 与 opcode。
 6. **写 witness**：正例、负例、顺序敏感例。
 7. **生成 + 建 oracle + 差分**：`codegen` → `build.ps1` → `conformance.py`。
@@ -193,7 +193,7 @@ rules/*.lspec
 # 在仓库根目录执行。全量单元测试与结构门禁
 python -X utf8 -m unittest discover -s tests -v
 python scripts/check_all_rules.py
-python -X utf8 -m legalizer_dsl.closure check --skip-evidence
+python -X utf8 -m legispec.closure check --skip-evidence
 
 # 生成器契约（22 份规则、所有 config 变体、双次确定性）
 python scripts/check_codegen_contract.py
@@ -207,14 +207,14 @@ python scripts/check_integration_status.py --require-pass out/integration-report
 python scripts/coverage_report.py --corpus examples --out out/coverage-report.json
 
 # 证据：完整审计、重跑、写回账本、收口
-python -X utf8 -m legalizer_dsl.claims verify --verify-corpus
+python -X utf8 -m legispec.claims verify --verify-corpus
 python scripts/refresh_evidence.py --all --require-all
 python scripts/refresh_evidence.py --all --write-ledger
-python -X utf8 -m legalizer_dsl.closure check
+python -X utf8 -m legispec.closure check
 
 # 单切片语法/静态检查与代码生成
-python -X utf8 -m legalizer_dsl --rules rules/aarch64-concat-vectors.lspec check --strict
-python -X utf8 -m legalizer_dsl --rules rules/aarch64-concat-vectors.lspec codegen --out-dir out/codegen
+python -X utf8 -m legispec --rules rules/aarch64-concat-vectors.lspec check --strict
+python -X utf8 -m legispec --rules rules/aarch64-concat-vectors.lspec codegen --out-dir out/codegen
 ```
 
 版本矩阵和 LLVM 升级顺序见 [`COMPATIBILITY.md`](COMPATIBILITY.md)。
@@ -253,7 +253,7 @@ python -X utf8 -m legalizer_dsl --rules rules/aarch64-concat-vectors.lspec codeg
 
 ```text
 claims=43 proven=43 failed=0
-398 tests OK（1 个环境相关 skip）
+400 tests OK（1 个环境相关 skip）
 strict rules sweep 22/22
 codegen contract PASS（22 份规则、24 个 config 变体）
 integration smoke PASS（ToyCPU 全 D、AArch64 vector；SKIP 不算通过）

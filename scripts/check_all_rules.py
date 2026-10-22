@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -35,7 +35,7 @@ RULES_DIR = REPO / "rules"
 if str(REPO / "src") not in sys.path:
     sys.path.insert(0, str(REPO / "src"))
 
-from legalizer_dsl import paths  # noqa: E402
+from legispec import paths  # noqa: E402
 
 # Rules whose strict check needs a non-default configuration.  Paths are
 # relative to the repository root; the checker resolves sibling manifests for
@@ -66,7 +66,7 @@ def build_command(rule: pathlib.Path) -> list[str]:
     command = [
         sys.executable,
         "-m",
-        "legalizer_dsl",
+        "legispec",
         "--rules",
         str(rule.resolve()),
     ]

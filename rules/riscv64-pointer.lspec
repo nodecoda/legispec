@@ -20,7 +20,7 @@
 #
 # Some opcodes appear both here and in riscv64-scalar.lspec because their C++
 # ruleset mixes pointer and scalar shapes (G_CONSTANT, G_PHI, G_ICMP,
-# G_SELECT).  Each LDSL file is a standalone experiment: the scalar file
+# G_SELECT).  Each LegiSpec file is a standalone experiment: the scalar file
 # models only the scalar domain, this file adds p0:64 and re-states the whole
 # ruleset so the pointer branch is actually exercised.  The two files are
 # never loaded together.

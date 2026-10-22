@@ -20,7 +20,7 @@ the RISC-V XLen experiment.
 | Rule coverage | **91 / 91** | **95 / 95** |
 | Closure-only queries | 85 | 86 |
 | Static check | 0 errors / 187 warnings | 0 errors / 194 warnings |
-| Oracle binary | `legalizer-oracle-aarch64.exe` | `legalizer-oracle-aarch64-cssc.exe` |
+| Oracle binary | `legispec-oracle-aarch64.exe` | `legispec-oracle-aarch64-cssc.exe` |
 
 The two oracle runs use the **same query corpus** (same SHA-256), so the
 difference is a pure feature effect:
@@ -66,7 +66,7 @@ const bool HasCSSC = ST.hasCSSC();
 Every `legalFor(HasCSSC, ...)`, `customFor(!HasCSSC, ...)` and
 `minScalar(HasCSSC, ...)` is a **construction-time bool**.  These overloads
 return early when the bool is false, so the rule is not added at all.  One
-frozen LDSL file per configuration is therefore exact, not an approximation.
+frozen LegiSpec file per configuration is therefore exact, not an approximation.
 
 ## 2. Configuration and oracle separation
 
@@ -93,7 +93,7 @@ The only difference is the feature string passed to `createTargetMachine`:
 ```
 
 The CSS variant is a **separate executable**
-(`legalizer-oracle-aarch64-cssc.exe`) so a conformance report can never be
+(`legispec-oracle-aarch64-cssc.exe`) so a conformance report can never be
 silently attributed to the wrong binary.  The same pattern is used for the
 RISC-V `+m,+zmmul,+zbb` variant.
 
@@ -112,7 +112,7 @@ Smoke check:
 ## 3. The four affected rulesets
 
 Only four rulesets read `HasCSSC` in the scalar projection.  Everything else
-is byte-for-byte identical between the two LDSL files.
+is byte-for-byte identical between the two LegiSpec files.
 
 ### 3.1 `G_SMIN`, `G_SMAX`, `G_UMIN`, `G_UMAX`
 
@@ -301,7 +301,7 @@ synonym for "all bit-count operations".
    rewrite.
 2. **`HasCSSC` is construction-time, so freezing is exact.**  `legalFor(bool)`,
    `customFor(bool)` and `minScalar(bool)` return early when false.  The C++
-   rule table itself already "skips" the rule; the LDSL comment is a record
+   rule table itself already "skips" the rule; the LegiSpec comment is a record
    of that fact, not a workaround.
 3. **Placement of the conditional rule matters.**  `G_CTPOP` puts the
    legal/custom pair first; `G_CTTZ` puts it after `widen/clamp/scalarSameSizeAs`;
@@ -318,10 +318,10 @@ synonym for "all bit-count operations".
 Rules and manifests:
 
 ```text
-toycpu/tools/legalizer_dsl/rules/aarch64-scalar.lspec
-toycpu/tools/legalizer_dsl/rules/aarch64-cssc-scalar.lspec
-toycpu/tools/legalizer_dsl/aarch64-scalar-capabilities.json
-toycpu/tools/legalizer_dsl/aarch64-cssc-scalar-capabilities.json
+toycpu/tools/legispec/rules/aarch64-scalar.lspec
+toycpu/tools/legispec/rules/aarch64-cssc-scalar.lspec
+toycpu/tools/legispec/aarch64-scalar-capabilities.json
+toycpu/tools/legispec/aarch64-cssc-scalar-capabilities.json
 ```
 
 Reports:
@@ -351,30 +351,30 @@ Static checks:
 
 ```powershell
 cd F:\llvm-study\toycpu\tools
-python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
+python -X utf8 -m legispec `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\aarch64-scalar-capabilities.json
+  --capabilities F:\llvm-study\toycpu\tools\legispec\aarch64-scalar-capabilities.json
 
-python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-cssc-scalar.lspec `
+python -X utf8 -m legispec `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-cssc-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\aarch64-cssc-scalar-capabilities.json
+  --capabilities F:\llvm-study\toycpu\tools\legispec\aarch64-cssc-scalar-capabilities.json
 ```
 
 Differential conformance:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
+python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-scalar.lspec `
+  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\aarch64-scalar-conformance-report.json `
   --llvm-build F:/llvm/build
 
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-cssc-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-cssc.exe `
+python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-cssc-scalar.lspec `
+  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64-cssc.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\aarch64-cssc-scalar-conformance-report.json `
   --llvm-build F:/llvm/build
@@ -383,10 +383,10 @@ python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
 Feature diff:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\diff_oracles.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
-  --oracle-left F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
-  --oracle-right F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-cssc.exe `
+python -X utf8 F:\llvm-study\toycpu\tools\legispec\diff_oracles.py `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-scalar.lspec `
+  --oracle-left F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe `
+  --oracle-right F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64-cssc.exe `
   --label-left generic --label-right cssc `
   --out F:\llvm-study\toycpu\out\aarch64-cssc-flips.json
 ```
@@ -405,8 +405,8 @@ Proven:
 
 ```text
 finite scalar domain D, closure R, 8,161 observations per configuration
-Python LDSL generic == real AArch64 generic getAction
-Python LDSL +cssc  == real AArch64 +cssc  getAction
+Python LegiSpec generic == real AArch64 generic getAction
+Python LegiSpec +cssc  == real AArch64 +cssc  getAction
 ```
 
 Not proven:
@@ -426,7 +426,7 @@ best one.
 ## 10. One-sentence conclusion
 
 > On the same 8,161-query scalar corpus, enabling `+cssc` changes exactly 62
-> answers (0.76%) across 7 opcodes; both the generic and `+cssc` LDSL models
+> answers (0.76%) across 7 opcodes; both the generic and `+cssc` LegiSpec models
 > agree with their own real oracle with zero divergences, and the differences
 > are fully explained by four construction-time `HasCSSC` clauses plus rule
 > order.

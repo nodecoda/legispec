@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -19,7 +19,7 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from legalizer_dsl.conformance import (
+from legispec.conformance import (
     ComparisonReport,
     Observation,
     _closure_outside_d,
@@ -29,8 +29,8 @@ from legalizer_dsl.conformance import (
     iter_d_queries,
     python_observation,
 )
-from legalizer_dsl.model import Query, parse_llt
-from legalizer_dsl.parser import parse, parse_file
+from legispec.model import Query, parse_llt
+from legispec.parser import parse, parse_file
 
 
 class ConformanceTests(unittest.TestCase):
@@ -104,7 +104,7 @@ class ReportDeterminismTests(unittest.TestCase):
     def test_report_bytes_do_not_depend_on_temp_directory_or_jsonl_path(self):
         here = pathlib.Path(__file__).resolve().parents[1]
         rules = here / "rules" / "toycpu.lspec"
-        oracle = here / "out" / "oracle" / "legalizer-oracle.exe"
+        oracle = here / "out" / "oracle" / "legispec-oracle.exe"
         if not oracle.is_file():
             self.skipTest("toycpu oracle not collected; see docs/EVIDENCE.md")
         info = parse_file(rules)

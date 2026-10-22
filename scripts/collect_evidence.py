@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -20,7 +20,7 @@ evidence directory produced elsewhere, and verifies the copy against the
 pinned sha256 values.
 
     python scripts/collect_evidence.py --from F:/llvm-study/toycpu/out
-    python -m legalizer_dsl.claims verify
+    python -m legispec.claims verify
 
 Exit codes: 0 = every pinned file present and matching, 1 = mismatch/missing.
 """

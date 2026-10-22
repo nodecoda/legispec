@@ -1,12 +1,12 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
 # ===----------------------------------------------------------------------===##
 
-"""Phase 6: translate the Legalizer DSL AST into C++ builder calls.
+"""Phase 6: translate the LegiSpec AST into C++ builder calls.
 
 The generated file is a *translation artifact*.  Its only contract is:
 
@@ -27,13 +27,13 @@ the Custom/Libcall/Lower capabilities required by the policy.
 
 from __future__ import annotations
 
-# Allow both ``python -m legalizer_dsl.codegen`` and direct script execution.
+# Allow both ``python -m legispec.codegen`` and direct script execution.
 if __package__ in (None, ""):
     import sys as _sys
     from pathlib import Path as _pathlib
 
     _sys.path.insert(0, str(_pathlib(__file__).resolve().parents[1]))
-    __package__ = "legalizer_dsl"
+    __package__ = "legispec"
 
 import argparse
 import hashlib
@@ -225,7 +225,7 @@ def _header_guard(namespace: str, output_stem: str) -> str:
 
 def _wiring_guard(output_stem: str) -> str:
     return re.sub(
-        r"[^A-Za-z0-9]", "_", f"LEGALIZER_DSL_WIRING_{output_stem}_INC"
+        r"[^A-Za-z0-9]", "_", f"LEGISPEC_WIRING_{output_stem}_INC"
     ).upper()
 
 
@@ -795,7 +795,7 @@ class LegalizerInfo;
 
 namespace {namespace} {{
 
-/// Populate \\p LI with the rules translated from the LDSL source.
+/// Populate \\p LI with the rules translated from the LegiSpec source.
 void applyGeneratedLegalizerRules(LegalizerInfo &LI);
 
 }} // namespace {namespace}
@@ -995,7 +995,7 @@ def _render_wiring(
     header_name = f"{output_stem}.h"
     source_name = f"{output_stem}.cpp"
     generated_dir = _wiring_relative_dir(out_dir, wiring_dir)
-    target_name = f"legalizer_dsl_{output_stem}"
+    target_name = f"legispec_{output_stem}"
     wiring_guard = _wiring_guard(output_stem)
     wiring_function = f"applyGeneratedLegalizerRulesForConsumer_{output_stem}"
     lookup_function = f"lookupGeneratedOpcode_{output_stem}"
@@ -1018,24 +1018,24 @@ def _render_wiring(
     cmake_text = f"""#===-- legalizer-rules.cmake - generated wiring -*- CMake -*-===//
 #
 # GENERATED FILE. DO NOT EDIT.
-# generator: legalizer-dsl {__version__}
+# generator: legispec {__version__}
 # llvm_commit: {llvm_commit}
 #
 #===----------------------------------------------------------------------===//
 
-set(LEGALIZER_DSL_GENERATED_DIR "${{CMAKE_CURRENT_LIST_DIR}}/{generated_dir}")
-set(LEGALIZER_DSL_GENERATED_HEADER "{header_name}")
-set(LEGALIZER_DSL_GENERATED_SOURCE "{source_name}")
-set(LEGALIZER_DSL_NAMESPACE "{namespace}")
-set(LEGALIZER_DSL_OUTPUT_STEM "{output_stem}")
-set(LEGALIZER_DSL_TARGET "{target_name}")
-set(LEGALIZER_DSL_HEADER_GUARD "{_header_guard(namespace, output_stem)}")
+set(LEGISPEC_GENERATED_DIR "${{CMAKE_CURRENT_LIST_DIR}}/{generated_dir}")
+set(LEGISPEC_GENERATED_HEADER "{header_name}")
+set(LEGISPEC_GENERATED_SOURCE "{source_name}")
+set(LEGISPEC_NAMESPACE "{namespace}")
+set(LEGISPEC_OUTPUT_STEM "{output_stem}")
+set(LEGISPEC_TARGET "{target_name}")
+set(LEGISPEC_HEADER_GUARD "{_header_guard(namespace, output_stem)}")
 
 if(NOT TARGET {target_name})
   add_library({target_name} STATIC
-    "${{LEGALIZER_DSL_GENERATED_DIR}}/${{LEGALIZER_DSL_GENERATED_SOURCE}}")
+    "${{LEGISPEC_GENERATED_DIR}}/${{LEGISPEC_GENERATED_SOURCE}}")
   target_include_directories({target_name} PUBLIC
-    "${{LEGALIZER_DSL_GENERATED_DIR}}"
+    "${{LEGISPEC_GENERATED_DIR}}"
     "${{CMAKE_CURRENT_LIST_DIR}}")
   target_link_libraries({target_name} PUBLIC
     LLVMCodeGen LLVMGlobalISel LLVMCore LLVMSupport)
@@ -1045,7 +1045,7 @@ endif()
     wiring_text = f"""//===-- wiring.cpp.inc - generated consumer wiring -*- C++ -*-===//
 //
 // GENERATED FILE. DO NOT EDIT.
-// generator: legalizer-dsl {__version__}
+// generator: legispec {__version__}
 // llvm_commit: {llvm_commit}
 //
 //===----------------------------------------------------------------------===//
@@ -1068,7 +1068,7 @@ endif()
   llvm::{namespace}::applyGeneratedLegalizerRules(LI);
 }}
 
-#define LEGALIZER_DSL_APPLY_RULES {wiring_function}
+#define LEGISPEC_APPLY_RULES {wiring_function}
 
 #endif // {wiring_guard}
 """
@@ -1104,7 +1104,7 @@ in the translation unit that constructs the `LegalizerInfo`:
 #include "wiring.cpp.inc"
 
 llvm::LegalizerInfo LI;
-LEGALIZER_DSL_APPLY_RULES(LI);
+LEGISPEC_APPLY_RULES(LI);
 ```
 
 Do not copy the generated source into the target's hand-written
@@ -1382,7 +1382,7 @@ def _default_paths() -> tuple[Path, Path]:
 def main(argv: Optional[list[str]] = None) -> int:
     default_rules, default_out = _default_paths()
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--rules", default=str(default_rules), help="LDSL rules file")
+    parser.add_argument("--rules", default=str(default_rules), help="LegiSpec rules file")
     parser.add_argument(
         "--define",
         action="append",
@@ -1420,7 +1420,7 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument(
         "--dsl-spec-version",
         default=DSL_SPEC_VERSION,
-        help="LDSL specification version pinned in the manifest",
+        help="LegiSpec specification version pinned in the manifest",
     )
     parser.add_argument(
         "--emit-wiring",

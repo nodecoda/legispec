@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -38,9 +38,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
-from legalizer_dsl import __version__, codegen  # noqa: E402
-from legalizer_dsl import paths  # noqa: E402
-from legalizer_dsl.codegen import DSL_SPEC_VERSION  # noqa: E402
+from legispec import __version__, codegen  # noqa: E402
+from legispec import paths  # noqa: E402
+from legispec.codegen import DSL_SPEC_VERSION  # noqa: E402
 
 OUT = ROOT / "out" / "codegen-contract"
 RULES = ROOT / "rules"

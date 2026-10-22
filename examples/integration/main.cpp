@@ -21,7 +21,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 // The generated wiring includes the generated header and defines
-// LEGALIZER_DSL_APPLY_RULES for this output stem.
+// LEGISPEC_APPLY_RULES for this output stem.
 #include "wiring.cpp.inc"
 
 #include <cctype>
@@ -334,12 +334,12 @@ void printError(raw_ostream &OS, int64_t Id, StringRef Message) {
 LegalizerInfo &getGeneratedLI() {
   static LegalizerInfo LI;
   static const bool Initialized = [] {
-#ifdef LDSL_USE_EXTENDED_LLT
+#ifdef LEGISPEC_USE_EXTENDED_LLT
     // AArch64's TargetMachine enables extended LLTs.  The generated consumer
     // has no TargetMachine, so it must declare the same configuration.
     LLT::setUseExtended(true);
 #endif
-    LEGALIZER_DSL_APPLY_RULES(LI);
+    LEGISPEC_APPLY_RULES(LI);
     return true;
   }();
   (void)Initialized;
@@ -359,7 +359,7 @@ int main(int argc, char **argv) {
       }
       InputPath = argv[++I];
     } else if (Arg == "--help" || Arg == "-h") {
-      outs() << "usage: legalizer-dsl-consumer [--input FILE]\n";
+      outs() << "usage: legispec-consumer [--input FILE]\n";
       return 0;
     } else {
       errs() << "error: unknown argument: " << Arg << "\n";

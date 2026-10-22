@@ -217,7 +217,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
 generated 路径新增 oracle：
 
 ```text
-legalizer-oracle-aarch64-vector-arith-gen.exe
+legispec-oracle-aarch64-vector-arith-gen.exe
 namespace: AArch64VectorArithGen
 ```
 

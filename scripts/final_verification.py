@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -42,12 +42,12 @@ from check_skips import (  # noqa: E402
     load_manifest,
     optional_for_platform,
 )
-from legalizer_dsl import __version__ as GENERATOR_VERSION  # noqa: E402
-from legalizer_dsl.codegen import DSL_SPEC_VERSION  # noqa: E402
-from legalizer_dsl.fingerprint import codegen_sha256, hand_evaluator_sha256  # noqa: E402
-from legalizer_dsl.paths import iter_rule_files  # noqa: E402
+from legispec import __version__ as GENERATOR_VERSION  # noqa: E402
+from legispec.codegen import DSL_SPEC_VERSION  # noqa: E402
+from legispec.fingerprint import codegen_sha256, hand_evaluator_sha256  # noqa: E402
+from legispec.paths import iter_rule_files  # noqa: E402
 
-SCHEMA = "legalizer-dsl-final-verification-v1"
+SCHEMA = "legispec-final-verification-v1"
 BASE_COMMIT = "9578630"
 CLAIMS_PATH = ROOT / "claims" / "claims.json"
 CLOSURE_PATH = ROOT / "out" / "closure.json"
@@ -363,7 +363,7 @@ def gate_unit_tests(expected_tests: Optional[int], expected_skipped: Optional[in
 def gate_claims(claims: dict):
     gate, text = run_gate(
         "claims-verify-corpus",
-        ["-X", "utf8", "-m", "legalizer_dsl.claims", "verify", "--verify-corpus"],
+        ["-X", "utf8", "-m", "legispec.claims", "verify", "--verify-corpus"],
     )
     problems: list[str] = []
     parsed = parse_ints(r"claims=(\d+)\s+proven=(\d+)\s+failed=(\d+)", text)
@@ -414,7 +414,7 @@ def gate_claims(claims: dict):
 
 def gate_closure(claims: dict, expected_tests: Optional[int]):
     gate, text = run_gate(
-        "closure", ["-X", "utf8", "-m", "legalizer_dsl.closure", "check", "--write"]
+        "closure", ["-X", "utf8", "-m", "legispec.closure", "check", "--write"]
     )
     problems: list[str] = []
     if gate["exit_code"] != 0:
@@ -433,7 +433,7 @@ def gate_closure(claims: dict, expected_tests: Optional[int]):
         if isinstance(closure_problems, list)
         else closure_problems
     )
-    if closure.get("schema") != "legalizer-dsl-closure-v1":
+    if closure.get("schema") != "legispec-closure-v1":
         problems.append(f"closure schema is {closure.get('schema')!r}")
     if isinstance(closure_problems, list):
         if closure_problems:

@@ -55,7 +55,7 @@ sDoubleXLen = s64
 p0          = p0 (32-bit)
 ```
 
-The oracle is `legalizer-oracle-riscv32-mzb.exe`, built from the same
+The oracle is `legispec-oracle-riscv32-mzb.exe`, built from the same
 `main.cpp` with `RISCV_ORACLE_RV32` + `RISCV_ORACLE_FEATURE_VARIANT`.
 
 ## 2. Why the product is not the sum
@@ -178,14 +178,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
   -WithRiscv
 
 cd F:\llvm-study\toycpu\tools
-python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-mzb-scalar.lspec `
+python -X utf8 -m legispec `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv32-mzb-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-mzb-scalar-capabilities.json
+  --capabilities F:\llvm-study\toycpu\tools\legispec\riscv32-mzb-scalar-capabilities.json
 
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-mzb-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32-mzb.exe `
+python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv32-mzb-scalar.lspec `
+  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legispec-oracle-riscv32-mzb.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv32-mzb-scalar-conformance-report.json `
   --llvm-build F:/llvm/build

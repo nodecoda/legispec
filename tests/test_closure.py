@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -20,7 +20,7 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from legalizer_dsl import closure
+from legispec import closure
 
 
 class SkipEvidenceTamperTests(unittest.TestCase):
@@ -56,7 +56,7 @@ class SkipEvidenceTamperTests(unittest.TestCase):
             evidence.write_text(
                 json.dumps(
                     {
-                        "schema": "legalizer-dsl-generated-evidence-v1",
+                        "schema": "legispec-generated-evidence-v1",
                         "hand_only": {"x.lspec": "hand oracle only in this fixture"},
                     }
                 ),
@@ -68,7 +68,7 @@ class SkipEvidenceTamperTests(unittest.TestCase):
             closure.LEDGER.write_text(
                 json.dumps(
                     {
-                        "schema": "legalizer-dsl-claims-v1",
+                        "schema": "legispec-claims-v1",
                         "claim_contract_version": 1,
                         "llvm_commit": "a" * 40,
                         "boundary": "test",
@@ -149,7 +149,7 @@ class GeneratedEvidenceTests(unittest.TestCase):
             manifest.write_text(
                 json.dumps(
                     {
-                        "schema": "legalizer-dsl-generated-evidence-v1",
+                        "schema": "legispec-generated-evidence-v1",
                         "hand_only": hand_only,
                     }
                 ),

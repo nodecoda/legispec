@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -12,7 +12,7 @@
 `constructs check` classifies every public builder method of
 `LegalizerInfo`.  CI does not build LLVM, so it downloads that one header at
 the LLVM commit pinned in `claims/claims.json` and points
-LEGALIZER_DSL_LLVM_SRC at the result.
+LEGISPEC_LLVM_SRC at the result.
 
     python scripts/fetch_llvm_header.py --dest .ci/llvm-src
 

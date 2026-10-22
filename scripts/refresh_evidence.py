@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -73,7 +73,7 @@ def _run_claim(claim: dict, *, dry_run: bool) -> tuple[str, str]:
         "-X",
         "utf8",
         "-m",
-        "legalizer_dsl.conformance",
+        "legispec.conformance",
         "--rules", str(rules_path),
         "--oracle", str(oracle_path),
         "--out", str(report_path),
@@ -109,7 +109,7 @@ def _verify_command() -> list[str]:
         "-X",
         "utf8",
         "-m",
-        "legalizer_dsl.claims",
+        "legispec.claims",
         "verify",
         "--verify-corpus",
         "--write",

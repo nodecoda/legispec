@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -47,7 +47,7 @@ class IntegrationFixtureTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn('#include "wiring.cpp.inc"', text)
-        self.assertIn("LEGALIZER_DSL_APPLY_RULES(LI)", text)
+        self.assertIn("LEGISPEC_APPLY_RULES(LI)", text)
         self.assertIn("LI.getAction(Query)", text)
         self.assertNotIn("legal_for", text)
         self.assertNotIn("LegalizeRuleSet", text)
@@ -57,11 +57,11 @@ class IntegrationFixtureTests(unittest.TestCase):
             ROOT / "examples" / "integration" / "CMakeLists.txt"
         ).read_text(encoding="utf-8")
         self.assertIn(
-            'include("${LDSL_WIRING_DIR}/legalizer-rules.cmake")', text
+            'include("${LEGISPEC_WIRING_DIR}/legalizer-rules.cmake")', text
         )
-        self.assertIn("target_link_libraries(legalizer-dsl-consumer", text)
+        self.assertIn("target_link_libraries(legispec-consumer", text)
         self.assertIn("LLVM_DIR", text)
-        self.assertIn("LDSL_USE_EXTENDED_LLT", text)
+        self.assertIn("LEGISPEC_USE_EXTENDED_LLT", text)
 
     def test_smoke_declares_toycpu_and_aarch64(self):
         smoke = _load_smoke()
@@ -75,7 +75,7 @@ class IntegrationFixtureTests(unittest.TestCase):
         self.assertTrue(smoke.TARGETS["aarch64-vector"]["extended_llt"])
 
     def test_query_selection_is_deterministic_and_bounded(self):
-        from legalizer_dsl.parser import parse_file
+        from legispec.parser import parse_file
 
         smoke = _load_smoke()
         info = parse_file(ROOT / "rules" / "toycpu.lspec")
@@ -87,7 +87,7 @@ class IntegrationFixtureTests(unittest.TestCase):
 
     def test_report_schema_is_distinct_from_conformance(self):
         smoke = _load_smoke()
-        self.assertEqual(smoke.SCHEMA, "legalizer-dsl-integration-v2")
+        self.assertEqual(smoke.SCHEMA, "legispec-integration-v2")
         self.assertEqual(set(smoke.TARGETS), {"toycpu", "aarch64-vector"})
 
     def test_status_gate_accepts_a_fully_pinned_pass(self):
@@ -107,7 +107,7 @@ class IntegrationFixtureTests(unittest.TestCase):
         checker = _load_status()
         cases = {
             "v1-schema": lambda data, root: data.update(
-                schema="legalizer-dsl-integration-v1"
+                schema="legispec-integration-v1"
             ),
             "small-sample": lambda data, root: data["inputs"].update(
                 query_count=1
@@ -328,7 +328,7 @@ def _fake_report(root: pathlib.Path) -> dict:
     query_sha = _sha(query_file)
     rules_sha = _sha(rules)
     return {
-        "schema": "legalizer-dsl-integration-v2",
+        "schema": "legispec-integration-v2",
         "target": "toycpu",
         "status": "PASS",
         "ok": True,

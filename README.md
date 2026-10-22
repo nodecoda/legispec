@@ -4,7 +4,7 @@
 > 把 legalizer 规则表变成可检查、可回生成、可对拍的规范。
 
 LegiSpec 把 LLVM GlobalISel 的 **`LegalizerInfo` 规则表**从 C++ 里抽出来，用一种外部声明式语言
-**LegiSpec DSL（LDSL，文件后缀 `.lspec`）** 重写；提供严格检查器、C++ 回生成器，以及对着真实
+**LegiSpec DSL（LegiSpec，文件后缀 `.lspec`）** 重写；提供严格检查器、C++ 回生成器，以及对着真实
 target oracle 做差分的证明工具链。
 
 一句话：**它是规则表的规范与证伪工具，不是另一个 legalizer。**
@@ -47,8 +47,8 @@ python -m unittest discover -s tests
 `check --strict` 会做语法、语义、capability 契约、可达性/遮蔽全套检查；
 `--strict` 缺 `capabilities/<rules>-capabilities.json` 即失败，不允许“静默放行 custom”。
 
-> 0.2.0 及更早版本的主命令是 `legalizer-dsl`。0.3.0 起主命令为 `legispec`，
-> 旧命令保留为弃用别名，1.0 移除。
+> 1.0 起，包名、import、命令行、数据目录、环境变量与证据 schema 全部使用
+> LegiSpec 标识；旧标识不再保留为别名。
 
 生成 C++：
 
@@ -74,7 +74,7 @@ python scripts/coverage_report.py --corpus examples --out out/coverage-report.js
 ## 4. 仓库结构
 
 ```text
-src/legalizer_dsl/        实现：parser / checker / interp / codegen / conformance / claims
+src/legispec/        实现：parser / checker / interp / codegen / conformance / claims
   checker/                规则级静态检查（wellformed / conflict / reachability / termination）
 rules/                    22 份 .lspec 规则转写（ToyCPU、X86-64、AArch64、RISC-V）
 witness/                  9 份 witness：固定顺序依赖与边界
@@ -82,7 +82,7 @@ capabilities/             22 份 provider 契约（custom / libcall / lower 谁�
 claims/                   claims.json（43 条断言与哈希钉）、generated-evidence.json（generated/hand-only 分类）、claim-ledger.md、构造覆盖
 docs/                     命题、语法、模式、配置、决策记录；兼容性见 COMPATIBILITY.md
 examples/                 真实 MIR / LLVM IR 语料
-tests/                    398 个单元测试
+tests/                    400 个单元测试
 scripts/                  证据收集与批处理
 out/                      本地证据缓存（不入库，见第 6 节）
 ```
@@ -98,10 +98,10 @@ hand-only=6
 rules-files=22
 hand-queries=321627
 constructs=63/63     # LLVM builder 方法 → DSL 原语，全部归类
-tests=398
+tests=400
 ```
 
-这些数字由 `python -m legalizer_dsl.closure check` 从产物重新计算并比对；
+这些数字由 `python -m legispec.closure check` 从产物重新计算并比对；
 `generated-covered=16` 表示 GeneratedCpp 等价只对 16 条 generated claim 成立；
 其余 6 条规则在 `claims/generated-evidence.json` 中显式登记为 hand-only，
 只证明 hand-evaluator 等价。closure 会拒绝既无 generated 证据、又无 hand-only 登记的新规则。

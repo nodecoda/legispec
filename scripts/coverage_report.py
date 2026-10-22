@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -42,12 +42,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
-from legalizer_dsl import witness as witness_mod  # noqa: E402
-from legalizer_dsl.checker.analysis import shape  # noqa: E402
-from legalizer_dsl.model import LLT, MemDesc, Query, parse_llt  # noqa: E402
-from legalizer_dsl.parser import parse_file  # noqa: E402
+from legispec import witness as witness_mod  # noqa: E402
+from legispec.checker.analysis import shape  # noqa: E402
+from legispec.model import LLT, MemDesc, Query, parse_llt  # noqa: E402
+from legispec.parser import parse_file  # noqa: E402
 
-SCHEMA = "legalizer-dsl-coverage-v1"
+SCHEMA = "legispec-coverage-v1"
 
 TARGETS = {
     "toycpu": "rules/toycpu.lspec",

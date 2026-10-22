@@ -17,7 +17,7 @@ Signed-off-by: Your Name <you@example.com>
 ```python
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -32,8 +32,8 @@ Signed-off-by: Your Name <you@example.com>
 
 ```powershell
 python scripts/reproduce_claims.py --only <受影响的 claim>
-python -m legalizer_dsl.claims verify --write
-python -m legalizer_dsl.closure check
+python -m legispec.claims verify --write
+python -m legispec.closure check
 ```
 
 只改 `claims.json` 里的数字、不重跑证据的 PR **一律拒绝**。
@@ -63,9 +63,9 @@ python -m legalizer_dsl.closure check
 
 ```powershell
 python -m unittest discover -s tests          # 219 tests
-python -m legalizer_dsl.claims verify          # 需要 out/ 证据
-python -m legalizer_dsl.constructs check       # 需要 LEGALIZER_DSL_LLVM_SRC
-python -m legalizer_dsl.closure check          # 文档 pinned 数字 vs 产物
+python -m legispec.claims verify          # 需要 out/ 证据
+python -m legispec.constructs check       # 需要 LEGISPEC_LLVM_SRC
+python -m legispec.closure check          # 文档 pinned 数字 vs 产物
 ```
 
 四条全绿才算可提交。缺证据时 `claims verify` 会明确失败，这是设计而非故障，
@@ -74,7 +74,7 @@ python -m legalizer_dsl.closure check          # 文档 pinned 数字 vs 产物
 ## 4. 代码风格
 
 - Python 3.10+，**只用标准库**，不引入运行时依赖；
-- `src/legalizer_dsl/` 内不做 I/O 副作用，CLI 层负责路径；
+- `src/legispec/` 内不做 I/O 副作用，CLI 层负责路径；
 - 文件编码 UTF-8 无 BOM；`.py/.lspec/.json` 用 LF，`.md/.ps1` 用 CRLF（见 `.gitattributes`）；
 - 诊断码 `P/T/K/C` 分段使用，新增诊断必须在 `docs/grammar.ebnf` 或 `diagnostics.py` 注册；
 - 注释写“为什么”，不写“是什么”；不写与代码无关的规划性注释。

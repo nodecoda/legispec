@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -126,7 +126,7 @@ class FinalVerificationTests(unittest.TestCase):
             "head_commit": "a" * 40,
         }
         self.claims = {
-            "schema": "legalizer-dsl-claims-v1",
+            "schema": "legispec-claims-v1",
             "claim_contract_version": 1,
             "llvm_commit": "b" * 40,
             "boundary": "test boundary",
@@ -242,7 +242,7 @@ class FinalVerificationTests(unittest.TestCase):
         first = ROOT / "out" / "test-null-toycpu.json"
         second = ROOT / "out" / "test-null-aarch64.json"
         payload = {
-            "schema": "legalizer-dsl-integration-v2",
+            "schema": "legispec-integration-v2",
             "status": "PASS",
             "ok": True,
             "target": "toycpu",

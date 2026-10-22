@@ -24,7 +24,7 @@ same; only the triple, CPU and `XLen` change.
 
 The claim:
 
-> On the same declared finite scalar domain, the LDSL RV32 model and the real
+> On the same declared finite scalar domain, the LegiSpec RV32 model and the real
 > `RISCVLegalizerInfo::getAction` built for `riscv32 / generic-rv32` agree on
 > every observed step.
 
@@ -47,7 +47,7 @@ p0          = p0 (32-bit)
 ```
 
 The oracle is a separate executable,
-`legalizer-oracle-riscv32.exe`, built from the same `main.cpp` with
+`legispec-oracle-riscv32.exe`, built from the same `main.cpp` with
 `RISCV_ORACLE_RV32`.  The RV64 and M/Zbb binaries are unchanged.
 
 Still absent: A, F, D, C, V, M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P.  The pointer
@@ -191,18 +191,18 @@ Static check:
 
 ```powershell
 cd F:\llvm-study\toycpu\tools
-python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-scalar.lspec `
+python -X utf8 -m legispec `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv32-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-scalar-capabilities.json
+  --capabilities F:\llvm-study\toycpu\tools\legispec\riscv32-scalar-capabilities.json
 ```
 
 Differential conformance:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32.exe `
+python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv32-scalar.lspec `
+  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legispec-oracle-riscv32.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv32-scalar-conformance-report.json `
   --llvm-build F:/llvm/build

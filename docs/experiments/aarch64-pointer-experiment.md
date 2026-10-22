@@ -25,7 +25,7 @@ AArch64 pointer shape `p0:64`.
 
 The claim is narrow:
 
-> On the declared finite pointer-shaped domain, the Python LDSL model and the
+> On the declared finite pointer-shaped domain, the Python LegiSpec model and the
 > real `AArch64LegalizerInfo::getAction(LegalityQuery)` agree on every
 > observed step.
 
@@ -41,7 +41,7 @@ without first checking `isVector()`, and a 32-bit `p0` also reached
 
 This experiment shows the other half of that story:
 
-> AArch64's legal pointer is `LLT::pointer(0, 64)`, written `p0:64` in LDSL.
+> AArch64's legal pointer is `LLT::pointer(0, 64)`, written `p0:64` in LegiSpec.
 > The 32-bit `p0` used in the failing probe was the wrong LLT shape, not a
 > legal AArch64 pointer.
 
@@ -62,8 +62,8 @@ scalar-only; the two domains are intentionally separate.
 Added:
 
 ```text
-toycpu/tools/legalizer_dsl/rules/aarch64-pointer.lspec
-toycpu/tools/legalizer_dsl/aarch64-pointer-capabilities.json
+toycpu/tools/legispec/rules/aarch64-pointer.lspec
+toycpu/tools/legispec/aarch64-pointer-capabilities.json
 toycpu/out/aarch64-pointer-conformance-report.json
 toycpu/out/aarch64-pointer-check.txt
 toycpu/notes/aarch64-pointer-experiment.md
@@ -312,7 +312,7 @@ with the scalar `G_ADD`/`G_MUL` predicates.
 The oracle is the same AArch64 oracle built for the scalar experiment:
 
 ```text
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe
+F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe
 ```
 
 It configures:
@@ -471,18 +471,18 @@ Static check:
 
 ```powershell
 cd F:\llvm-study\toycpu\tools
-python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-pointer.lspec `
+python -m legispec `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-pointer.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\aarch64-pointer-capabilities.json
+  --capabilities F:\llvm-study\toycpu\tools\legispec\aarch64-pointer-capabilities.json
 ```
 
 Differential conformance:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-pointer.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
+python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-pointer.lspec `
+  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\aarch64-pointer-conformance-report.json `
   --llvm-build F:/llvm/build
@@ -498,7 +498,7 @@ ToyCPU regression gate:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-legalizer-dsl.ps1
+  F:\llvm-study\toycpu\scripts\check-legispec.ps1
 ```
 
 ## 9. Limits and next steps
@@ -507,7 +507,7 @@ Proven:
 
 ```text
 finite pointer-shaped domain D, closure R, 924 observations
-Python LDSL policy == real AArch64 getAction for the modeled pointer rules
+Python LegiSpec policy == real AArch64 getAction for the modeled pointer rules
 ```
 
 Not proven:

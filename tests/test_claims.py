@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -25,7 +25,7 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from legalizer_dsl import claims
+from legispec import claims
 
 
 EVIDENCE_PRESENT = all(
@@ -88,11 +88,11 @@ class ClaimLedgerTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             report = pathlib.Path(tmp) / "report.json"
-            oracle = claims.OUT / "oracle" / "legalizer-oracle.exe"
+            oracle = claims.OUT / "oracle" / "legispec-oracle.exe"
             report.write_text(
                 json.dumps(
                     {
-                        "schema": "legalizer-dsl-conformance-v1",
+                        "schema": "legispec-conformance-v1",
                         "evaluator_sha256": claims.evaluator_sha256(),
                         "inputs": {
                             "rules": str(claims.RULES / "toycpu.lspec"),
@@ -115,7 +115,7 @@ class ClaimLedgerTests(unittest.TestCase):
                 id="unpinned",
                 rules="toycpu.lspec",
                 report=str(report),
-                oracle="oracle/legalizer-oracle.exe",
+                oracle="oracle/legispec-oracle.exe",
                 scope="test",
                 excludes=(),
                 config={},
@@ -141,13 +141,13 @@ class ClaimLedgerTests(unittest.TestCase):
         import tempfile
 
         with tempfile.TemporaryDirectory() as tmp:
-            oracle = claims.OUT / "oracle" / "legalizer-oracle.exe"
+            oracle = claims.OUT / "oracle" / "legispec-oracle.exe"
             rules = claims.RULES / "toycpu.lspec"
             report = pathlib.Path(tmp) / "report.json"
             report.write_text(
                 json.dumps(
                     {
-                        "schema": "legalizer-dsl-conformance-v1",
+                        "schema": "legispec-conformance-v1",
                         "evaluator_sha256": claims.evaluator_sha256(),
                         "inputs": {
                             "rules": str(rules),
@@ -172,7 +172,7 @@ class ClaimLedgerTests(unittest.TestCase):
                 id="stale-rules",
                 rules="toycpu.lspec",
                 report=str(report),
-                oracle="oracle/legalizer-oracle.exe",
+                oracle="oracle/legispec-oracle.exe",
                 scope="test",
                 excludes=(),
                 config={},
@@ -362,12 +362,12 @@ class ProvenancePathTests(unittest.TestCase):
             oracle_path.parent.mkdir(parents=True)
             oracle_path.write_bytes(b"oracle-bytes")
             payload = {
-                "schema": "legalizer-dsl-conformance-v1",
+                "schema": "legispec-conformance-v1",
                 "evaluator_sha256": claims.evaluator_sha256(),
                 "inputs": {
                     "rules": (
                         "F:\\llvm-study\\toycpu\\tools\\"
-                        "legalizer_dsl\\rules\\toycpu.lspec"
+                        "legispec\\rules\\toycpu.lspec"
                     ),
                     "rules_sha256": claims._sha256(rules_path),
                     "sha256": "a" * 64,
@@ -474,7 +474,7 @@ def _valid_report(
     oracle_sha=None,
 ):
     return {
-        "schema": "legalizer-dsl-conformance-v1",
+        "schema": "legispec-conformance-v1",
         "evaluator_sha256": (
             claims.hand_evaluator_sha256() if evaluator is None else evaluator
         ),

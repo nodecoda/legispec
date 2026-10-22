@@ -108,7 +108,7 @@ so any other shape is Unsupported.
 
 ## 4. Feature orthogonality
 
-Running the same pointer file against `legalizer-oracle-riscv32-mzb.exe`:
+Running the same pointer file against `legispec-oracle-riscv32-mzb.exe`:
 
 ```text
 queries=770 divergences=0 rules=31/31
@@ -129,14 +129,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
   -WithRiscv
 
 cd F:\llvm-study\toycpu\tools
-python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-pointer.lspec `
+python -X utf8 -m legispec `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv32-pointer.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-pointer-capabilities.json
+  --capabilities F:\llvm-study\toycpu\tools\legispec\riscv32-pointer-capabilities.json
 
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-pointer.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32.exe `
+python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
+  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv32-pointer.lspec `
+  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legispec-oracle-riscv32.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv32-pointer-conformance-report.json `
   --llvm-build F:/llvm/build

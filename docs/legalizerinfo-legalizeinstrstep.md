@@ -12,7 +12,7 @@
 >
 > 相关文档（本仓库）：
 > - [LegiSpec 与复杂规则走读](walkthrough.md)
-> - [LDSL v0.1 语言定义](ldsl-v0.1.md)
+> - [LegiSpec v0.1 语言定义](legispec-v1.0.md)
 > - [规则表设计](design.md)
 >
 > 同源的 LLVM 通用分析（IRTranslator / MachineIRBuilder / SelectionDAG、

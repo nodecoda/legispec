@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -13,7 +13,7 @@ deliberately independent from the C++ implementation: each witness records
 what the *specification* intends, then the Python evaluator is asked whether
 that intent still holds.
 
-Witness format (see ``witness/toycpu.witness`` and ``docs/ldsl-v0.1.md``)::
+Witness format (see ``witness/toycpu.witness`` and ``docs/legispec-v1.0.md``)::
 
     witness name {
         query       = (G_ADD, [s16])

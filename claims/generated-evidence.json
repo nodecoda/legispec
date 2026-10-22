@@ -7,5 +7,5 @@
     "riscv32-pointer.lspec": "Hand RV32 pointer oracle covers the slice; no generated RV32 pointer oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice.",
     "riscv64-pointer.lspec": "Hand RV64 pointer oracle covers the slice; no generated RV64 pointer oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice."
   },
-  "schema": "legalizer-dsl-generated-evidence-v1"
+  "schema": "legispec-generated-evidence-v1"
 }

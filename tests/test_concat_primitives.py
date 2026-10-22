@@ -1,6 +1,6 @@
 # ===----------------------------------------------------------------------===##
 #
-# Part of the Legalizer DSL project, under the Apache License v2.0 with LLVM
+# Part of the LegiSpec project, under the Apache License v2.0 with LLVM
 # Exceptions.  See LICENSE.TXT for license information.
 # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 #
@@ -47,14 +47,14 @@ import unittest
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 
-from legalizer_dsl import Action, Query, codegen, parse, parse_llt
-from legalizer_dsl.conformance import (
+from legispec import Action, Query, codegen, parse, parse_llt
+from legispec.conformance import (
     _closure_outside_d,
     closure_queries,
     iter_d_queries,
 )
-from legalizer_dsl.interp import verify_domain
-from legalizer_dsl.parser import parse_file
+from legispec.interp import verify_domain
+from legispec.parser import parse_file
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
 CONCAT_RULES = HERE / "rules" / "aarch64-concat-vectors.lspec"
