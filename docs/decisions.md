@@ -14,6 +14,7 @@
 | D-0003 | 2026-10-19 | unspecified | `G_INTRINSIC*` 的 arity 由 intrinsic 签名决定 |
 | D-0004 | 2026-10-19 | spec-wrong | `v1` 不是可表示的 LLT，从 D 中移除 |
 | D-0005 | 2026-10-21 | unspecified | 拆包：证据外置，身份用内容哈希，路径只作同名判定 |
+| D-0006 | 2026-10-22 | unspecified | 品牌硬切：LegiSpec 1.0 单一标识，移除全部旧别名 |
 
 ---
 
@@ -126,6 +127,36 @@ action    = 1. out/ 不入库，claims.json 钉 rules_sha256 / oracle_sha256；
 verify    = 43/43 PROVEN；aarch64-scalar 与 riscv32-scalar 就地重跑 0 分歧；
             rules/riscv-conditional-gconstant.lspec 的 EOL 规范化触发 STALE 后，
             重跑 2 条 claim 并 --write，重新 43/43。
+
+---
+
+## D-0006 品牌硬切：LegiSpec 1.0 单一标识
+
+```text
+kind      = unspecified（工程决策）
+observed  = 对外文档已使用 LegiSpec，但包名、import、数据目录、环境变量、
+            CMake/C++ 宏、schema id 与 oracle 文件名仍使用旧标识
+expected  = 一个产品一个闭环：install -> import -> CLI -> data -> env -> schema -> oracle
+context   = pyproject.toml、src/legispec/paths.py、codegen.py、conformance.py、
+            claims/claims.json
+cause     = 0.3.0 只完成品牌层，未完成标识层；继续零散修改会反复触发证据重建
+```
+
+**处置**：
+
+1. Python 包与 import 统一为 `legispec`；
+2. 安装数据目录统一为 `share/legispec`；
+3. 环境变量、CMake 变量与生成 C++ 宏统一为 `LEGISPEC_*`；
+4. 12 类证据 schema id 统一为 `legispec-*`；
+5. 26 个 oracle 可执行文件改名为 `legispec-oracle*`；
+6. 移除旧 CLI 别名，只保留 5 个 canonical 入口；
+7. 旧标识只保留在两份冻结存档中，不参与新文档与构建；
+8. 删除与包名同名的根 launcher，避免 import 时被脚本遮蔽。
+
+**验证**：400 tests OK（1 个环境相关 skip）；strict rules sweep 22/22；
+codegen contract PASS（22 份规则、24 个 config 变体）；claims 43/43 PROVEN；
+wheel smoke 5 个入口；`final_verification` PASS `gates=11/11`
+`release_eligible=true`。
 
 ---
 
