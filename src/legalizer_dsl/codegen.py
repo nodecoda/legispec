@@ -18,7 +18,7 @@ and rule order is preserved.
 
 Usage::
 
-    python codegen.py --rules rules/toycpu.ldsl --out-dir out/codegen
+    python codegen.py --rules rules/toycpu.lspec --out-dir out/codegen
 
 The command writes ``toycpu_rules_gen.h``, ``toycpu_rules_gen.cpp`` and
 ``codegen-manifest.json``.  The manifest records the rule hash, rule counts and
@@ -1376,7 +1376,7 @@ def check_generated(
 
 
 def _default_paths() -> tuple[Path, Path]:
-    return paths.RULES / "toycpu.ldsl", paths.OUT / "codegen"
+    return paths.RULES / "toycpu.lspec", paths.OUT / "codegen"
 
 
 def main(argv: Optional[list[str]] = None) -> int:

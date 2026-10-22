@@ -30,7 +30,7 @@ import sys
 import tempfile
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
-RULE_NAME = "toycpu.ldsl"
+RULE_NAME = "toycpu.lspec"
 
 
 def run(

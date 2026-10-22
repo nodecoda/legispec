@@ -222,7 +222,7 @@ class ClaimsAuditCompletenessTests(unittest.TestCase):
     def test_claims_audit_is_complete_when_evidence_is_missing(self):
         claim = Claim(
             id="missing-evidence",
-            rules="x.ldsl",
+            rules="x.lspec",
             report="report.json",
             oracle="oracle/missing.exe",
             scope="test",
@@ -338,7 +338,7 @@ class CliSurfaceTests(unittest.TestCase):
     def test_strict_custom_without_manifest_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
-            rules_path = root / "rules" / "custom.ldsl"
+            rules_path = root / "rules" / "custom.lspec"
             rules_path.parent.mkdir()
             rules_path.write_text(
                 """
@@ -370,14 +370,14 @@ class CliSurfaceTests(unittest.TestCase):
         invocations = {
             "codegen": [
                 "--rules",
-                "rules/toycpu.ldsl",
+                "rules/toycpu.lspec",
                 "codegen",
                 "--out-dir",
                 "out/review-codegen",
             ],
             "conform": [
                 "--rules",
-                "rules/toycpu.ldsl",
+                "rules/toycpu.lspec",
                 "conform",
                 "--oracle",
                 "out/oracle/legalizer-oracle.exe",

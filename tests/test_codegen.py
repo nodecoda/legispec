@@ -25,8 +25,8 @@ from legalizer_dsl.checker.capability import required_capabilities
 from legalizer_dsl.parser import parse, parse_file
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
-RULES = HERE / "rules" / "toycpu.ldsl"
-REL = "rules/toycpu.ldsl"
+RULES = HERE / "rules" / "toycpu.lspec"
+REL = "rules/toycpu.lspec"
 
 
 def _sha(data: bytes) -> str:
@@ -215,7 +215,7 @@ class CodegenContractTests(unittest.TestCase):
             self.assertFalse((out / codegen.GENERATED_SOURCE).exists())
 
     def test_namespace_is_derived_from_rules_stem(self):
-        rules = HERE / "rules" / "aarch64-vector.ldsl"
+        rules = HERE / "rules" / "aarch64-vector.lspec"
         with tempfile.TemporaryDirectory() as tmp:
             out = pathlib.Path(tmp) / "out"
             self.assertEqual(
@@ -230,7 +230,7 @@ class CodegenContractTests(unittest.TestCase):
 
     def test_unknown_namespace_family_requires_explicit_namespace(self):
         with tempfile.TemporaryDirectory() as tmp:
-            rules = pathlib.Path(tmp) / "mystery-target.ldsl"
+            rules = pathlib.Path(tmp) / "mystery-target.lspec"
             rules.write_text(
                 "ruleset G_X { legal_for {s32}; }\n", encoding="utf-8"
             )
@@ -258,8 +258,8 @@ class CodegenContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             out = pathlib.Path(tmp)
             slices = (
-                HERE / "rules" / "toycpu.ldsl",
-                HERE / "rules" / "aarch64-vector.ldsl",
+                HERE / "rules" / "toycpu.lspec",
+                HERE / "rules" / "aarch64-vector.lspec",
             )
             headers = []
             for rules in slices:
@@ -384,7 +384,7 @@ class CodegenContractTests(unittest.TestCase):
             codegen.generate(
                 info,
                 out_dir=out,
-                rules_rel="probe.ldsl",
+                rules_rel="probe.lspec",
                 rules_sha="0" * 64,
             )
             source = (out / codegen.GENERATED_SOURCE).read_text(
@@ -480,7 +480,7 @@ class WiringContractTests(unittest.TestCase):
             texts = []
             for rules in (
                 RULES,
-                HERE / 'rules' / 'aarch64-vector.ldsl',
+                HERE / 'rules' / 'aarch64-vector.lspec',
             ):
                 info = parse_file(rules)
                 stem = codegen._derive_output_stem(rules)
@@ -561,7 +561,7 @@ class OutputStemSafetyTests(unittest.TestCase):
             self.assertTrue((out / "_ok2.h").is_file())
 
     def test_default_stem_sanitizes_hyphenated_rules(self):
-        rules = HERE / "rules" / "aarch64-concat-vectors.ldsl"
+        rules = HERE / "rules" / "aarch64-concat-vectors.lspec"
         with tempfile.TemporaryDirectory() as tmp:
             out = pathlib.Path(tmp) / "out"
             self.assertEqual(
@@ -608,7 +608,7 @@ class SourceLabelTests(unittest.TestCase):
     def test_external_rules_get_a_stable_label_instead_of_an_absolute_path(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
-            rules = root / "probe.ldsl"
+            rules = root / "probe.lspec"
             rules.write_text("ruleset G_X { legal_for {s32}; }\n", encoding="utf-8")
             out = root / "out"
             self.assertEqual(
@@ -627,7 +627,7 @@ class SourceLabelTests(unittest.TestCase):
             manifest = json.loads(
                 (out / codegen.GENERATED_MANIFEST).read_text(encoding="utf-8")
             )
-            self.assertEqual(manifest["source"], "external/probe.ldsl")
+            self.assertEqual(manifest["source"], "external/probe.lspec")
 
 
 if __name__ == "__main__":

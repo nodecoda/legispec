@@ -75,7 +75,7 @@ DSL spec must name the configuration, not just the target.
 Added:
 
 ```text
-toycpu/tools/legalizer_dsl/rules/riscv64-scalar.ldsl
+toycpu/tools/legalizer_dsl/rules/riscv64-scalar.lspec
 toycpu/tools/legalizer_dsl/riscv64-scalar-capabilities.json
 toycpu/out/riscv64-scalar-conformance-report.json
 toycpu/out/riscv64-scalar-check.txt
@@ -247,7 +247,7 @@ Static check:
 ```powershell
 cd F:\llvm-study\toycpu\tools
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-scalar-capabilities.json
 ```
@@ -256,7 +256,7 @@ Differential conformance:
 
 ```powershell
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv64-scalar-conformance-report.json `
@@ -308,7 +308,7 @@ the Zmmul overflow path).
 
 ## 同一配置的单源写法
 
-`rules/riscv-scalar-conditional.ldsl` 用 `--define` 把这份配置与另一个
+`rules/riscv-scalar-conditional.lspec` 用 `--define` 把这份配置与另一个
 XLen 配置写在同一份源码里；决策函数与本文件逐查询等价。见
 `notes/legalizer-dsl-config-guard.md`，一键验证：
 `toycpu/scripts/check-riscv-conditional.ps1`。

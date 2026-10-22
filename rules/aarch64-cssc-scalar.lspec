@@ -9,7 +9,7 @@
 #   HasCSSC     = true (+cssc)
 #   HasSVE      = false
 #
-# This is the +cssc point.  It differs from aarch64-scalar.ldsl only in
+# This is the +cssc point.  It differs from aarch64-scalar.lspec only in
 # four rulesets: G_SMIN/G_SMAX/G_UMIN/G_UMAX, G_ABS, G_CTPOP, G_CTTZ.
 #
 # This is NOT a model of all of AArch64.  Omitted on purpose:

@@ -80,6 +80,23 @@ DOCS = DATA_ROOT / "docs"
 CLAIMS_DIR = DATA_ROOT / "claims"
 TESTS = DATA_ROOT / "tests"
 
+# Canonical rule-file suffix.  ``.ldsl`` is the pre-1.0 historical spelling: an
+# explicit ``--rules`` path still parses, but nothing discovers it implicitly.
+RULE_SUFFIX = ".lspec"
+LEGACY_RULE_SUFFIX = ".ldsl"
+
+
+def iter_rule_files(root: pathlib.Path | None = None) -> list[pathlib.Path]:
+    """Return the committed rule files in deterministic order.
+
+    Packaging, the closure gate, the strict sweep and the CI scripts all call
+    this, so the canonical suffix is declared exactly once.
+    """
+    directory = RULES if root is None else pathlib.Path(root)
+    return sorted(
+        path for path in directory.glob(f"*{RULE_SUFFIX}") if path.is_file()
+    )
+
 OUT = out_root()
 LEDGER = CLAIMS_DIR / "claims.json"
 CLAIM_LEDGER_MD = CLAIMS_DIR / "claim-ledger.md"

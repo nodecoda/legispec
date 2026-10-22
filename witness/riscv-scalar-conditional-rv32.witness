@@ -1,5 +1,5 @@
 # Declared-unreachable rules for the RV32 configuration of
-# rules/riscv-scalar-conditional.ldsl.
+# rules/riscv-scalar-conditional.lspec.
 #
 # G_SEXT_INREG rule 0 is the transcription of
 #
@@ -7,7 +7,7 @@
 #
 # With sXLen == s32 the first two conjuncts cannot both hold, so the C++
 # really builds a rule that can never fire on RV32.  The frozen
-# riscv32-scalar.ldsl file drops that rule; the single-source file keeps it,
+# riscv32-scalar.lspec file drops that rule; the single-source file keeps it,
 # so the rule table still matches the C++ and the fact is declared here.
 #
 # This is a configuration-specific witness: under is64bit=true the same rule

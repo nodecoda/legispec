@@ -57,8 +57,8 @@ R = closure(Q0) 在 D 内的一步 legalize 后继
 | `measure_concat_shapes.py` | 真实 MIR 形状审计 | 域是否覆盖真实查询 |
 | `closure.py` | 收口审计：pinned 数字 vs 产物 | 文档数字或资产清单漂移时 |
 | `cli.py` / `legalizer-dsl` | `check` / `codegen` / `conform` / `witness` | 日常入口 |
-| `rules/*.ldsl` | 22 份规则转写 | 证明对象 |
-| `tests/` | 392 个单元测试 | 改任何实现前先跑 |
+| `rules/*.lspec` | 22 份规则转写 | 证明对象 |
+| `tests/` | 395 个单元测试 | 改任何实现前先跑 |
 | `witness/` | 每片的固定证据 | 回归 |
 | `*capabilities.json` | custom/libcall/lower 的 provider 契约 | strict check |
 
@@ -73,7 +73,7 @@ hand-only=6
 rules-files=22
 hand-queries=321627
 constructs=63
-tests=392
+tests=395
 <!-- /closure:pinned -->
 
 这些数字由 `closure.py check` 从 `claims.json`、`rules/`、`construct-coverage.json`、
@@ -85,9 +85,9 @@ tests=392
 ## 4. 覆盖清单
 
 GeneratedCpp 证据只覆盖下列 16 条 generated claim 对应的规则；另外 6 条规则是
-显式 hand-only：`aarch64-pointer.ldsl`、`riscv-conditional-gconstant.ldsl`、
-`riscv-scalar-conditional.ldsl`、`riscv32-mzb-scalar.ldsl`、
-`riscv32-pointer.ldsl`、`riscv64-pointer.ldsl`。原因与允许范围记录在
+显式 hand-only：`aarch64-pointer.lspec`、`riscv-conditional-gconstant.lspec`、
+`riscv-scalar-conditional.lspec`、`riscv32-mzb-scalar.lspec`、
+`riscv32-pointer.lspec`、`riscv64-pointer.lspec`。原因与允许范围记录在
 `claims/generated-evidence.json`。
 
 | Target | 切片 | 代表查询数 | 规则命中 |
@@ -115,7 +115,7 @@ GeneratedCpp 证据只覆盖下列 16 条 generated claim 对应的规则；另�
 ## 5. 证据链
 
 ```text
-rules/*.ldsl
+rules/*.lspec
   -> parser.py            语法 / 宏 / config guard
   -> model.py             语义求值
   -> check --strict       K001 重叠、K002 顺序敏感、C004 custom 覆盖、可达性
@@ -179,7 +179,7 @@ rules/*.ldsl
 1. **选点**：一个 opcode + 一个固定配置（triple/cpu/features/pointer）。
 2. **读 C++**：把 builder 展开成有序规则，记录文件与行号。
 3. **写 domain**：types/imms/mems/q0 + filter；filter 的依据必须是 opcode 契约。
-4. **写 LDSL**：`rules/<target>-<slice>.ldsl`，跑 `check --strict`。
+4. **写 LDSL**：`rules/<target>-<slice>.lspec`，跑 `check --strict`。
 5. **写 capabilities**：custom/libcall/lower 的 symbol 与 opcode。
 6. **写 witness**：正例、负例、顺序敏感例。
 7. **生成 + 建 oracle + 差分**：`codegen` → `build.ps1` → `conformance.py`。
@@ -213,8 +213,8 @@ python scripts/refresh_evidence.py --all --write-ledger
 python -X utf8 -m legalizer_dsl.closure check
 
 # 单切片语法/静态检查与代码生成
-python -X utf8 -m legalizer_dsl --rules rules/aarch64-concat-vectors.ldsl check --strict
-python -X utf8 -m legalizer_dsl --rules rules/aarch64-concat-vectors.ldsl codegen --out-dir out/codegen
+python -X utf8 -m legalizer_dsl --rules rules/aarch64-concat-vectors.lspec check --strict
+python -X utf8 -m legalizer_dsl --rules rules/aarch64-concat-vectors.lspec codegen --out-dir out/codegen
 ```
 
 版本矩阵和 LLVM 升级顺序见 [`COMPATIBILITY.md`](COMPATIBILITY.md)。
@@ -223,9 +223,9 @@ python -X utf8 -m legalizer_dsl --rules rules/aarch64-concat-vectors.ldsl codege
 
 1. 本文 §0–§6；
 2. `grammar.ebnf`（只看 program/ruleset/rule/domain 四段）；
-3. `rules/toycpu.ldsl`（最简单的完整规则表）；
-4. `rules/aarch64-concat-vectors.ldsl`（custom + bitcast + 域过滤）；
-5. `rules/riscv-scalar-conditional.ldsl`（config guard）；
+3. `rules/toycpu.lspec`（最简单的完整规则表）；
+4. `rules/aarch64-concat-vectors.lspec`（custom + bitcast + 域过滤）；
+5. `rules/riscv-scalar-conditional.lspec`（config guard）；
 6. `model.py` 的 `Action`/`Query`/`Domain`，再 `parser.py` 的 `parse_rule`；
 7. `codegen.py` 的 `emit_ruleset`；
 8. `conformance.py` 的 `iter_d_queries`/`closure_queries`；
@@ -253,7 +253,7 @@ python -X utf8 -m legalizer_dsl --rules rules/aarch64-concat-vectors.ldsl codege
 
 ```text
 claims=43 proven=43 failed=0
-392 tests OK（1 个环境相关 skip）
+395 tests OK（1 个环境相关 skip）
 strict rules sweep 22/22
 codegen contract PASS（22 份规则、24 个 config 变体）
 integration smoke PASS（ToyCPU 全 D、AArch64 vector；SKIP 不算通过）

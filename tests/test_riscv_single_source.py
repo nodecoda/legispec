@@ -41,7 +41,7 @@ RULES = pathlib.Path(__file__).resolve().parents[1] / "rules"
 
 CONFIGS = {
     "rv64": {
-        "file": RULES / "riscv64-scalar.ldsl",
+        "file": RULES / "riscv64-scalar.lspec",
         "config": {
             "is64bit": True,
             "sXLen": LLT.scalar(64),
@@ -50,7 +50,7 @@ CONFIGS = {
         "capabilities": "riscv64-scalar-capabilities.json",
     },
     "rv32": {
-        "file": RULES / "riscv32-scalar.ldsl",
+        "file": RULES / "riscv32-scalar.lspec",
         "config": {
             "is64bit": False,
             "sXLen": LLT.scalar(32),
@@ -60,7 +60,7 @@ CONFIGS = {
     },
 }
 
-UNIFIED = RULES / "riscv-scalar-conditional.ldsl"
+UNIFIED = RULES / "riscv-scalar-conditional.lspec"
 
 # Declared scalar domain of both files (rv64/scalar and rv32/scalar agree).
 DOMAIN_TYPES = tuple(

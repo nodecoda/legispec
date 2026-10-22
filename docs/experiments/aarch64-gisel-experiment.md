@@ -79,7 +79,7 @@ sMaxScalar  = s64
 ```
 
 This file is the `generic` (CSSC off) point.  The `+cssc` point is
-`rules/aarch64-cssc-scalar.ldsl`; it differs only in four rulesets
+`rules/aarch64-cssc-scalar.lspec`; it differs only in four rulesets
 (`G_SMIN/G_SMAX/G_UMIN/G_UMAX`, `G_ABS`, `G_CTPOP`, `G_CTTZ`).
 
 The `NEON`/`FPARMv8` gate is a **target-model precondition**, not a legality
@@ -92,9 +92,9 @@ the chosen configuration in its header and in
 Added:
 
 ```text
-toycpu/tools/legalizer_dsl/rules/aarch64-scalar.ldsl
+toycpu/tools/legalizer_dsl/rules/aarch64-scalar.lspec
 toycpu/tools/legalizer_dsl/aarch64-scalar-capabilities.json
-toycpu/tools/legalizer_dsl/rules/aarch64-cssc-scalar.ldsl
+toycpu/tools/legalizer_dsl/rules/aarch64-cssc-scalar.lspec
 toycpu/tools/legalizer_dsl/aarch64-cssc-scalar-capabilities.json
 toycpu/out/aarch64-scalar-conformance-report.json
 toycpu/out/aarch64-scalar-check.txt
@@ -566,7 +566,7 @@ requirement, not a convenience; section 6 explains the two assertions that
 forced it.
 
 Q0 seeds (one or more per ruleset) are in the `domain` block of
-`rules/aarch64-scalar.ldsl`.  The seeds include the four rulesets added for the
+`rules/aarch64-scalar.lspec`.  The seeds include the four rulesets added for the
 CSSC axis, so their arity is defined and they participate in closure.
 
 ## 5. Oracle
@@ -836,7 +836,7 @@ Static check:
 ```powershell
 cd F:\llvm-study\toycpu\tools
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
   check --strict
 ```
 
@@ -844,7 +844,7 @@ Differential conformance:
 
 ```powershell
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\aarch64-scalar-conformance-report.json `
@@ -896,14 +896,14 @@ CSSC is covered separately in `aarch64-cssc-experiment.md`.
 The highest-value next experiments are:
 
 1. **Pointer subset (done).** The scalar pointer rulesets are modeled in
-   `aarch64-pointer.ldsl`: 11 rulesets, 17 rules, 924 queries, 0 divergences.
+   `aarch64-pointer.lspec`: 11 rulesets, 17 rules, 924 queries, 0 divergences.
    Remaining pointer work: vector pointers (`v2p0`), address spaces, and the
    custom rewrite bodies.
 2. **Vector subset.** Add vector LLTs and the vector rule primitives
    (`clampNumElements`, `clampMaxNumElements`, `moreElementsToNextPow2`,
    `scalarize`, `widenVectorEltsToVectorMinSize`) and model AArch64 vector
    add/mul/logic.  This is where most of AArch64's legalizer complexity lives.
-3. **Feature parameterization.**  CSSC is done: `aarch64-cssc-scalar.ldsl`
+3. **Feature parameterization.**  CSSC is done: `aarch64-cssc-scalar.lspec`
    flips four rulesets and is differentially tested against a separate
    `+cssc` oracle.  Remaining: `HasSVE` and `HasFP16` variants.  The LDSL still
    records one fixed subtarget configuration per file by design.

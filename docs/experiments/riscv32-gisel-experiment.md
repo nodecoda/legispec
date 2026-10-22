@@ -161,7 +161,7 @@ staying legal.
 
 ## 4. Orthogonality with the feature axis
 
-The RV32 run uses the same `riscv64-mzb-scalar.ldsl` domain, so the query
+The RV32 run uses the same `riscv64-mzb-scalar.lspec` domain, so the query
 hash is identical, but the answers differ on 41% of queries.  Conversely, the
 `+m,+zmmul,+zbb` file remains an RV64 model; it is not valid for RV32 because
 `legalFor({sXLen})`, libcall widths and every `is64Bit()` branch move.
@@ -192,7 +192,7 @@ Static check:
 ```powershell
 cd F:\llvm-study\toycpu\tools
 python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-scalar.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-scalar-capabilities.json
 ```
@@ -201,7 +201,7 @@ Differential conformance:
 
 ```powershell
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv32-scalar-conformance-report.json `
@@ -248,7 +248,7 @@ single-axis model can show.
 
 ## 同一配置的单源写法
 
-`rules/riscv-scalar-conditional.ldsl` 用 `--define` 把这份配置与另一个
+`rules/riscv-scalar-conditional.lspec` 用 `--define` 把这份配置与另一个
 XLen 配置写在同一份源码里；决策函数与本文件逐查询等价。见
 `notes/legalizer-dsl-config-guard.md`，一键验证：
 `toycpu/scripts/check-riscv-conditional.ps1`。

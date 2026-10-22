@@ -66,7 +66,7 @@ p0          = pointer(0, 64)
 Added:
 
 ```text
-toycpu/tools/legalizer_dsl/rules/x86-scalar.ldsl
+toycpu/tools/legalizer_dsl/rules/x86-scalar.lspec
 toycpu/tools/legalizer_dsl/x86-scalar-capabilities.json
 toycpu/tools/oracle/... -> legalizer-oracle-x86.exe
 toycpu/out/x86-scalar-conformance-report.json
@@ -90,7 +90,7 @@ The `cli.py` change generalizes auto-discovery from a hard-coded
 <rules-stem>-capabilities.json   (fallback: capabilities.json)
 ```
 
-For `toycpu.ldsl` the resolved paths are unchanged, so the ToyCPU gate was
+For `toycpu.lspec` the resolved paths are unchanged, so the ToyCPU gate was
 re-run and still passes.
 
 ## 3. Modeled rules
@@ -307,7 +307,7 @@ closure.  `s80/s96/s256` also exercise scalar values above `s64`.
 `p0` (a 32-bit pointer) is not silently treated as X86's `p0`.
 
 Q0 seeds (one or more per ruleset) are in the `domain` block of
-`rules/x86-scalar.ldsl`.
+`rules/x86-scalar.lspec`.
 
 ## 5. Oracle
 
@@ -432,7 +432,7 @@ Static check:
 ```powershell
 cd F:\llvm-study\toycpu\tools
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\x86-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\x86-scalar.lspec `
   check --strict
 ```
 
@@ -440,7 +440,7 @@ Differential conformance:
 
 ```powershell
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\x86-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\x86-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle\legalizer-oracle-x86.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\x86-scalar-conformance-report.json

@@ -5,7 +5,7 @@ Status: 已证明（hand + generated：185 查询，0 分歧，13/14 规则）
 
 ## 1. 范围
 
-`rules/aarch64-fcmp.ldsl` 转写
+`rules/aarch64-fcmp.lspec` 转写
 `llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp`
 （LLVM `d855d9e48067026317998cbff734004f328f833d`）771-799 行：
 
@@ -50,7 +50,7 @@ Types[1] = 被比较的浮点值（f16 / bf16 / f32 / f64 / f128 或固定向量
 
 `HasFP16 = false` 是一个**冻结配置**。C++ 的第二个 `legalFor` 被
 `HasFP16` 包住，在这个配置下宏不发射任何规则，因此规则文件直接省略它，
-不写 guard。这与 `rules/aarch64-atomic.ldsl` 对 `UseOutlineAtomics`
+不写 guard。这与 `rules/aarch64-atomic.lspec` 对 `UseOutlineAtomics`
 的处理一致：一个产品点一份冻结文件；`+fullfp16` 若要做，应是独立文件，
 而不是让所有消费者都传 `--define HasFP16=false`。
 
@@ -358,7 +358,7 @@ core=27 guard=5 macro=15 none=11 partial=5
 ## 6. 本片新增文件
 
 ```text
-rules/aarch64-fcmp.ldsl
+rules/aarch64-fcmp.lspec
 aarch64-fcmp-capabilities.json
 witness/aarch64-fcmp.witness
 tests/test_fcmp_primitives.py（18 个测试）

@@ -5,7 +5,7 @@ Status: 已证明（hand + generated，176 查询，0 分歧）
 
 ## 1. 范围
 
-`rules/aarch64-vector.ldsl` 转写
+`rules/aarch64-vector.lspec` 转写
 `llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp` 的三个区域：
 
 ```text
@@ -25,7 +25,7 @@ HasSVE      = false
 ```
 
 `HasCSSC` 控制的两条 builder 调用在构造期为假，因此不生成规则，和
-`aarch64-scalar.ldsl` 的处理方式相同。
+`aarch64-scalar.lspec` 的处理方式相同。
 
 ## 2. 为什么选这一片
 
@@ -177,7 +177,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
 ```powershell
 python -X utf8 F:\llvm-study	oycpu	ools\legalizer_dsl\conformance.py `
   --rules F:\llvm-study	oycpu	ools\legalizer_dsl
-ulesarch64-vector.ldsl `
+ulesarch64-vector.lspec `
   --oracle F:\llvm-study	oycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
   --out F:\llvm-study	oycpu\outarch64-vector-conformance-report.json `
   --llvm-build F:/llvm/build

@@ -43,12 +43,12 @@ SLOT_FIELDS = (
 )
 
 CONFIG_DEFINES = {
-    "riscv-conditional-gconstant.ldsl": [
+    "riscv-conditional-gconstant.lspec": [
         "is64bit=true",
         "sXLen=s64",
         "sDoubleXLen=s128",
     ],
-    "riscv-scalar-conditional.ldsl": [
+    "riscv-scalar-conditional.lspec": [
         "is64bit=true",
         "sXLen=s64",
         "sDoubleXLen=s128",
@@ -170,7 +170,7 @@ def _generate(source: str, *, config=None):
         manifest = codegen.generate(
             info,
             out_dir=pathlib.Path(tmp),
-            rules_rel="probe.ldsl",
+            rules_rel="probe.lspec",
             rules_sha="0" * 64,
             namespace="Probe",
             output_stem="probe_rules_gen",
@@ -180,7 +180,7 @@ def _generate(source: str, *, config=None):
 
 class AllRulesStructureTests(unittest.TestCase):
     def test_all_committed_rules_match_ast_structure(self):
-        paths = sorted(RULES_DIR.glob("*.ldsl"))
+        paths = sorted(RULES_DIR.glob("*.lspec"))
         self.assertEqual(len(paths), 22)
         for path in paths:
             with self.subTest(rule=path.name):

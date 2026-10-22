@@ -33,7 +33,7 @@
 #
 # Feature axis (M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V) is fixed at "off" in this
 # file.  That is orthogonal to XLen and is covered by separate frozen files:
-# riscv64-mzb-scalar.ldsl and riscv32-mzb-scalar.ldsl.
+# riscv64-mzb-scalar.lspec and riscv32-mzb-scalar.lspec.
 #
 # Omitted on purpose, same as the frozen files:
 #   * vector / scalable-vector rules

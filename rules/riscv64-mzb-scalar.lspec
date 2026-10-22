@@ -11,7 +11,7 @@
 #
 # generic-rv64 itself only declares +64bit,+i (RISCVProcessors.td:108-113);
 # the M/Zmmul/Zbb features are supplied by the oracle's baked-in feature
-# string.  This file is therefore a *feature-flip* of riscv64-scalar.ldsl,
+# string.  This file is therefore a *feature-flip* of riscv64-scalar.lspec,
 # not a different CPU: same XLen, same triple, same pointer rules.  Comparing
 # the two files shows exactly which legality decisions depend on which
 # extension, which is the point of the experiment.

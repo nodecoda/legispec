@@ -18,7 +18,7 @@
 #   * G_MERGE_VALUES / G_UNMERGE_VALUES, G_BITCAST
 #   * calls, jump tables in memory, and the actual legalizeCustom bodies
 #
-# Some opcodes appear both here and in riscv64-scalar.ldsl because their C++
+# Some opcodes appear both here and in riscv64-scalar.lspec because their C++
 # ruleset mixes pointer and scalar shapes (G_CONSTANT, G_PHI, G_ICMP,
 # G_SELECT).  Each LDSL file is a standalone experiment: the scalar file
 # models only the scalar domain, this file adds p0:64 and re-states the whole

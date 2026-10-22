@@ -14,8 +14,8 @@
 #   p0          = p0 (32-bit)
 #
 # This is the product point of the two axes:
-#   * XLen: 64 -> 32   (riscv32-scalar.ldsl)
-#   * features: +m,+zmmul,+zbb   (riscv64-mzb-scalar.ldsl)
+#   * XLen: 64 -> 32   (riscv32-scalar.lspec)
+#   * features: +m,+zmmul,+zbb   (riscv64-mzb-scalar.lspec)
 # The product is not the sum of the two diffs: rule ORDER interacts with
 # XLen.  In particular, customFor({s32}) is emitted unconditionally for
 # G_SDIV/G_UDIV/G_UREM and G_CTLZ/G_CTTZ, but legalFor({sXLen}) precedes it.

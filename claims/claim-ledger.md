@@ -98,64 +98,64 @@ one step: LegalizerInfo::getAction(LegalityQuery); not the iterative Legalizer p
 ## Scope and exclusions
 
 - `toycpu`: full ToyCPU policy layer
-- `toycpu-generated`: C++ generated from toycpu.ldsl by codegen.py
+- `toycpu-generated`: C++ generated from toycpu.lspec by codegen.py
 - `x86-scalar`: X86-64 integer + pointer shapes
   - not covered: vector, FP, memory descriptors, atomics, custom
-- `x86-generated`: C++ generated from x86-scalar.ldsl by codegen.py
+- `x86-generated`: C++ generated from x86-scalar.lspec by codegen.py
   - not covered: vector, FP, memory descriptors, atomics, custom
 - `aarch64-scalar`: AArch64 generic scalar subset
   - not covered: vector / SVE / FP16, memory descriptors, atomics
-- `aarch64-generated`: C++ generated from aarch64-scalar.ldsl by codegen.py
+- `aarch64-generated`: C++ generated from aarch64-scalar.lspec by codegen.py
   - not covered: vector / SVE / FP16, memory descriptors, atomics
 - `aarch64-cssc-scalar`: AArch64 scalar subset with +cssc
   - not covered: vector / SVE / FP16, memory descriptors, atomics
-- `aarch64-cssc-generated`: C++ generated from aarch64-cssc-scalar.ldsl by codegen.py
+- `aarch64-cssc-generated`: C++ generated from aarch64-cssc-scalar.lspec by codegen.py
   - not covered: vector / SVE / FP16, memory descriptors, atomics
 - `aarch64-pointer`: AArch64 pointer subset
   - not covered: vector / SVE / FP16, memory descriptors, atomics
 - `aarch64-atomic`: AArch64 generic atomic subset (UseOutlineAtomics=false)
   - not covered: vector / SVE / FP16, memory descriptors, outline atomics, LSE
-- `aarch64-atomic-generated`: C++ generated from aarch64-atomic.ldsl by codegen.py
+- `aarch64-atomic-generated`: C++ generated from aarch64-atomic.lspec by codegen.py
   - not covered: vector / SVE / FP16, memory descriptors, outline atomics, LSE
 - `aarch64-atomic-outline`: AArch64 atomic subset with +outline-atomics (UseOutlineAtomics=true)
   - not covered: vector / SVE / FP16, memory descriptors, LSE
-- `aarch64-atomic-outline-generated`: C++ generated from aarch64-atomic-outline.ldsl by codegen.py
+- `aarch64-atomic-outline-generated`: C++ generated from aarch64-atomic-outline.lspec by codegen.py
   - not covered: vector / SVE / FP16, memory descriptors, LSE
 - `aarch64-atomic-lse`: AArch64 atomic subset with +lse (policy table identical to generic)
   - not covered: vector / SVE / FP16, memory descriptors, outline atomics
 - `aarch64-vector`: AArch64 generic fixed-vector subset: min/max element-count clamps, abs-difference/average legalFor+lower, CLMUL legalFor
   - not covered: scalable vectors (SVE), FP16, memory descriptors, atomics, custom handlers
-- `aarch64-vector-generated`: C++ generated from aarch64-vector.ldsl by codegen.py
+- `aarch64-vector-generated`: C++ generated from aarch64-vector.lspec by codegen.py
   - not covered: scalable vectors (SVE), FP16, memory descriptors, atomics, custom handlers
 - `aarch64-vector-arith`: AArch64 generic G_ADD/G_SUB/G_AND/G_OR/G_XOR: legalFor, scalar clamps, lane-count clamps, minScalarOrEltIf, scalarizeIf and moreElementsToNextPow2
   - not covered: scalable vectors (SVE), memory descriptors, atomics, custom handlers, FP and calls
-- `aarch64-vector-arith-generated`: C++ generated from aarch64-vector-arith.ldsl by codegen.py
+- `aarch64-vector-arith-generated`: C++ generated from aarch64-vector-arith.lspec by codegen.py
   - not covered: scalable vectors (SVE), memory descriptors, atomics, custom handlers, FP and calls
 - `aarch64-vector-mul`: AArch64 generic G_MUL: legalFor, scalar clamps, lane-count clamps, minScalarOrEltIf, scalarizeIf and moreElementsToNextPow2
   - not covered: scalable vectors (SVE), memory descriptors, atomics, custom handlers, FP and calls
-- `aarch64-vector-mul-generated`: C++ generated from aarch64-vector-mul.ldsl by codegen.py
+- `aarch64-vector-mul-generated`: C++ generated from aarch64-vector-mul.lspec by codegen.py
   - not covered: scalable vectors (SVE), memory descriptors, atomics, custom handlers, FP and calls
 - `aarch64-vector-shift`: AArch64 generic G_SHL/G_ASHR/G_LSHR: two-slot scalar/vector interaction (minScalarSameAs, min/maxScalarEltSameAsIf), scalar clamps, lane-count clamps, scalarizeIf and moreElementsToNextPow2
   - not covered: scalable vectors (SVE), memory descriptors, atomics, custom handlers, FP and calls
-- `aarch64-vector-shift-generated`: C++ generated from aarch64-vector-shift.ldsl by codegen.py
+- `aarch64-vector-shift-generated`: C++ generated from aarch64-vector-shift.lspec by codegen.py
   - not covered: scalable vectors (SVE), memory descriptors, atomics, custom handlers, FP and calls
 - `aarch64-icmp`: AArch64 generic G_ICMP: result/operand slot relation, widenScalarOrEltToNextPow2, minScalarOrElt, pointer-vector result widening and scalar/lane clamps
   - not covered: scalable vectors (SVE), memory descriptors, atomics, custom handler bodies, FP and calls
-- `aarch64-icmp-generated`: C++ generated from aarch64-icmp.ldsl by codegen.py
+- `aarch64-icmp-generated`: C++ generated from aarch64-icmp.lspec by codegen.py
   - not covered: scalable vectors (SVE), memory descriptors, atomics, custom handler bodies, FP and calls
 - `aarch64-fcmp`: AArch64 generic G_FCMP: integer mask result, float operand, mixed-slot widening, scalarize of 128-bit vectors, lane clamps and the s128 libcall
   - not covered: scalable vectors (SVE), memory descriptors, atomics, custom handler bodies, libcall target lowering / ABI, +fullfp16 (HasFP16 = false is frozen)
-- `aarch64-fcmp-generated`: C++ generated from aarch64-fcmp.ldsl by codegen.py, with LLT::setUseExtended(true) declared explicitly
+- `aarch64-fcmp-generated`: C++ generated from aarch64-fcmp.lspec by codegen.py, with LLT::setUseExtended(true) declared explicitly
   - not covered: scalable vectors (SVE), memory descriptors, atomics, custom handler bodies, libcall target lowering / ABI, +fullfp16 (HasFP16 = false is frozen)
 - `aarch64-concat-vectors`: AArch64 generic G_CONCAT_VECTORS: legalFor pairs, the sub-byte custom escape hatch, and the concat bitcast (source total size plus result lane division)
   - not covered: scalable vectors (SVE), custom handler bodies (legalizeConcatVectors MIR), bitcast successors outside the concat contract, memory descriptors and atomics, calls / ABI
-- `aarch64-concat-vectors-generated`: C++ generated from aarch64-concat-vectors.ldsl by codegen.py, with LLT::setUseExtended(true) declared explicitly
+- `aarch64-concat-vectors-generated`: C++ generated from aarch64-concat-vectors.lspec by codegen.py, with LLT::setUseExtended(true) declared explicitly
   - not covered: scalable vectors (SVE), custom handler bodies (legalizeConcatVectors MIR), bitcast successors outside the concat contract, memory descriptors and atomics, calls / ABI
 - `riscv64-scalar`: RV64 generic-rv64 (+64bit,+i) scalar subset
   - not covered: M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V, vector / scalable vector, memory descriptors and atomics, FP (F/D) and calls
-- `riscv64-generated`: C++ generated from riscv64-scalar.ldsl by codegen.py (RV64)
+- `riscv64-generated`: C++ generated from riscv64-scalar.lspec by codegen.py (RV64)
   - not covered: M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V, vector / scalable vector, memory descriptors and atomics, FP (F/D) and calls
-- `riscv64-mzb-generated`: C++ generated from riscv64-mzb-scalar.ldsl by codegen.py
+- `riscv64-mzb-generated`: C++ generated from riscv64-mzb-scalar.lspec by codegen.py
   - not covered: M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V, vector / scalable vector, memory descriptors and atomics, FP (F/D) and calls
 - `riscv64-pointer`: RV64 pointer subset
   - not covered: M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V, vector / scalable vector, memory descriptors and atomics, FP (F/D) and calls
@@ -165,7 +165,7 @@ one step: LegalizerInfo::getAction(LegalityQuery); not the iterative Legalizer p
   - not covered: M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V, vector / scalable vector, memory descriptors and atomics, FP (F/D) and calls
 - `riscv32-scalar`: RV32 generic-rv32 (+32bit,+i) scalar subset
   - not covered: M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V, vector / scalable vector, memory descriptors and atomics, FP (F/D) and calls
-- `riscv32-generated`: C++ generated from riscv32-scalar.ldsl by codegen.py
+- `riscv32-generated`: C++ generated from riscv32-scalar.lspec by codegen.py
   - not covered: M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V, vector / scalable vector, memory descriptors and atomics, FP (F/D) and calls
 - `riscv32-mzb-scalar`: RV32 scalar subset with +m,+zmmul,+zbb
   - not covered: M, Zmmul, Zbb, Zbc, Zbkc, Zbkb, P, V, vector / scalable vector, memory descriptors and atomics, FP (F/D) and calls

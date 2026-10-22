@@ -38,7 +38,7 @@ from legalizer_dsl import (
     parse_llt,
 )
 
-RULES = pathlib.Path(__file__).resolve().parents[1] / "rules" / "toycpu.ldsl"
+RULES = pathlib.Path(__file__).resolve().parents[1] / "rules" / "toycpu.lspec"
 INFO = parse_file(RULES)
 
 

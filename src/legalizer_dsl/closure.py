@@ -120,7 +120,7 @@ def generated_evidence(entries: list[dict]) -> tuple[dict, list[str]]:
     """
 
     problems: list[str] = []
-    on_disk = {path.name for path in RULES.glob("*.ldsl") if path.is_file()}
+    on_disk = {path.name for path in paths.iter_rule_files(RULES)}
     generated = {
         claim["rules"]
         for claim in entries
@@ -229,7 +229,7 @@ def audit(write: bool, skip_evidence: bool = False, skip_tests: bool = False) ->
             problems.append(f"{cid}: report was produced from a different rules hash")
 
     referenced = {claim["rules"] for claim in entries}
-    on_disk = {path.name for path in RULES.glob("*.ldsl") if path.is_file()}
+    on_disk = {path.name for path in paths.iter_rule_files(RULES)}
     for missing in sorted(on_disk - referenced):
         problems.append(f"rules file has no claim: {missing}")
     for missing in sorted(referenced - on_disk):

@@ -18,6 +18,16 @@ Evidence storage and reproduction are in [`EVIDENCE.md`](EVIDENCE.md).
 | Python | `>=3.10` | `pyproject.toml` |
 | Evidence schema | `legalizer-dsl-conformance-v1`, `legalizer-dsl-integration-v2` | `conformance.py`, `integration_smoke.py` |
 
+### Rule-file suffix
+
+`.lspec` is the canonical rule-file suffix. The 0.2.0 tree renamed every
+`rules/*.ldsl` asset to `rules/*.lspec` without changing rule bodies; the only
+textual change inside the assets is the cross-reference in a comment. Discovery
+(`paths.iter_rule_files`) is suffix-driven and returns `.lspec` only, so a
+stale `.ldsl` file left in a working tree is never picked up. The parser itself
+is suffix-agnostic, so an explicit `--rules old.ldsl` still parses; that is a
+migration escape hatch, not a supported packaging layout.
+
 An integration report is valid only when it was produced from this exact
 tree and toolchain. The status gate re-checks `head_commit == HEAD`,
 `worktree_dirty == false`, the generator/DSL-spec versions, the
@@ -27,7 +37,7 @@ older commit, a dirty worktree, or a different generator is stale even if its
 JSON shape looks valid.
 
 The rules binding is target-specific: `inputs.rules` must equal the declared
-rules file for `target` (for example `rules/toycpu.ldsl` for `toycpu`), not
+rules file for `target` (for example `rules/toycpu.lspec` for `toycpu`), not
 just any file whose hash matches. `query_count` must equal the number of JSONL
 records in the hashed query file and must not exceed the recorded
 `query_limit` (when the limit is non-zero). Generated header/source paths are
@@ -59,29 +69,29 @@ resolved at generation time; there is no runtime subtarget dispatch.
 
 | Target | Rules file | Config | Claim id(s) | Queries | Rules matched |
 |---|---|---|---|---:|---:|
-| ToyCPU | `toycpu.ldsl` | default | `toycpu`, `toycpu-generated` | 243714 | 87/89 |
-| X86-64 | `x86-scalar.ldsl` | default | `x86-scalar`, `x86-generated` | 7591 | 69/69 |
-| AArch64 | `aarch64-scalar.ldsl` | default | `aarch64-scalar`, `aarch64-generated` | 8161 | 91/91 |
-| AArch64 + CSSC | `aarch64-cssc-scalar.ldsl` | default | `aarch64-cssc-scalar`, `aarch64-cssc-generated` | 8161 | 95/95 |
-| AArch64 | `aarch64-pointer.ldsl` | default | `aarch64-pointer` | 924 | 17/17 |
-| AArch64 | `aarch64-atomic.ldsl` | generic | `aarch64-atomic`, `aarch64-atomic-generated` | 612 | 11/11 |
-| AArch64 | `aarch64-atomic-outline.ldsl` | outline-atomics | `aarch64-atomic-outline`, `aarch64-atomic-outline-generated` | 612 | 10/10 |
-| AArch64 | `aarch64-atomic.ldsl` | LSE | `aarch64-atomic-lse` | 612 | 11/11 |
-| AArch64 | `aarch64-vector.ldsl` | fixed vectors | `aarch64-vector`, `aarch64-vector-generated` | 176 | 10/11 |
-| AArch64 | `aarch64-vector-arith.ldsl` | fixed vectors | `aarch64-vector-arith`, `aarch64-vector-arith-generated` | 120 | 13/15 |
-| AArch64 | `aarch64-vector-mul.ldsl` | fixed vectors | `aarch64-vector-mul`, `aarch64-vector-mul-generated` | 24 | 13/15 |
-| AArch64 | `aarch64-vector-shift.ldsl` | fixed vectors | `aarch64-vector-shift`, `aarch64-vector-shift-generated` | 270 | 19/21 |
-| AArch64 | `aarch64-icmp.ldsl` | fixed vectors | `aarch64-icmp`, `aarch64-icmp-generated` | 173 | 19/23 |
-| AArch64 | `aarch64-fcmp.ldsl` | fixed vectors | `aarch64-fcmp`, `aarch64-fcmp-generated` | 185 | 13/14 |
-| AArch64 | `aarch64-concat-vectors.ldsl` | fixed vectors | `aarch64-concat-vectors`, `aarch64-concat-vectors-generated` | 28 | 3/3 |
-| RISC-V 64 | `riscv64-scalar.ldsl` | RV64 | `riscv64-scalar`, `riscv64-generated` | 7861 | 103/103 |
-| RISC-V 64 + M/Zbb | `riscv64-mzb-scalar.ldsl` | RV64 | `riscv64-mzb-scalar`, `riscv64-mzb-generated` | 7861 | 117/118 |
-| RISC-V 64 | `riscv64-pointer.ldsl` | RV64, pointer widths | `riscv64-pointer`, `riscv64-pointer-mzb` | 770 | 32/32 |
-| RISC-V 32 | `riscv32-scalar.ldsl` | RV32 | `riscv32-scalar`, `riscv32-generated` | 7861 | 100/100 |
-| RISC-V 32 + M/Zbb | `riscv32-mzb-scalar.ldsl` | RV32 | `riscv32-mzb-scalar` | 7861 | 111/115 |
-| RISC-V 32 | `riscv32-pointer.ldsl` | RV32, pointer widths | `riscv32-pointer`, `riscv32-pointer-mzb` | 770 | 31/31 |
-| RISC-V conditional | `riscv-conditional-gconstant.ldsl` | RV32 / RV64 | `riscv-conditional-gconstant-rv32`, `-rv64` | 9 | 4/4 |
-| RISC-V conditional | `riscv-scalar-conditional.ldsl` | RV32 / RV64 | `riscv-conditional-scalar-rv32`, `-rv64` | 7861 | 100/101, 108/108 |
+| ToyCPU | `toycpu.lspec` | default | `toycpu`, `toycpu-generated` | 243714 | 87/89 |
+| X86-64 | `x86-scalar.lspec` | default | `x86-scalar`, `x86-generated` | 7591 | 69/69 |
+| AArch64 | `aarch64-scalar.lspec` | default | `aarch64-scalar`, `aarch64-generated` | 8161 | 91/91 |
+| AArch64 + CSSC | `aarch64-cssc-scalar.lspec` | default | `aarch64-cssc-scalar`, `aarch64-cssc-generated` | 8161 | 95/95 |
+| AArch64 | `aarch64-pointer.lspec` | default | `aarch64-pointer` | 924 | 17/17 |
+| AArch64 | `aarch64-atomic.lspec` | generic | `aarch64-atomic`, `aarch64-atomic-generated` | 612 | 11/11 |
+| AArch64 | `aarch64-atomic-outline.lspec` | outline-atomics | `aarch64-atomic-outline`, `aarch64-atomic-outline-generated` | 612 | 10/10 |
+| AArch64 | `aarch64-atomic.lspec` | LSE | `aarch64-atomic-lse` | 612 | 11/11 |
+| AArch64 | `aarch64-vector.lspec` | fixed vectors | `aarch64-vector`, `aarch64-vector-generated` | 176 | 10/11 |
+| AArch64 | `aarch64-vector-arith.lspec` | fixed vectors | `aarch64-vector-arith`, `aarch64-vector-arith-generated` | 120 | 13/15 |
+| AArch64 | `aarch64-vector-mul.lspec` | fixed vectors | `aarch64-vector-mul`, `aarch64-vector-mul-generated` | 24 | 13/15 |
+| AArch64 | `aarch64-vector-shift.lspec` | fixed vectors | `aarch64-vector-shift`, `aarch64-vector-shift-generated` | 270 | 19/21 |
+| AArch64 | `aarch64-icmp.lspec` | fixed vectors | `aarch64-icmp`, `aarch64-icmp-generated` | 173 | 19/23 |
+| AArch64 | `aarch64-fcmp.lspec` | fixed vectors | `aarch64-fcmp`, `aarch64-fcmp-generated` | 185 | 13/14 |
+| AArch64 | `aarch64-concat-vectors.lspec` | fixed vectors | `aarch64-concat-vectors`, `aarch64-concat-vectors-generated` | 28 | 3/3 |
+| RISC-V 64 | `riscv64-scalar.lspec` | RV64 | `riscv64-scalar`, `riscv64-generated` | 7861 | 103/103 |
+| RISC-V 64 + M/Zbb | `riscv64-mzb-scalar.lspec` | RV64 | `riscv64-mzb-scalar`, `riscv64-mzb-generated` | 7861 | 117/118 |
+| RISC-V 64 | `riscv64-pointer.lspec` | RV64, pointer widths | `riscv64-pointer`, `riscv64-pointer-mzb` | 770 | 32/32 |
+| RISC-V 32 | `riscv32-scalar.lspec` | RV32 | `riscv32-scalar`, `riscv32-generated` | 7861 | 100/100 |
+| RISC-V 32 + M/Zbb | `riscv32-mzb-scalar.lspec` | RV32 | `riscv32-mzb-scalar` | 7861 | 111/115 |
+| RISC-V 32 | `riscv32-pointer.lspec` | RV32, pointer widths | `riscv32-pointer`, `riscv32-pointer-mzb` | 770 | 31/31 |
+| RISC-V conditional | `riscv-conditional-gconstant.lspec` | RV32 / RV64 | `riscv-conditional-gconstant-rv32`, `-rv64` | 9 | 4/4 |
+| RISC-V conditional | `riscv-scalar-conditional.lspec` | RV32 / RV64 | `riscv-conditional-scalar-rv32`, `-rv64` | 7861 | 100/101, 108/108 |
 
 Unmatched rules are declared unreachable, not silent passes. The ledger's
 `unmatched` field records each one; coverage reports summarize them.

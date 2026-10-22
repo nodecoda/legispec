@@ -28,7 +28,7 @@ Signed-off-by: Your Name <you@example.com>
 
 ### 规则一：改规则，必须重跑证据
 
-任何 `rules/*.ldsl` 的内容改动都会让既有断言的 `rules_sha256` 失效。PR 必须包含：
+任何 `rules/*.lspec` 的内容改动都会让既有断言的 `rules_sha256` 失效。PR 必须包含：
 
 ```powershell
 python scripts/reproduce_claims.py --only <受影响的 claim>
@@ -75,7 +75,7 @@ python -m legalizer_dsl.closure check          # 文档 pinned 数字 vs 产物
 
 - Python 3.10+，**只用标准库**，不引入运行时依赖；
 - `src/legalizer_dsl/` 内不做 I/O 副作用，CLI 层负责路径；
-- 文件编码 UTF-8 无 BOM；`.py/.ldsl/.json` 用 LF，`.md/.ps1` 用 CRLF（见 `.gitattributes`）；
+- 文件编码 UTF-8 无 BOM；`.py/.lspec/.json` 用 LF，`.md/.ps1` 用 CRLF（见 `.gitattributes`）；
 - 诊断码 `P/T/K/C` 分段使用，新增诊断必须在 `docs/grammar.ebnf` 或 `diagnostics.py` 注册；
 - 注释写“为什么”，不写“是什么”；不写与代码无关的规划性注释。
 

@@ -143,7 +143,7 @@ generic widening would change both the action and the resulting MIR.
 
 ## 4. Orthogonality: pointer rules are untouched
 
-Running `riscv64-pointer.ldsl` against the **mzb** oracle:
+Running `riscv64-pointer.lspec` against the **mzb** oracle:
 
 ```text
 queries=770 divergences=0 rules=32/32
@@ -175,7 +175,7 @@ Static check:
 ```powershell
 cd F:\llvm-study\toycpu\tools
 python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-mzb-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-mzb-scalar.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-mzb-scalar-capabilities.json
 ```
@@ -184,7 +184,7 @@ Differential conformance:
 
 ```powershell
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-mzb-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-mzb-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv-mzb.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv64-mzb-scalar-conformance-report.json `

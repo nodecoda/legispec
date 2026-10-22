@@ -16,7 +16,7 @@ Status: 说明文档（回答"处理得不完整？"）
 | AArch64 | scalar + pointer + 原子配置族（generic / +outline-atomics / +lse）+ 固定向量切片；无 scalable vector/SVE/FP 算术/内存描述；G_FCMP 浮点比较已覆盖；G_CONCAT_VECTORS custom/bitcast 已覆盖；CSSC scalar 已覆盖 |
 | RISC-V | RV64 与 RV32 两套 scalar + pointer，外加 RV64/RV32 的 `+m,+zmmul,+zbb` 组合；无 RV32+D、`+zbc`/`+zbkc`/`+p`/`+v`、FP/内存/原子/调用 |
 
-**文件大小接近 ToyCPU，不代表覆盖接近 ToyCPU。** 真正的差别在"域"和"特性矩阵"，而 `.ldsl` 文件只是策略表，不是整个后端。
+**文件大小接近 ToyCPU，不代表覆盖接近 ToyCPU。** 真正的差别在"域"和"特性矩阵"，而 `.lspec` 文件只是策略表，不是整个后端。
 
 ## 1. 硬数据
 
@@ -49,24 +49,24 @@ Status: 说明文档（回答"处理得不完整？"）
 
 | 文件 | 字节 |
 |---|---:|
-| `rules/toycpu.ldsl` | 9,868 |
-| `rules/x86-scalar.ldsl` | 5,661 |
-| `rules/aarch64-scalar.ldsl` + `aarch64-pointer.ldsl` | 8,756 + 3,502 = 12,258 |
-| `rules/aarch64-cssc-scalar.ldsl` | 8,888 |
-| `rules/aarch64-atomic.ldsl` | 3,136 |
-| `rules/aarch64-atomic-outline.ldsl` | 2,868 |
-| `rules/aarch64-vector.ldsl` | 2,547 |
-| `rules/aarch64-vector-arith.ldsl` | 3,227 |
-| `rules/aarch64-vector-mul.ldsl` | 3,188 |
-| `rules/aarch64-vector-shift.ldsl` | 5,188 |
-| `rules/aarch64-icmp.ldsl` | 4,805 |
-| `rules/aarch64-fcmp.ldsl` | 7,250 |
-| `rules/aarch64-concat-vectors.ldsl` | 4,451 |
-| `rules/riscv64-scalar.ldsl` + `riscv64-pointer.ldsl` | 9,852 + 4,205 = 14,057 |
-| `rules/riscv64-mzb-scalar.ldsl` | 13,233 |
-| `rules/riscv32-scalar.ldsl` | 11,171 |
-| `rules/riscv32-mzb-scalar.ldsl` | 11,874 |
-| `rules/riscv32-pointer.ldsl` | 5,238 |
+| `rules/toycpu.lspec` | 9,868 |
+| `rules/x86-scalar.lspec` | 5,661 |
+| `rules/aarch64-scalar.lspec` + `aarch64-pointer.lspec` | 8,756 + 3,502 = 12,258 |
+| `rules/aarch64-cssc-scalar.lspec` | 8,888 |
+| `rules/aarch64-atomic.lspec` | 3,136 |
+| `rules/aarch64-atomic-outline.lspec` | 2,868 |
+| `rules/aarch64-vector.lspec` | 2,547 |
+| `rules/aarch64-vector-arith.lspec` | 3,227 |
+| `rules/aarch64-vector-mul.lspec` | 3,188 |
+| `rules/aarch64-vector-shift.lspec` | 5,188 |
+| `rules/aarch64-icmp.lspec` | 4,805 |
+| `rules/aarch64-fcmp.lspec` | 7,250 |
+| `rules/aarch64-concat-vectors.lspec` | 4,451 |
+| `rules/riscv64-scalar.lspec` + `riscv64-pointer.lspec` | 9,852 + 4,205 = 14,057 |
+| `rules/riscv64-mzb-scalar.lspec` | 13,233 |
+| `rules/riscv32-scalar.lspec` | 11,171 |
+| `rules/riscv32-mzb-scalar.lspec` | 11,874 |
+| `rules/riscv32-pointer.lspec` | 5,238 |
 
 AArch64 的 generic scalar + pointer 合计 12,258 字节，仍与 ToyCPU 同量级；+cssc 变体再加 8,888 字节，但覆盖的是同一批 48 个 scalar opcode 的另一个配置点；generic atomic 子集再加 3,136 字节，覆盖 12 个原子 opcode；+outline-atomics 变体再加 2,868 字节，覆盖同一批 opcode 的另一个策略点。RISC-V 的 generic 配置也只有 1.4 倍。特性变体 mzb 把 scalar 文件推到 13,233 字节，但它覆盖的仍是同一批 73 个 scalar opcode。它们的 opcode 覆盖率分别只有：
 
@@ -179,9 +179,9 @@ Python LDSL 模型与真实 LegalizerInfo::getAction()
 **一份源码**，用 `--define is64bit=... sXLen=... sDoubleXLen=...` 选择配置：
 
 ```text
-rules/riscv-scalar-conditional.ldsl
-  +-- is64bit=true,  sXLen=s64, sDoubleXLen=s128  -> 与 riscv64-scalar.ldsl 决策等价
-  +-- is64bit=false, sXLen=s32, sDoubleXLen=s64   -> 与 riscv32-scalar.ldsl 决策等价
+rules/riscv-scalar-conditional.lspec
+  +-- is64bit=true,  sXLen=s64, sDoubleXLen=s128  -> 与 riscv64-scalar.lspec 决策等价
+  +-- is64bit=false, sXLen=s32, sDoubleXLen=s64   -> 与 riscv32-scalar.lspec 决策等价
 ```
 
 它证明的不是"又覆盖了一个 target"，而是 **guard 的语义**：构造期条件为假时，
@@ -221,7 +221,7 @@ DSL 已有 `legal_for_mem`，但需要把每个 target 的 MMO 对齐表和内�
 
 ### L3：固定向量（中到大）
 
-**第一片已完成**：`rules/aarch64-vector.ldsl` 覆盖
+**第一片已完成**：`rules/aarch64-vector.lspec` 覆盖
 `G_SMIN/G_SMAX/G_UMIN/G_UMAX` 的 `clampNumElements`、`G_ABDS` 家族的
 `legalFor+lower`、以及 `G_CLMUL` 的纯 `legalFor`。DSL 新增
 `clamp_num_elements` / `clamp_min_num_elements` / `clamp_max_num_elements`
@@ -229,7 +229,7 @@ DSL 已有 `legal_for_mem`，但需要把每个 target 的 MMO 对齐表和内�
 输出的 `moreElementsIf` / `fewerElementsIf` 已通过与真实 AArch64 oracle
 对拍。
 
-**第二片已完成**：`rules/aarch64-vector-arith.ldsl` 覆盖
+**第二片已完成**：`rules/aarch64-vector-arith.lspec` 覆盖
 `G_ADD/G_SUB/G_AND/G_OR/G_XOR` 的共享 ruleset。DSL 新增
 `min_scalar_or_elt_if`、`more_elements_to_next_pow2` 两个宏；`scalarizeIf`
 用 core rule `fewer tN to element_of(tN) when ...` 表达。新增节点
@@ -238,13 +238,13 @@ DSL 已有 `legal_for_mem`，但需要把每个 target 的 MMO 对齐表和内�
 结构性不可达规则：`v1` 不存在，所以 `clampNumElements` 的 `lanes < 2`
 min 半条永不命中。
 
-**第三片已完成**：`rules/aarch64-vector-mul.ldsl` 覆盖 `G_MUL`。它与
+**第三片已完成**：`rules/aarch64-vector-mul.lspec` 覆盖 `G_MUL`。它与
 `G_ADD` 家族的唯一结构差异是 C++ 里没有 `HasSVE` 的 `legalFor` 分支；其余
 15 条规则完全同形，因此本片不需要新增 DSL 原语，只验证了独立 builder
 边界下的转写与生成。24 条查询（1 opcode × 24 类型）零分歧，13/15 规则，
 两条未命中仍是 `v1` 结构性不可达的 `clampNumElements` min 半条。
 
-**第四片已完成**：`rules/aarch64-vector-shift.ldsl` 覆盖
+**第四片已完成**：`rules/aarch64-vector-shift.lspec` 覆盖
 `G_SHL/G_ASHR/G_LSHR` 的共享 ruleset。这是第一片**规则约束两个类型槽位
 关系**的切片：`minScalarSameAs` 比较槽 0 的标量宽度与槽 1 的总宽度，
 `min/maxScalarEltSameAsIf` 把源 LLT 整体复制到槽 1。DSL 新增
@@ -259,7 +259,7 @@ min 半条永不命中。
 `LegalizerInfo.cpp:204` 的 `mutationIsSane` 断言崩溃。三条查询都违反
 opcode 的 shape 契约，因此域必须显式声明契约，而不是扩张到契约外。
 
-**第五片已完成**：`rules/aarch64-icmp.ldsl` 覆盖 `G_ICMP`。这是第一片
+**第五片已完成**：`rules/aarch64-icmp.lspec` 覆盖 `G_ICMP`。这是第一片
 `Types[0]` 不是操作数类型的切片：槽 0 是比较结果 mask，槽 1 是 LHS/RHS
 共享的操作数类型。DSL 新增 `PointerVector`、`ElemTypesEq`、`EltSizeNotPow2`
 三个谓词，以及 `min_scalar_or_elt`、`widen_scalar_or_elt_to_next_pow2`
@@ -271,7 +271,7 @@ D 上可满足（`v3s16`），但 `v2s16` 被规则 9 抢先、`v3s16` 被规则
 `v4s16`，因此它永远不是首次命中。这与“谓词不可满足”的 `unreachable`
 是不同的事实；检查器新增 R003/R004/R005 三条判据区分二者。
 
-**第六片已完成**：`rules/aarch64-fcmp.ldsl` 覆盖 `G_FCMP`。这是第一片带
+**第六片已完成**：`rules/aarch64-fcmp.lspec` 覆盖 `G_FCMP`。这是第一片带
 浮点操作数的切片：槽 0 是整数比较 mask，槽 1 是被比较的浮点值。DSL 新增
 浮点 LLT（`LLT.kind="float"` + `FpSemantics`）、`LLT.eq_llvm()`、
 `is_float(tN)`、`scalar_is_float(tN, ...)`、`change_element_to(...)` 与
@@ -284,7 +284,7 @@ clamp）因 `v1` 不存在而不可达，没有 shadowed 规则。
 `not is_float(t0)` 排除）；生成 oracle 必须自己声明
 `LLT::setUseExtended(true)`，否则 `isFloat16()` 退化为 16 位标量判断。
 
-**第七片已完成**：`rules/aarch64-concat-vectors.ldsl` 覆盖
+**第七片已完成**：`rules/aarch64-concat-vectors.lspec` 覆盖
 `G_CONCAT_VECTORS`。这是第一片同时带 **custom 逃逸点**与
 **消费源槽形状的 mutation** 的切片。DSL 新增 `fixed_vector(tN)`、
 `concat_shape(t0,t1)`、`concat_shape_any(t0,t1)`、

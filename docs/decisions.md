@@ -99,7 +99,7 @@ context   = llvm/include/llvm/CodeGenTypes/LowLevelType.h:123-130
 **处置**：
 
 1. `model.LLT.vector` 拒绝 `lanes == 1`，稳定诊断码 `T011`；
-2. 从 `rules/toycpu.ldsl` 的 `domain.types` 删除全部 `v1*`；
+2. 从 `rules/toycpu.lspec` 的 `domain.types` 删除全部 `v1*`；
 3. `docs/ldsl-v0.1.md` §2.7 写明结论约束；
 4. D 的规模从 33 个 LLT 降为 28 个，conformance query 从 381,944 降为 243,714；
 5. 保留 `v2/v4/v8`，它们仍是合法 LLT；
@@ -124,7 +124,7 @@ action    = 1. out/ 不入库，claims.json 钉 rules_sha256 / oracle_sha256；
             4. scripts/reproduce_claims.py 按每条 claim 的 config 重跑 oracle；
             5. 缺证据时单元测试 skip，claims verify 明确 FAIL，不伪装通过。
 verify    = 43/43 PROVEN；aarch64-scalar 与 riscv32-scalar 就地重跑 0 分歧；
-            rules/riscv-conditional-gconstant.ldsl 的 EOL 规范化触发 STALE 后，
+            rules/riscv-conditional-gconstant.lspec 的 EOL 规范化触发 STALE 后，
             重跑 2 条 claim 并 --write，重新 43/43。
 
 ---

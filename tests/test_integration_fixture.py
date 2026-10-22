@@ -78,7 +78,7 @@ class IntegrationFixtureTests(unittest.TestCase):
         from legalizer_dsl.parser import parse_file
 
         smoke = _load_smoke()
-        info = parse_file(ROOT / "rules" / "toycpu.ldsl")
+        info = parse_file(ROOT / "rules" / "toycpu.lspec")
         first = smoke._select_queries(info, 40)
         second = smoke._select_queries(info, 40)
         self.assertEqual(first, second)
@@ -286,10 +286,10 @@ def _remove_source(data: dict, root: pathlib.Path) -> None:
 
 
 def _use_other_rules(data: dict, root: pathlib.Path) -> None:
-    other = root / "rules" / "other.ldsl"
+    other = root / "rules" / "other.lspec"
     other.write_text("ruleset G_Y { legal_for {s32}; }\n", encoding="utf-8")
     digest = _sha(other)
-    data["inputs"]["rules"] = "rules/other.ldsl"
+    data["inputs"]["rules"] = "rules/other.lspec"
     data["inputs"]["rules_sha256"] = digest
     data["provenance"]["rules_sha256"] = digest
 
@@ -303,7 +303,7 @@ def _fake_report(root: pathlib.Path) -> dict:
 
     artifacts = root / "artifacts"
     artifacts.mkdir()
-    rules = root / "rules" / "toycpu.ldsl"
+    rules = root / "rules" / "toycpu.lspec"
     rules.parent.mkdir()
     rules.write_text("ruleset G_X { legal_for {s32}; }\n", encoding="utf-8")
     query_file = artifacts / "queries.jsonl"

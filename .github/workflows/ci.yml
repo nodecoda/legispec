@@ -63,7 +63,7 @@ jobs:
       - name: Wheel install smoke
         run: python scripts/wheel_smoke.py
       - name: Strict rule check (ToyCPU)
-        run: legalizer-dsl --rules rules/toycpu.ldsl check --strict
+        run: legalizer-dsl --rules rules/toycpu.lspec check --strict
       - name: Construct coverage (committed LLVM header snapshot)
         run: ldsl-constructs check
       - name: Closure (structure and pinned numbers only)

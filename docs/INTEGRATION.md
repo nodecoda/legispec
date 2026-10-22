@@ -33,7 +33,7 @@ domain. Domain-external queries remain `UNKNOWN`; they are not evidence.
 ## 2. Generate the artifacts
 
 ```text
-python -m legalizer_dsl --rules rules/toycpu.ldsl codegen \
+python -m legalizer_dsl --rules rules/toycpu.lspec codegen \
   --out-dir out/integration/toycpu/generated \
   --emit-wiring out/integration/toycpu/wiring \
   --llvm-commit <commit>
@@ -53,7 +53,7 @@ out/integration/toycpu/wiring/wiring.md
 `--check` verifies all of these artifacts without writing:
 
 ```text
-python -m legalizer_dsl --rules rules/toycpu.ldsl codegen \
+python -m legalizer_dsl --rules rules/toycpu.lspec codegen \
   --out-dir out/integration/toycpu/generated \
   --emit-wiring out/integration/toycpu/wiring \
   --llvm-commit <commit> --check

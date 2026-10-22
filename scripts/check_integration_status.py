@@ -47,8 +47,8 @@ SCHEMA = "legalizer-dsl-integration-v2"
 MIN_QUERY_COUNT = 100
 REQUIRED_COMPARISONS = ("consumer", "hand_written_oracle", "generated_oracle")
 TARGET_RULES = {
-    "toycpu": "rules/toycpu.ldsl",
-    "aarch64-vector": "rules/aarch64-vector.ldsl",
+    "toycpu": "rules/toycpu.lspec",
+    "aarch64-vector": "rules/aarch64-vector.lspec",
 }
 HEX64 = re.compile(r"[0-9a-f]{64}")
 HEX40 = re.compile(r"[0-9a-f]{40}")

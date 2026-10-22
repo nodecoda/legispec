@@ -130,12 +130,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
 
 cd F:\llvm-study\toycpu\tools
 python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-pointer.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-pointer.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-pointer-capabilities.json
 
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-pointer.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-pointer.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv32-pointer-conformance-report.json `

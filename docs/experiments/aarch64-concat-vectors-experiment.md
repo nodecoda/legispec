@@ -5,7 +5,7 @@ Status: 已证明（hand + generated：28 查询，0 分歧，3/3 规则；custo
 
 ## 1. 范围
 
-`rules/aarch64-concat-vectors.ldsl` 转写
+`rules/aarch64-concat-vectors.lspec` 转写
 `llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp`
 （LLVM `d855d9e48067026317998cbff734004f328f833d`）1333-1357 行：
 
@@ -300,7 +300,7 @@ methods=63 classified=63 unclassified=0
 ## 6. 本片新增文件
 
 ```text
-rules/aarch64-concat-vectors.ldsl
+rules/aarch64-concat-vectors.lspec
 aarch64-concat-vectors-capabilities.json
 witness/aarch64-concat-vectors.witness（12 条）
 tests/test_concat_primitives.py（16 个测试）

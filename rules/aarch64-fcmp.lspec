@@ -20,7 +20,7 @@
 #   .legalFor(HasFP16, {{i32, f16}, {v4i16, v4f16}, {v8i16, v8f16}})
 #
 # With HasFP16 = false that macro emits no rule at all, exactly like the
-# UseOutlineAtomics branch in rules/aarch64-atomic.ldsl.  It is deliberately
+# UseOutlineAtomics branch in rules/aarch64-atomic.lspec.  It is deliberately
 # omitted rather than guarded, because a guard would force every consumer
 # (codegen.py, CMake, the gate script) to supply --define HasFP16=false for a
 # single file.  A +fullfp16 product point must be a separate frozen file, the

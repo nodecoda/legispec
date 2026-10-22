@@ -25,7 +25,7 @@ must not decrease, and the target set must match exactly.
 
 ### `aarch64-vector`
 
-- rules: `rules/aarch64-vector.ldsl`
+- rules: `rules/aarch64-vector.lspec`
 - unmatched rules: 1
 - parse errors: 0
 - domain types not observed: 6
@@ -37,7 +37,7 @@ Unmatched rules:
 
 ### `toycpu`
 
-- rules: `rules/toycpu.ldsl`
+- rules: `rules/toycpu.lspec`
 - unmatched rules: 2
 - parse errors: 0
 - domain types not observed: 15

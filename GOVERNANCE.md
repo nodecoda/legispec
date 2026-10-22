@@ -28,7 +28,7 @@
 |---|---|---|
 | P0 文档/测试 | 注释、错别字、新增 witness | 1 review |
 | P1 实现 | parser/checker 修 bug，不改语言 | 1 review + 全绿门禁 |
-| P2 规则 | 新增/修改 `.ldsl` | RFC issue + 重跑证据 + 账本 `--write` |
+| P2 规则 | 新增/修改 `.lspec` | RFC issue + 重跑证据 + 账本 `--write` |
 | P3 语言语义 | 新原语、新诊断码、domain 语义 | RFC issue + 两人一致 + 版本号 minor |
 | P4 证据模型 | 改动 `claims.py` 的身份判定、哈希口径 | RFC issue + 两人一致 + 重新证明全部 43 条 |
 

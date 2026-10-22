@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import json
 import pathlib
 import sysconfig
 import tempfile
@@ -94,7 +95,7 @@ class PyprojectDataFilesTests(unittest.TestCase):
         text = (REPO / "pyproject.toml").read_text(encoding="utf-8")
         self.assertIn("[tool.setuptools.data-files]", text)
         for key in (
-            '"share/legalizer-dsl/rules" = ["rules/*.ldsl"]',
+            '"share/legalizer-dsl/rules" = ["rules/*.lspec"]',
             '"share/legalizer-dsl/witness" = ["witness/*.witness"]',
             '"share/legalizer-dsl/capabilities" = ["capabilities/*.json"]',
             '"share/legalizer-dsl/claims" = ["claims/*.json", "claims/*.md", "claims/*.txt"]',
@@ -103,6 +104,39 @@ class PyprojectDataFilesTests(unittest.TestCase):
             with self.subTest(key=key):
                 self.assertIn(key, text)
 
+
+
+class RuleExtensionTests(unittest.TestCase):
+    """The canonical rule suffix is a repo-wide invariant, not a convention."""
+
+    def test_rules_directory_uses_only_the_canonical_suffix(self):
+        rules = sorted(path for path in (REPO / "rules").iterdir() if path.is_file())
+        suffixes = {path.suffix for path in rules}
+        self.assertEqual(suffixes, {paths.RULE_SUFFIX})
+        self.assertEqual(
+            [path.name for path in paths.iter_rule_files(REPO / "rules")],
+            [path.name for path in rules],
+        )
+
+    def test_legacy_suffix_is_never_discovered(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = pathlib.Path(tmp)
+            (root / "toycpu.lspec").write_text("", encoding="utf-8")
+            (root / "legacy.ldsl").write_text("", encoding="utf-8")
+            discovered = paths.iter_rule_files(root)
+        self.assertEqual([path.name for path in discovered], ["toycpu.lspec"])
+
+    def test_claims_and_generated_evidence_reference_lspec(self):
+        claims = json.loads((REPO / "claims" / "claims.json").read_text(encoding="utf-8-sig"))
+        for claim in claims["claims"]:
+            with self.subTest(claim=claim["id"]):
+                self.assertTrue(claim["rules"].endswith(paths.RULE_SUFFIX), claim["rules"])
+        manifest = json.loads(
+            (REPO / "claims" / "generated-evidence.json").read_text(encoding="utf-8-sig")
+        )
+        for name in manifest["hand_only"]:
+            with self.subTest(name=name):
+                self.assertTrue(name.endswith(paths.RULE_SUFFIX), name)
 
 
 class FingerprintManifestTests(unittest.TestCase):

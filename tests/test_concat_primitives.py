@@ -57,7 +57,7 @@ from legalizer_dsl.interp import verify_domain
 from legalizer_dsl.parser import parse_file
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
-CONCAT_RULES = HERE / "rules" / "aarch64-concat-vectors.ldsl"
+CONCAT_RULES = HERE / "rules" / "aarch64-concat-vectors.lspec"
 
 FIXED_VECTOR = """
 ruleset G_Q {

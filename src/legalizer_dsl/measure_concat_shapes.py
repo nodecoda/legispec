@@ -313,7 +313,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--llc", default=os.environ.get("LEGALIZER_DSL_LLC", r"F:\llvm\build\bin\llc.exe")
     )
-    parser.add_argument("--rules", default=str(REPO / "rules" / "aarch64-concat-vectors.ldsl"))
+    parser.add_argument("--rules", default=str(REPO / "rules" / "aarch64-concat-vectors.lspec"))
     parser.add_argument(
         "--ir", action="append", default=[], help="IR corpus compiled with -stop-after=legalizer"
     )

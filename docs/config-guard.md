@@ -109,7 +109,7 @@ evaluate to false and delete rules.
 
 ### 5.1 Minimal case
 
-`rules/riscv-conditional-gconstant.ldsl` is the `G_CONSTANT` builder above
+`rules/riscv-conditional-gconstant.lspec` is the `G_CONSTANT` builder above
 written once:
 
 ```
@@ -128,7 +128,7 @@ ruleset G_CONSTANT {
 
 ### 5.2 Full scalar subset
 
-`rules/riscv-scalar-conditional.ldsl` covers the whole scalar subset
+`rules/riscv-scalar-conditional.lspec` covers the whole scalar subset
 (38 rulesets, 73 opcodes) with the same three configuration values.
 
 | configuration | rules | static check | oracle | queries | divergences |
@@ -144,7 +144,7 @@ legalIf(all(typeIs(0, sXLen), sizeIs(0, 64), immIs(0, 32)))
 ```
 
 On RV32 `typeIs(0, s32)` and `sizeIs(0, 64)` cannot both hold, so the C++
-builds a rule that can never fire.  The frozen `riscv32-scalar.ldsl` dropped
+builds a rule that can never fire.  The frozen `riscv32-scalar.lspec` dropped
 it; the single-source file keeps it and declares it in
 `witness/riscv-scalar-conditional-rv32.witness`.  Keeping the rule is what
 makes the table match the C++; the witness is what distinguishes "the C++ has

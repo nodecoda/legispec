@@ -1,4 +1,4 @@
-# Executable witnesses for rules/aarch64-fcmp.ldsl.
+# Executable witnesses for rules/aarch64-fcmp.lspec.
 #
 # Every emitted rule index is covered once, either by a positive step or by an
 # explicit unreachable declaration.  There are 14 rules in the frozen

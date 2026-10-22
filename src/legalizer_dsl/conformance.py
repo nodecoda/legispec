@@ -522,7 +522,7 @@ def build_report(
 
 
 def main(argv: Optional[list[str]] = None) -> int:
-    default_rules = paths.RULES / "toycpu.ldsl"
+    default_rules = paths.RULES / "toycpu.lspec"
     default_oracle = paths.OUT / "oracle" / "legalizer-oracle.exe"
     default_out = paths.OUT / "conformance-report.json"
 

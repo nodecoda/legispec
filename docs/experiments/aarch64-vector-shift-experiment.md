@@ -5,7 +5,7 @@ Status: 已证明（hand + generated：270 查询，0 分歧，19/21 规则）
 
 ## 1. 范围
 
-`rules/aarch64-vector-shift.ldsl` 转写
+`rules/aarch64-vector-shift.lspec` 转写
 `llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp`
 （LLVM `d855d9e48067026317998cbff734004f328f833d`）234-265 行：
 
@@ -197,7 +197,7 @@ codegen 产物；unittest 总数 147 -> 155。
 ## 7. 本片新增文件
 
 ```text
-rules/aarch64-vector-shift.ldsl
+rules/aarch64-vector-shift.lspec
 aarch64-vector-shift-capabilities.json
 witness/aarch64-vector-shift.witness
 tests/test_shift_primitives.py

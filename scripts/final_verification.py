@@ -45,6 +45,7 @@ from check_skips import (  # noqa: E402
 from legalizer_dsl import __version__ as GENERATOR_VERSION  # noqa: E402
 from legalizer_dsl.codegen import DSL_SPEC_VERSION  # noqa: E402
 from legalizer_dsl.fingerprint import codegen_sha256, hand_evaluator_sha256  # noqa: E402
+from legalizer_dsl.paths import iter_rule_files  # noqa: E402
 
 SCHEMA = "legalizer-dsl-final-verification-v1"
 BASE_COMMIT = "9578630"
@@ -530,7 +531,7 @@ def gate_codegen_contract():
         r"codegen-contract:\s*PASS\s+rules=(\d+)\s+variants=(\d+)\s+failures=(\d+)",
         text,
     )
-    expected_rules = len(sorted((ROOT / "rules").glob("*.ldsl")))
+    expected_rules = len(iter_rule_files(ROOT / "rules"))
     if parsed is None:
         problems.append("codegen contract output has no PASS summary")
     else:

@@ -38,7 +38,7 @@ class SkipEvidenceTamperTests(unittest.TestCase):
             root = pathlib.Path(tmp)
             rules = root / "rules"
             rules.mkdir()
-            (rules / "x.ldsl").write_text("ruleset G_X { legal; }\n", encoding="utf-8")
+            (rules / "x.lspec").write_text("ruleset G_X { legal; }\n", encoding="utf-8")
             coverage = root / "construct-coverage.json"
             coverage.write_text(
                 json.dumps({"counts": {}, "methods": []}), encoding="utf-8"
@@ -57,7 +57,7 @@ class SkipEvidenceTamperTests(unittest.TestCase):
                 json.dumps(
                     {
                         "schema": "legalizer-dsl-generated-evidence-v1",
-                        "hand_only": {"x.ldsl": "hand oracle only in this fixture"},
+                        "hand_only": {"x.lspec": "hand oracle only in this fixture"},
                     }
                 ),
                 encoding="utf-8",
@@ -89,7 +89,7 @@ class SkipEvidenceTamperTests(unittest.TestCase):
                         "claims": [
                             {
                                 "id": "x",
-                                "rules": "x.ldsl",
+                                "rules": "x.lspec",
                                 "report": "x.json",
                                 "oracle": "oracle/x.exe",
                                 "scope": "test",
@@ -102,7 +102,7 @@ class SkipEvidenceTamperTests(unittest.TestCase):
                                 "llvm_commit": "a" * 40,
                                 "ok": False,
                                 "divergences": 7,
-                                "rules_sha256": closure.sha256(rules / "x.ldsl"),
+                                "rules_sha256": closure.sha256(rules / "x.lspec"),
                                 "report_sha256": "a" * 64,
                                 "corpus_sha256": "a" * 64,
                                 "oracle_sha256": "a" * 64,
@@ -164,21 +164,21 @@ class GeneratedEvidenceTests(unittest.TestCase):
 
     def test_every_rule_needs_generated_claim_or_hand_only_reason(self):
         summary, problems = self._run(
-            {"covered.ldsl": "", "declared.ldsl": "", "missing.ldsl": ""},
-            [{"id": "covered-generated", "rules": "covered.ldsl"}],
-            {"declared.ldsl": "no generated oracle for this slice"},
+            {"covered.lspec": "", "declared.lspec": "", "missing.lspec": ""},
+            [{"id": "covered-generated", "rules": "covered.lspec"}],
+            {"declared.lspec": "no generated oracle for this slice"},
         )
         self.assertEqual(summary["generated_covered"], 1)
-        self.assertEqual(summary["hand_only"], ["declared.ldsl"])
+        self.assertEqual(summary["hand_only"], ["declared.lspec"])
         self.assertTrue(
-            any("missing.ldsl" in problem for problem in problems), problems
+            any("missing.lspec" in problem for problem in problems), problems
         )
 
     def test_generated_and_hand_only_are_mutually_exclusive(self):
         _, problems = self._run(
-            {"both.ldsl": ""},
-            [{"id": "both-generated", "rules": "both.ldsl"}],
-            {"both.ldsl": "contradictory"},
+            {"both.lspec": ""},
+            [{"id": "both-generated", "rules": "both.lspec"}],
+            {"both.lspec": "contradictory"},
         )
         self.assertTrue(
             any("both generated and hand-only" in problem for problem in problems),
@@ -205,9 +205,9 @@ class GeneratedEvidenceTests(unittest.TestCase):
 
     def test_hand_only_declaration_must_reference_a_real_rule_with_a_reason(self):
         _, problems = self._run(
-            {"real.ldsl": ""},
+            {"real.lspec": ""},
             [],
-            {"ghost.ldsl": "  "},
+            {"ghost.lspec": "  "},
         )
         self.assertTrue(any("missing rule" in problem for problem in problems), problems)
         self.assertTrue(any("no reason" in problem for problem in problems), problems)

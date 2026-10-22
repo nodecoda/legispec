@@ -109,7 +109,7 @@ debug 构建里有 `mutationIsSane` 之类的断言，但没有静态语义分�
 ## 5. 外部 DSL 是什么
 
 ```text
-rules/*.ldsl + domain(D, filter, Q0) + capabilities + witness
+rules/*.lspec + domain(D, filter, Q0) + capabilities + witness
         |
         v
 parser / model  ->  checker  ->  interp (apply + fixpoint)
@@ -152,7 +152,7 @@ for every q in D union R:
 
 | 维度 | C++ 内置 EDSL | 外部 DSL |
 |---|---|---|
-| 语法 | fluent API | `.ldsl` |
+| 语法 | fluent API | `.lspec` |
 | 语义检查 | 运行期断言 + 约定 | 静态 checker + 有限域枚举 |
 | 执行 | C++ `apply` | Python `interp` |
 | 生成 | 手写 | `codegen.py -> C++` |

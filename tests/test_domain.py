@@ -23,7 +23,7 @@ from legalizer_dsl.diagnostics import DslError, Severity
 from legalizer_dsl.parser import parse, parse_file
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
-RULES = HERE / "rules" / "toycpu.ldsl"
+RULES = HERE / "rules" / "toycpu.lspec"
 CLI = HERE / "legalizer-dsl.py"
 
 
@@ -124,7 +124,7 @@ class StrictModeTests(unittest.TestCase):
     def test_check_strict_requires_domain(self):
         source = "ruleset G_X { legal_for {s32}; }\n"
         with tempfile.TemporaryDirectory() as tmp:
-            path = pathlib.Path(tmp) / "no-domain.ldsl"
+            path = pathlib.Path(tmp) / "no-domain.lspec"
             path.write_text(source, encoding="utf-8", newline="")
             result = subprocess.run(
                 [sys.executable, str(CLI), "--rules", str(path), "check", "--strict"],

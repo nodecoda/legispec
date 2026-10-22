@@ -49,7 +49,7 @@ Claim = (P, G, Ref, k, D, R, U, Obs, ≈, E)
 GeneratedCpp 命题**不是**对全部规则无条件成立。当前 43 条 claim 中有 16 条
 generated claim；另外 6 条规则在 `claims/generated-evidence.json` 中显式登记为
 hand-only，只支持第一条（hand-evaluator）等价，不支持第二条（GeneratedCpp）等价。
-`closure check` 强制每条 `rules/*.ldsl` 要么有 generated claim，要么有带原因的
+`closure check` 强制每条 `rules/*.lspec` 要么有 generated claim，要么有带原因的
 hand-only 登记；新增规则不能静默绕过这个分类。
 
 旁条件：

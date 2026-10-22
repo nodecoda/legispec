@@ -50,8 +50,8 @@ from legalizer_dsl.parser import parse_file  # noqa: E402
 SCHEMA = "legalizer-dsl-coverage-v1"
 
 TARGETS = {
-    "toycpu": "rules/toycpu.ldsl",
-    "aarch64-vector": "rules/aarch64-vector.ldsl",
+    "toycpu": "rules/toycpu.lspec",
+    "aarch64-vector": "rules/aarch64-vector.lspec",
 }
 
 # A MIR file describes one target's real shapes.  Do not feed every corpus

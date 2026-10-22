@@ -156,9 +156,9 @@ python -m unittest discover -s F:\llvm-study\toycpu\tools\legalizer_dsl\tests -v
 
 # 2. 静态检查与 witness
 python F:\llvm-study\toycpu\tools\legalizer-dsl.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\toycpu.ldsl check --strict
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\toycpu.lspec check --strict
 python F:\llvm-study\toycpu\tools\legalizer-dsl.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\toycpu.ldsl witness `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\toycpu.lspec witness `
   F:\llvm-study\toycpu\tools\legalizer_dsl\witness\toycpu.witness
 
 # 3. 构建 C++ oracle（自动选择 VS2022 / 可用 Windows SDK）

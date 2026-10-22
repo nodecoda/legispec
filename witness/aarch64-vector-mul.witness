@@ -1,4 +1,4 @@
-# Executable witnesses for rules/aarch64-vector-mul.ldsl.
+# Executable witnesses for rules/aarch64-vector-mul.lspec.
 #
 # Every rule index is covered once, either by a positive step or by an
 # explicit unreachable declaration.  The two unreachable rules are the

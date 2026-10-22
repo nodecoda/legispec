@@ -62,7 +62,7 @@ scalar-only; the two domains are intentionally separate.
 Added:
 
 ```text
-toycpu/tools/legalizer_dsl/rules/aarch64-pointer.ldsl
+toycpu/tools/legalizer_dsl/rules/aarch64-pointer.lspec
 toycpu/tools/legalizer_dsl/aarch64-pointer-capabilities.json
 toycpu/out/aarch64-pointer-conformance-report.json
 toycpu/out/aarch64-pointer-check.txt
@@ -472,7 +472,7 @@ Static check:
 ```powershell
 cd F:\llvm-study\toycpu\tools
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-pointer.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-pointer.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\aarch64-pointer-capabilities.json
 ```
@@ -481,7 +481,7 @@ Differential conformance:
 
 ```powershell
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-pointer.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-pointer.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\aarch64-pointer-conformance-report.json `

@@ -56,7 +56,7 @@ SCHEMA = "legalizer-dsl-integration-v2"
 
 TARGETS = {
     "toycpu": {
-        "rules": "rules/toycpu.ldsl",
+        "rules": "rules/toycpu.lspec",
         "namespace": None,
         "oracle": "out/oracle/legalizer-oracle",
         "generated_oracle": "out/oracle/legalizer-oracle-gen",
@@ -67,7 +67,7 @@ TARGETS = {
         ),
     },
     "aarch64-vector": {
-        "rules": "rules/aarch64-vector.ldsl",
+        "rules": "rules/aarch64-vector.lspec",
         "namespace": None,
         "oracle": "out/oracle-aarch64/legalizer-oracle-aarch64",
         "generated_oracle": (

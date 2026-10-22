@@ -5,7 +5,7 @@ Status: 已证明（generic / +outline-atomics / +lse 三个配置点）
 
 ## 1. 范围
 
-`rules/aarch64-atomic.ldsl` 和 `rules/aarch64-atomic-outline.ldsl` 转写
+`rules/aarch64-atomic.lspec` 和 `rules/aarch64-atomic-outline.lspec` 转写
 `llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp:1148-1174`
 中的原子规则：
 
@@ -110,7 +110,7 @@ G_ATOMICRMW_{MIN,MAX,UMIN,UMAX}:
 ## 5. +lse：策略不变性
 
 `+lse` 使 `UseOutlineAtomics` 仍为 `false`，所以可以直接复用
-`aarch64-atomic.ldsl`。这不是“省文件”，而是一个更强的断言：
+`aarch64-atomic.lspec`。这不是“省文件”，而是一个更强的断言：
 
 ```text
 同一份 DSL 规则表

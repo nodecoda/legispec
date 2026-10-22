@@ -10,7 +10,7 @@
 #   HasSVE      = false
 #
 # HasCSSC is a construction-time bool.  The +cssc point is a separate
-# frozen file, aarch64-cssc-scalar.ldsl; only four rulesets differ.
+# frozen file, aarch64-cssc-scalar.lspec; only four rulesets differ.
 #
 # This is NOT a model of all of AArch64.  Omitted on purpose:
 #   * every vector / scalable-vector legalFor and legality clause

@@ -157,7 +157,7 @@ G_SEXT_INREG          all lower -> imm 8/16 legal (imm 32 still not)
 
 ## 4. Orthogonality check: pointer rules at RV32
 
-`riscv32-pointer.ldsl` against the RV32+mzb oracle:
+`riscv32-pointer.lspec` against the RV32+mzb oracle:
 
 ```text
 queries=770 divergences=0 rules=31/31
@@ -179,12 +179,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
 
 cd F:\llvm-study\toycpu\tools
 python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-mzb-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-mzb-scalar.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-mzb-scalar-capabilities.json
 
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-mzb-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-mzb-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32-mzb.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv32-mzb-scalar-conformance-report.json `

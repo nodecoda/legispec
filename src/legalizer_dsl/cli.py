@@ -12,13 +12,13 @@ Examples
 --------
 Explain the expanded rules for one opcode::
 
-    python legalizer-dsl.py --rules rules/toycpu.ldsl explain G_ICMP
+    python legalizer-dsl.py --rules rules/toycpu.lspec explain G_ICMP
 
 Trace first-match evaluation for a query::
 
-    python legalizer-dsl.py --rules rules/toycpu.ldsl trace G_ADD --type s64
-    python legalizer-dsl.py --rules rules/toycpu.ldsl trace G_ICMP --type v4s1 --type v4s32
-    python legalizer-dsl.py --rules rules/toycpu.ldsl trace G_LOAD --type s8 --type p0 --mem s8:8
+    python legalizer-dsl.py --rules rules/toycpu.lspec trace G_ADD --type s64
+    python legalizer-dsl.py --rules rules/toycpu.lspec trace G_ICMP --type v4s1 --type v4s32
+    python legalizer-dsl.py --rules rules/toycpu.lspec trace G_LOAD --type s8 --type p0 --mem s8:8
 
 The ``trace`` command prints every rule in order, whether it matched, and the
 resulting ``LegalizeActionStep``.
@@ -61,7 +61,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--rules",
         "-r",
         required=True,
-        help="path to a .ldsl rule file",
+        help="path to a .lspec rule file",
     )
     parser.add_argument(
         "--define",

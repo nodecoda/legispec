@@ -5,7 +5,7 @@ Status: 已证明（hand + generated，120 查询，0 分歧）
 
 ## 1. 范围
 
-`rules/aarch64-vector-arith.ldsl` 转写
+`rules/aarch64-vector-arith.lspec` 转写
 `llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp` 的 181-206 行：
 
 ```text
@@ -27,7 +27,7 @@ HasCSSC     = false
 
 ## 2. 为什么选这一片
 
-上一片 `aarch64-vector.ldsl` 只用了 `clampNumElements`，规则形状是
+上一片 `aarch64-vector.lspec` 只用了 `clampNumElements`，规则形状是
 “合法集合 + lane clamp + lower”。这一片第一次同时打开三个元素级策略：
 
 ```text

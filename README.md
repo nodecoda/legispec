@@ -36,7 +36,7 @@ R = closure(Q0) 在 D 内的一步合法化后继
 
 ```powershell
 python -m pip install -e .
-legalizer-dsl --rules rules/toycpu.ldsl check --strict
+legalizer-dsl --rules rules/toycpu.lspec check --strict
 python -m unittest discover -s tests
 ```
 
@@ -46,7 +46,7 @@ python -m unittest discover -s tests
 生成 C++：
 
 ```powershell
-legalizer-dsl --rules rules/aarch64-vector.ldsl codegen --out-dir out/codegen
+legalizer-dsl --rules rules/aarch64-vector.lspec codegen --out-dir out/codegen
 ```
 
 生成器契约检查（22 份规则、所有 config 变体、双次生成确定性、manifest provenance）：
@@ -69,13 +69,13 @@ python scripts/coverage_report.py --corpus examples --out out/coverage-report.js
 ```text
 src/legalizer_dsl/        实现：parser / checker / interp / codegen / conformance / claims
   checker/                规则级静态检查（wellformed / conflict / reachability / termination）
-rules/                    22 份 .ldsl 规则转写（ToyCPU、X86-64、AArch64、RISC-V）
+rules/                    22 份 .lspec 规则转写（ToyCPU、X86-64、AArch64、RISC-V）
 witness/                  9 份 witness：固定顺序依赖与边界
 capabilities/             22 份 provider 契约（custom / libcall / lower 谁能接）
 claims/                   claims.json（43 条断言与哈希钉）、generated-evidence.json（generated/hand-only 分类）、claim-ledger.md、构造覆盖
 docs/                     命题、语法、模式、配置、决策记录；兼容性见 COMPATIBILITY.md
 examples/                 真实 MIR / LLVM IR 语料
-tests/                    392 个单元测试
+tests/                    395 个单元测试
 scripts/                  证据收集与批处理
 out/                      本地证据缓存（不入库，见第 6 节）
 ```
@@ -91,7 +91,7 @@ hand-only=6
 rules-files=22
 hand-queries=321627
 constructs=63/63     # LLVM builder 方法 → DSL 原语，全部归类
-tests=392
+tests=395
 ```
 
 这些数字由 `python -m legalizer_dsl.closure check` 从产物重新计算并比对；

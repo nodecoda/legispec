@@ -176,10 +176,10 @@ class CheckAllRulesTests(unittest.TestCase):
         names = [rule.name for rule in rules]
         self.assertGreaterEqual(len(rules), 22)
         self.assertEqual(names, sorted(names))
-        self.assertTrue(all(name.endswith(".ldsl") for name in names))
+        self.assertTrue(all(name.endswith(".lspec") for name in names))
 
     def test_riscv_conditional_gconstant_override(self):
-        name = "riscv-conditional-gconstant.ldsl"
+        name = "riscv-conditional-gconstant.lspec"
         command = self._command(name)
         self.assertEqual(self._pair(command, "--rules"), str((HERE / "rules" / name).resolve()))
         for define in ("is64bit=true", "sXLen=s64", "sDoubleXLen=s128"):
@@ -191,7 +191,7 @@ class CheckAllRulesTests(unittest.TestCase):
         self.assertIn("--strict", command)
 
     def test_riscv_scalar_conditional_override(self):
-        name = "riscv-scalar-conditional.ldsl"
+        name = "riscv-scalar-conditional.lspec"
         command = self._command(name)
         self.assertEqual(self._pair(command, "--rules"), str((HERE / "rules" / name).resolve()))
         for define in ("is64bit=true", "sXLen=s64", "sDoubleXLen=s128"):
@@ -203,7 +203,7 @@ class CheckAllRulesTests(unittest.TestCase):
         self.assertIn("--strict", command)
 
     def test_aarch64_vector_override(self):
-        name = "aarch64-vector.ldsl"
+        name = "aarch64-vector.lspec"
         command = self._command(name)
         self.assertEqual(self._pair(command, "--rules"), str((HERE / "rules" / name).resolve()))
         self.assertEqual(
@@ -220,7 +220,7 @@ class CheckAllRulesTests(unittest.TestCase):
                 sys.executable,
                 str(HERE / "scripts" / "check_all_rules.py"),
                 "--only",
-                "toycpu.ldsl",
+                "toycpu.lspec",
                 "--json",
             ],
             cwd=HERE,
@@ -236,7 +236,7 @@ class CheckAllRulesTests(unittest.TestCase):
         report = json.loads(proc.stdout)
         self.assertTrue(report["ok"])
         self.assertEqual(report["count"], 1)
-        self.assertEqual(report["results"][0]["file"], "toycpu.ldsl")
+        self.assertEqual(report["results"][0]["file"], "toycpu.lspec")
         self.assertIn("errors=0", report["results"][0]["summary"])
         self.assertLess(elapsed, 15.0, f"toycpu smoke took {elapsed:.2f}s")
 
@@ -246,7 +246,7 @@ class ReproduceOracleDirectoryTests(unittest.TestCase):
     def test_oracle_directory_is_independent_of_report_output(self):
         claim = {
             "id": "x",
-            "rules": "toycpu.ldsl",
+            "rules": "toycpu.lspec",
             "oracle": "oracle/legalizer-oracle.exe",
             "report": "report.json",
             "config": {},

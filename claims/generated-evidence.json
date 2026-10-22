@@ -1,11 +1,11 @@
 {
   "hand_only": {
-    "aarch64-pointer.ldsl": "Hand oracle covers 17/17 pointer rules over 924 queries; no generated pointer oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice.",
-    "riscv-conditional-gconstant.ldsl": "Hand oracles cover RV32/RV64 G_CONSTANT guard configs; no generated conditional oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice.",
-    "riscv-scalar-conditional.ldsl": "Hand oracles cover RV32/RV64 conditional scalar configs; no generated conditional oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice.",
-    "riscv32-mzb-scalar.ldsl": "Hand RV32 +m,+zmmul,+zbb oracle covers the slice; no generated RV32 MZB oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice.",
-    "riscv32-pointer.ldsl": "Hand RV32 pointer oracle covers the slice; no generated RV32 pointer oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice.",
-    "riscv64-pointer.ldsl": "Hand RV64 pointer oracle covers the slice; no generated RV64 pointer oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice."
+    "aarch64-pointer.lspec": "Hand oracle covers 17/17 pointer rules over 924 queries; no generated pointer oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice.",
+    "riscv-conditional-gconstant.lspec": "Hand oracles cover RV32/RV64 G_CONSTANT guard configs; no generated conditional oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice.",
+    "riscv-scalar-conditional.lspec": "Hand oracles cover RV32/RV64 conditional scalar configs; no generated conditional oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice.",
+    "riscv32-mzb-scalar.lspec": "Hand RV32 +m,+zmmul,+zbb oracle covers the slice; no generated RV32 MZB oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice.",
+    "riscv32-pointer.lspec": "Hand RV32 pointer oracle covers the slice; no generated RV32 pointer oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice.",
+    "riscv64-pointer.lspec": "Hand RV64 pointer oracle covers the slice; no generated RV64 pointer oracle is part of the standalone evidence set, so GeneratedCpp equivalence is not claimed for this slice."
   },
   "schema": "legalizer-dsl-generated-evidence-v1"
 }

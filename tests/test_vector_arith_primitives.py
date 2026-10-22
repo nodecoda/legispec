@@ -89,7 +89,7 @@ class VectorArithPrimitiveTests(unittest.TestCase):
             codegen.generate(
                 INFO,
                 out_dir=out,
-                rules_rel="probe.ldsl",
+                rules_rel="probe.lspec",
                 rules_sha="0" * 64,
             )
             source = (out / codegen.GENERATED_SOURCE).read_text(

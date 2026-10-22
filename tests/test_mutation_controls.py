@@ -35,9 +35,9 @@ from legalizer_dsl.conformance import (  # noqa: E402
 from legalizer_dsl.model import Query, parse_llt  # noqa: E402
 from legalizer_dsl.parser import parse, parse_defines, parse_file  # noqa: E402
 
-TOY_RULES = ROOT / "rules" / "toycpu.ldsl"
+TOY_RULES = ROOT / "rules" / "toycpu.lspec"
 TOY_ORACLE = ROOT / "out" / "oracle" / "legalizer-oracle.exe"
-RISCV_RULES = ROOT / "rules" / "riscv-conditional-gconstant.ldsl"
+RISCV_RULES = ROOT / "rules" / "riscv-conditional-gconstant.lspec"
 RISCV_ORACLE = ROOT / "out" / "oracle-riscv" / "legalizer-oracle-riscv.exe"
 
 

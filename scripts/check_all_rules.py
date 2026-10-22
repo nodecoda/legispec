@@ -9,7 +9,7 @@
 
 """Run a strict check over every committed rule file.
 
-The CI gate is intentionally simple: each ``rules/*.ldsl`` file is checked with
+The CI gate is intentionally simple: each ``rules/*.lspec`` file is checked with
 ``--strict`` (plus the defines/capability manifest/witness it needs), and the
 script fails if any file does not exit zero.  Rules that are not listed in
 ``OVERRIDES`` rely on the CLI's normal sibling-manifest discovery.
@@ -17,7 +17,7 @@ script fails if any file does not exit zero.  Rules that are not listed in
 Usage::
 
     python scripts/check_all_rules.py
-    python scripts/check_all_rules.py --only toycpu.ldsl --json
+    python scripts/check_all_rules.py --only toycpu.lspec --json
 """
 
 from __future__ import annotations
@@ -32,19 +32,24 @@ import sys
 REPO = pathlib.Path(__file__).resolve().parents[1]
 RULES_DIR = REPO / "rules"
 
+if str(REPO / "src") not in sys.path:
+    sys.path.insert(0, str(REPO / "src"))
+
+from legalizer_dsl import paths  # noqa: E402
+
 # Rules whose strict check needs a non-default configuration.  Paths are
 # relative to the repository root; the checker resolves sibling manifests for
 # every other rule automatically.
 OVERRIDES: dict[str, dict[str, object]] = {
-    "riscv-conditional-gconstant.ldsl": {
+    "riscv-conditional-gconstant.lspec": {
         "defines": ["is64bit=true", "sXLen=s64", "sDoubleXLen=s128"],
         "capabilities": "capabilities/riscv-conditional-gconstant-rv64-capabilities.json",
     },
-    "riscv-scalar-conditional.ldsl": {
+    "riscv-scalar-conditional.lspec": {
         "defines": ["is64bit=true", "sXLen=s64", "sDoubleXLen=s128"],
         "capabilities": "capabilities/riscv64-scalar-capabilities.json",
     },
-    "aarch64-vector.ldsl": {
+    "aarch64-vector.lspec": {
         "witness": "witness/aarch64-vector-unreachable.witness",
     },
 }
@@ -52,7 +57,7 @@ OVERRIDES: dict[str, dict[str, object]] = {
 
 def discover_rules() -> list[pathlib.Path]:
     """Return every committed rule file in deterministic order."""
-    return sorted(path for path in RULES_DIR.glob("*.ldsl") if path.is_file())
+    return paths.iter_rule_files(RULES_DIR)
 
 
 def build_command(rule: pathlib.Path) -> list[str]:

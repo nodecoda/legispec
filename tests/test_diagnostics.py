@@ -19,7 +19,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1] / "src"))
 from legalizer_dsl.diagnostics import Diagnostic, DslError, Severity, Span
 from legalizer_dsl.parser import parse, parse_file
 
-RULES = pathlib.Path(__file__).resolve().parents[1] / "rules" / "toycpu.ldsl"
+RULES = pathlib.Path(__file__).resolve().parents[1] / "rules" / "toycpu.lspec"
 
 CASES = [
     ("lexer", "ruleset G_X { @ }", "L001"),
@@ -93,7 +93,7 @@ class DiagnosticContractTests(unittest.TestCase):
 
     def test_diagnostic_rendering(self):
         diag = Diagnostic("W003", Severity.WARN, "duplicate opcode", Span.point(2, 4))
-        self.assertEqual(diag.format("f.ldsl"), "f.ldsl:2:4-4: WARN: W003: duplicate opcode")
+        self.assertEqual(diag.format("f.lspec"), "f.lspec:2:4-4: WARN: W003: duplicate opcode")
 
 
 if __name__ == "__main__":

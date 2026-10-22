@@ -95,7 +95,7 @@ class ClaimLedgerTests(unittest.TestCase):
                         "schema": "legalizer-dsl-conformance-v1",
                         "evaluator_sha256": claims.evaluator_sha256(),
                         "inputs": {
-                            "rules": str(claims.RULES / "toycpu.ldsl"),
+                            "rules": str(claims.RULES / "toycpu.lspec"),
                             "config": {},
                         },
                         "reference": {
@@ -113,7 +113,7 @@ class ClaimLedgerTests(unittest.TestCase):
             )
             claim = claims.Claim(
                 id="unpinned",
-                rules="toycpu.ldsl",
+                rules="toycpu.lspec",
                 report=str(report),
                 oracle="oracle/legalizer-oracle.exe",
                 scope="test",
@@ -142,7 +142,7 @@ class ClaimLedgerTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as tmp:
             oracle = claims.OUT / "oracle" / "legalizer-oracle.exe"
-            rules = claims.RULES / "toycpu.ldsl"
+            rules = claims.RULES / "toycpu.lspec"
             report = pathlib.Path(tmp) / "report.json"
             report.write_text(
                 json.dumps(
@@ -170,7 +170,7 @@ class ClaimLedgerTests(unittest.TestCase):
             )
             claim = claims.Claim(
                 id="stale-rules",
-                rules="toycpu.ldsl",
+                rules="toycpu.lspec",
                 report=str(report),
                 oracle="oracle/legalizer-oracle.exe",
                 scope="test",
@@ -200,7 +200,7 @@ class ClaimLedgerTests(unittest.TestCase):
 def _make_claim(**overrides):
     values = {
         "id": "test-claim",
-        "rules": "test.ldsl",
+        "rules": "test.lspec",
         "report": "report.json",
         "oracle": "oracle/test-oracle.exe",
         "scope": "test",
@@ -346,7 +346,7 @@ class EvaluatorStalenessTests(unittest.TestCase):
 
 class ProvenancePathTests(unittest.TestCase):
     def test_rules_tail_accepts_old_monorepo_path_but_not_other_checkout(self):
-        claim = _make_claim(id="toycpu", rules="toycpu.ldsl")
+        claim = _make_claim(id="toycpu", rules="toycpu.lspec")
         saved = (claims.RULES, claims.OUT)
         with tempfile.TemporaryDirectory() as tmp:
             root = pathlib.Path(tmp)
@@ -367,7 +367,7 @@ class ProvenancePathTests(unittest.TestCase):
                 "inputs": {
                     "rules": (
                         "F:\\llvm-study\\toycpu\\tools\\"
-                        "legalizer_dsl\\rules\\toycpu.ldsl"
+                        "legalizer_dsl\\rules\\toycpu.lspec"
                     ),
                     "rules_sha256": claims._sha256(rules_path),
                     "sha256": "a" * 64,
@@ -403,14 +403,14 @@ class ProvenancePathTests(unittest.TestCase):
                 entry = claims.audit(claim)
                 self.assertTrue(entry["ok"], entry["problems"])
 
-                payload["inputs"]["rules"] = "other/toycpu.ldsl"
+                payload["inputs"]["rules"] = "other/toycpu.lspec"
                 report_path.write_bytes(
                     b"\xef\xbb\xbf" + json.dumps(payload).encode("utf-8")
                 )
                 entry = claims.audit(claim)
                 self.assertFalse(entry["ok"])
                 self.assertTrue(
-                    any("not 'toycpu.ldsl'" in p for p in entry["problems"]), entry
+                    any("not 'toycpu.lspec'" in p for p in entry["problems"]), entry
                 )
             finally:
                 claims.RULES, claims.OUT = saved
@@ -427,7 +427,7 @@ class WitnessPinTests(unittest.TestCase):
         self.assertEqual(len(entry.get("witness_sha256", "")), 64)
 
     def test_derived_missing_witness_is_allowed(self):
-        claim = _make_claim(id="derived-missing", rules="derived-missing.ldsl")
+        claim = _make_claim(id="derived-missing", rules="derived-missing.lspec")
         entry = claims.audit(claim)
         self.assertIsNone(entry["witness"])
         self.assertFalse(
@@ -588,7 +588,7 @@ class EvidenceFingerprintTests(unittest.TestCase):
         )
 
     def test_generated_report_requires_codegen_fingerprint(self):
-        claim = _make_claim(id="fp-generated", rules="fp.ldsl")
+        claim = _make_claim(id="fp-generated", rules="fp.lspec")
         evidence = _TempEvidence(claim)
         try:
             payload = evidence.write_report()
@@ -761,7 +761,7 @@ class CorpusVerificationTests(unittest.TestCase):
             "domain { types { s32 }; q0 { (G_X, [s32]); } }\n"
             "ruleset G_X { legal; }\n"
         )
-        claim = _make_claim(id="corpus", rules="corpus.ldsl")
+        claim = _make_claim(id="corpus", rules="corpus.lspec")
         evidence = _TempEvidence(claim, rules_text=rules_text)
         try:
             evidence.write_report(corpus_sha="0" * 64)

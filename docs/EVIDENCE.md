@@ -7,7 +7,7 @@ Normal CI runs the strict rules sweep (`python scripts/check_all_rules.py`) and 
 `claims/claims.json` 里 43 条断言，每一条都钉住三样东西：
 
 ```text
-rules/<name>.ldsl          内容哈希（rules_sha256）—— 入库
+rules/<name>.lspec          内容哈希（rules_sha256）—— 入库
 out/<report>.json          内容哈希（report 由 rules+oracle 产出）—— 不入库
 out/<oracle>.exe           内容哈希（oracle_sha256）—— 不入库
 ```
@@ -83,7 +83,7 @@ python -m legalizer_dsl.claims verify                    # 断言仍然成立
    所以它注定跟随 target 后端，不在本仓库内：
 
    ```powershell
-   legalizer-dsl --rules rules/aarch64-vector.ldsl codegen --out-dir out/codegen
+   legalizer-dsl --rules rules/aarch64-vector.lspec codegen --out-dir out/codegen
    # out/codegen/*.cpp + <target>/tools/oracle/main.cpp + 该 target 的 CodeGen 库
    #   -> out/oracle-aarch64/legalizer-oracle-aarch64.exe
    ```

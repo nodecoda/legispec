@@ -33,7 +33,7 @@ package-dir = { "" = "src" }
 where = ["src"]
 
 [tool.setuptools.data-files]
-"share/legalizer-dsl/rules" = ["rules/*.ldsl"]
+"share/legalizer-dsl/rules" = ["rules/*.lspec"]
 "share/legalizer-dsl/witness" = ["witness/*.witness"]
 "share/legalizer-dsl/capabilities" = ["capabilities/*.json"]
 "share/legalizer-dsl/claims" = ["claims/*.json", "claims/*.md", "claims/*.txt"]

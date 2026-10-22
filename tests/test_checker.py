@@ -22,7 +22,7 @@ from legalizer_dsl.parser import parse, parse_file
 from legalizer_dsl.witness import parse_witness_file
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
-RULES = HERE / "rules" / "toycpu.ldsl"
+RULES = HERE / "rules" / "toycpu.lspec"
 WITNESS = HERE / "witness" / "toycpu.witness"
 
 

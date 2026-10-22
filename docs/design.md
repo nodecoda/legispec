@@ -5,7 +5,7 @@
 > 范围：只建模 `LegalizerInfo::getAction` + `LegalizeRuleSet::apply`，
 > 不建模 `LegalizerHelper` 的 MIR 改写。
 > 代码：`src/legalizer_dsl/`
-> 规则：`rules/toycpu.ldsl`
+> 规则：`rules/toycpu.lspec`
 
 相关文档：
 
@@ -478,7 +478,7 @@ legal when always
 
 ## 6. ToyCPU 规则转写
 
-完整文件：`rules/toycpu.ldsl`。
+完整文件：`rules/toycpu.lspec`。
 
 ### 6.1 `G_ADD`：clamp 展开
 
@@ -634,7 +634,7 @@ src/legalizer_dsl/
   model.py             # LLT / Query / Pred / TypeExpr / Rule / RuleSet
   parser.py            # lexer + recursive-descent parser + macro expansion
   cli.py               # explain / trace / check / opcodes
-  rules/toycpu.ldsl    # ToyCPU 规则转写
+  rules/toycpu.lspec    # ToyCPU 规则转写
   tests/test_legalizer_dsl.py
 legalizer-dsl.py       # 仓库根 launcher（等价于安装后的 legalizer-dsl）
 ~~~
@@ -684,7 +684,7 @@ cli.main
 
 ~~~powershell
 python F:\llvm-study\toycpu\tools\legalizer-dsl.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\toycpu.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\toycpu.lspec `
   check --verbose
 ~~~
 
@@ -699,18 +699,18 @@ rulesets=47 opcodes=80 rules=89
 ### 8.2 查看展开后的规则
 
 ~~~powershell
-python ...\legalizer-dsl.py --rules ...\toycpu.ldsl explain G_ICMP
+python ...\legalizer-dsl.py --rules ...\toycpu.lspec explain G_ICMP
 ~~~
 
 ### 8.3 追踪一次查询
 
 ~~~powershell
-python ...\legalizer-dsl.py --rules ...\toycpu.ldsl trace G_ADD --type s64
-python ...\legalizer-dsl.py --rules ...\toycpu.ldsl trace G_ICMP --type v4s1 --type v4s32
-python ...\legalizer-dsl.py --rules ...\toycpu.ldsl trace G_PHI --type s1
-python ...\legalizer-dsl.py --rules ...\toycpu.ldsl trace G_SDIV --type s64
-python ...\legalizer-dsl.py --rules ...\toycpu.ldsl trace G_SHUFFLE_VECTOR --type v4s32 --type v4s32
-python ...\legalizer-dsl.py --rules ...\toycpu.ldsl trace G_LOAD --type s32 --type p0 --mem s8:8
+python ...\legalizer-dsl.py --rules ...\toycpu.lspec trace G_ADD --type s64
+python ...\legalizer-dsl.py --rules ...\toycpu.lspec trace G_ICMP --type v4s1 --type v4s32
+python ...\legalizer-dsl.py --rules ...\toycpu.lspec trace G_PHI --type s1
+python ...\legalizer-dsl.py --rules ...\toycpu.lspec trace G_SDIV --type s64
+python ...\legalizer-dsl.py --rules ...\toycpu.lspec trace G_SHUFFLE_VECTOR --type v4s32 --type v4s32
+python ...\legalizer-dsl.py --rules ...\toycpu.lspec trace G_LOAD --type s32 --type p0 --mem s8:8
 ~~~
 
 `G_ADD s64` 的实际输出：
@@ -727,7 +727,7 @@ Result: NarrowScalar t0 -> s32
 ### 8.4 列出 opcode
 
 ~~~powershell
-python ...\legalizer-dsl.py --rules ...\toycpu.ldsl opcodes
+python ...\legalizer-dsl.py --rules ...\toycpu.lspec opcodes
 ~~~
 
 ### 8.5 运行测试

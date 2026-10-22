@@ -1,4 +1,4 @@
-# Declared-unreachable rules for rules/aarch64-vector.ldsl.
+# Declared-unreachable rules for rules/aarch64-vector.lspec.
 #
 # G_SMIN rule 5 is the min half of
 #

@@ -5,7 +5,7 @@ Status: 已证明（hand + generated；24 查询，0 分歧）
 
 ## 1. 范围
 
-`rules/aarch64-vector-mul.ldsl` 转写
+`rules/aarch64-vector-mul.lspec` 转写
 `llvm/lib/Target/AArch64/GISel/AArch64LegalizerInfo.cpp` 的 208-235 行：
 
 ```text
@@ -29,7 +29,7 @@ C++ 里只有 `G_ADD` 家族写了第二组 `legalFor(HasSVE, ...)`。
 
 这是本轮唯一需要先决定的建模问题。`G_MUL` 与 `G_ADD` 家族的规则链
 除 `HasSVE` 分支外完全同形，看起来可以并入
-`aarch64-vector-arith.ldsl` 做一次复用。最终选择独立 ruleset，理由是：
+`aarch64-vector-arith.lspec` 做一次复用。最终选择独立 ruleset，理由是：
 
 1. C++ 里是两个独立的 `getActionDefinitionsBuilder` 调用，ruleset 边界
    是源码结构的一部分；
@@ -99,7 +99,7 @@ G_MUL [v4s64]  -> FewerElements   v2s64    (clampNumElements s64)
 ## 5. 本片新增
 
 ```text
-rules/aarch64-vector-mul.ldsl
+rules/aarch64-vector-mul.lspec
 aarch64-vector-mul-capabilities.json
 witness/aarch64-vector-mul.witness
 out/codegen-aarch64-vector-mul/（AArch64VectorMulGen）

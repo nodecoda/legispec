@@ -26,7 +26,7 @@ import tempfile
 import unittest
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
-RULES = REPO / "rules" / "riscv-conditional-gconstant.ldsl"
+RULES = REPO / "rules" / "riscv-conditional-gconstant.lspec"
 CONFORMANCE = REPO / "src" / "legalizer_dsl" / "conformance.py"
 ORACLE = REPO / "out" / "oracle-riscv" / "legalizer-oracle-riscv.exe"
 DEFINES = [
@@ -75,7 +75,7 @@ class HarnessSensitivityTests(unittest.TestCase):
         )
         self.assertNotEqual(mutated, source, "mutation anchor not found")
         with tempfile.TemporaryDirectory() as tmp:
-            path = pathlib.Path(tmp) / "mutated.ldsl"
+            path = pathlib.Path(tmp) / "mutated.lspec"
             path.write_text(mutated, encoding="utf-8", newline="\n")
             code, data = run_conformance(path)
         self.assertNotEqual(code, 0, "harness accepted a wrong rule table")
@@ -86,7 +86,7 @@ class HarnessSensitivityTests(unittest.TestCase):
         mutated = source.replace("when not is64bit;", "when is64bit;")
         self.assertNotEqual(mutated, source, "mutation anchor not found")
         with tempfile.TemporaryDirectory() as tmp:
-            path = pathlib.Path(tmp) / "mutated.ldsl"
+            path = pathlib.Path(tmp) / "mutated.lspec"
             path.write_text(mutated, encoding="utf-8", newline="\n")
             code, data = run_conformance(path)
         self.assertNotEqual(code, 0, "harness accepted a flipped guard")

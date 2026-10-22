@@ -105,7 +105,7 @@ From any directory:
 
 ~~~powershell
 $dsl = 'F:\llvm-study\toycpu\tools\legalizer-dsl.py'
-$rules = 'F:\llvm-study\toycpu\tools\legalizer_dsl\rules\toycpu.ldsl'
+$rules = 'F:\llvm-study\toycpu\tools\legalizer_dsl\rules\toycpu.lspec'
 $witness = 'F:\llvm-study\toycpu\tools\legalizer_dsl\witness\toycpu.witness'
 
 python $dsl --rules $rules check --verbose
@@ -200,7 +200,7 @@ policy.
 
 ## Second target: X86-64 (scalar subset)
 
-`rules/x86-scalar.ldsl` transcribes the scalar parts of
+`rules/x86-scalar.lspec` transcribes the scalar parts of
 `X86LegalizerInfo.cpp`.  It is a migration test, not a full X86 model:
 vector clauses, memory descriptors, custom legalization, FP and atomics are
 out of scope.  The experiment is documented in
@@ -208,11 +208,11 @@ out of scope.  The experiment is documented in
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\x86-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\x86-scalar.lspec `
   check --strict
 
 python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\x86-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\x86-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle\legalizer-oracle-x86.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\x86-scalar-conformance-report.json
@@ -238,12 +238,12 @@ step 8.
 
 ## Third target: AArch64 (scalar subset)
 
-`rules/aarch64-scalar.ldsl` transcribes the scalar parts of
+`rules/aarch64-scalar.lspec` transcribes the scalar parts of
 `AArch64LegalizerInfo.cpp`.  It is a migration test, not a full AArch64
 model: vector/scalable-vector clauses, memory descriptors, FP and SVE/FP16
 feature variants are out of scope.  CSSC is a separate frozen configuration
-(`rules/aarch64-cssc-scalar.ldsl`); pointer rulesets and atomics are separate
-subsets (`aarch64-pointer.ldsl`, `aarch64-atomic.ldsl`).  The scalar experiment
+(`rules/aarch64-cssc-scalar.lspec`); pointer rulesets and atomics are separate
+subsets (`aarch64-pointer.lspec`, `aarch64-atomic.lspec`).  The scalar experiment
 is documented in `experiments/aarch64-gisel-experiment.md`.
 
 The oracle links against the full LLVM build at `F:\llvm\build` and is built
@@ -259,11 +259,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
   check --strict
 
 python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\aarch64-scalar-conformance-report.json `
@@ -286,8 +286,8 @@ pointers.
 
 ### AArch64 +CSSC
 
-`rules/aarch64-cssc-scalar.ldsl` is the `+cssc` point of the same scalar
-experiment.  It differs from `aarch64-scalar.ldsl` in exactly four rulesets:
+`rules/aarch64-cssc-scalar.lspec` is the `+cssc` point of the same scalar
+experiment.  It differs from `aarch64-scalar.lspec` in exactly four rulesets:
 `G_SMIN/G_SMAX/G_UMIN/G_UMAX`, `G_ABS`, `G_CTPOP` and `G_CTTZ`.  `HasCSSC` is a
 construction-time bool in `AArch64LegalizerInfo`, so one frozen file per
 configuration is exact.  The experiment is documented in
@@ -295,19 +295,19 @@ configuration is exact.  The experiment is documented in
 
 ~~~powershell
 python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-cssc-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-cssc-scalar.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\aarch64-cssc-scalar-capabilities.json
 
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-cssc-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-cssc-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-cssc.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\aarch64-cssc-scalar-conformance-report.json `
   --llvm-build F:/llvm/build
 
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\diff_oracles.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
   --oracle-left F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
   --oracle-right F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-cssc.exe `
   --label-left generic --label-right cssc `
@@ -359,7 +359,7 @@ configuration variants.
 
 ### AArch64 pointer subset
 
-`rules/aarch64-pointer.ldsl` models the scalar pointer rulesets
+`rules/aarch64-pointer.lspec` models the scalar pointer rulesets
 (`G_PTR_ADD`, `G_PTRMASK`, `G_PTRTOINT`, `G_INTTOPTR`, `G_BRINDIRECT`,
 `G_FRAME_INDEX`, `G_GLOBAL_VALUE`, `G_PTRAUTH_GLOBAL_VALUE`,
 `G_BLOCK_ADDR`, `G_JUMP_TABLE`, `G_BRJT`).  It uses the real 64-bit AArch64
@@ -368,12 +368,12 @@ is documented in `experiments/aarch64-pointer-experiment.md`.
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-pointer.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-pointer.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\aarch64-pointer-capabilities.json
 
 python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-pointer.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-pointer.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\aarch64-pointer-conformance-report.json `
@@ -390,8 +390,8 @@ input sha256=991f7f5abc20f06a9890d8a558f33e1df7a9c6c5d849092b55f36cf2eaf60c42
 
 ### AArch64 atomic policy family
 
-`rules/aarch64-atomic.ldsl` models generic AArch64 (outline atomics off) and
-`rules/aarch64-atomic-outline.ldsl` models `+outline-atomics`.  The source is
+`rules/aarch64-atomic.lspec` models generic AArch64 (outline atomics off) and
+`rules/aarch64-atomic-outline.lspec` models `+outline-atomics`.  The source is
 `AArch64LegalizerInfo.cpp:1148-1174`; the governing construction variable is:
 
 ```cpp
@@ -418,7 +418,7 @@ uses `libcall + clampScalar`.  The `G_ATOMICRMW_*` libcall set excludes
 `s128`, so `s128` falls through to `clampScalar` and narrows to `s64`.
 `G_ATOMIC_CMPXCHG` includes `s128` in its libcall set.
 
-`+lse` deliberately reuses `aarch64-atomic.ldsl`: `UseOutlineAtomics` remains
+`+lse` deliberately reuses `aarch64-atomic.lspec`: `UseOutlineAtomics` remains
 false, so the policy table should equal generic.  A dedicated `+lse` oracle
 and a generic-vs-lse differential prove exactly that:
 
@@ -458,7 +458,7 @@ aarch64-atomic-lse
 
 ### AArch64 fixed-vector vertical slice
 
-`rules/aarch64-vector.ldsl` is the first vector slice.  It transcribes three
+`rules/aarch64-vector.lspec` is the first vector slice.  It transcribes three
 source regions from `AArch64LegalizerInfo.cpp`:
 
 ~~~text
@@ -541,7 +541,7 @@ lambda referencing a local `LLT`), is documented in
 
 ### AArch64 G_ADD-family vector slice
 
-`rules/aarch64-vector-arith.ldsl` transcribes lines 181-206 of
+`rules/aarch64-vector-arith.lspec` transcribes lines 181-206 of
 `AArch64LegalizerInfo.cpp`: the shared ruleset for `G_ADD`, `G_SUB`, `G_AND`,
 `G_OR` and `G_XOR`.  This is the first slice that exercises the three
 element-wise vector policies together:
@@ -612,7 +612,7 @@ The experiment is documented in
 
 ### AArch64 G_MUL vector slice
 
-`rules/aarch64-vector-mul.ldsl` transcribes lines 208-235 of
+`rules/aarch64-vector-mul.lspec` transcribes lines 208-235 of
 `AArch64LegalizerInfo.cpp`.  `G_MUL` is a separate
 `getActionDefinitionsBuilder` call and, unlike the `G_ADD` family, has no
 `HasSVE` legalFor branch.  The remaining chain is identical, so the slice
@@ -652,7 +652,7 @@ aarch64-vector-mul-generated
 
 ### AArch64 G_SHL / G_ASHR / G_LSHR two-slot slice
 
-`rules/aarch64-vector-shift.ldsl` transcribes lines 234-265 of
+`rules/aarch64-vector-shift.lspec` transcribes lines 234-265 of
 `AArch64LegalizerInfo.cpp`.  The three opcodes share one builder, so they share
 one ruleset.  This is the first slice whose rules constrain the relationship
 between two type slots, and the first that needs a domain-level shape filter.
@@ -722,7 +722,7 @@ aarch64-vector-shift-generated
 
 ### AArch64 G_ICMP result/operand slice
 
-`rules/aarch64-icmp.ldsl` transcribes lines 740-769 of
+`rules/aarch64-icmp.lspec` transcribes lines 740-769 of
 `AArch64LegalizerInfo.cpp`.  It is the first slice where `Types[0]` is not an
 operand: slot 0 is the comparison result mask and slot 1 is the operand type
 shared by LHS and RHS.
@@ -783,7 +783,7 @@ aarch64-icmp-generated
 
 ### AArch64 G_FCMP float slice
 
-`rules/aarch64-fcmp.ldsl` transcribes lines 771-799 of
+`rules/aarch64-fcmp.lspec` transcribes lines 771-799 of
 `AArch64LegalizerInfo.cpp`.  It is the first slice with a float operand:
 slot 0 is the integer comparison mask, slot 1 is the compared float value.
 
@@ -842,7 +842,7 @@ aarch64-fcmp-generated
 
 ### AArch64 G_CONCAT_VECTORS custom/bitcast slice
 
-`rules/aarch64-concat-vectors.ldsl` transcribes lines 1333-1357 of
+`rules/aarch64-concat-vectors.lspec` transcribes lines 1333-1357 of
 `AArch64LegalizerInfo.cpp`:
 
 ~~~text
@@ -913,7 +913,7 @@ aarch64-concat-vectors-generated
 
 ## Fourth target: RISC-V (RV64 scalar subset)
 
-`rules/riscv64-scalar.ldsl` transcribes the scalar parts of
+`rules/riscv64-scalar.lspec` transcribes the scalar parts of
 `RISCVLegalizerInfo.cpp`, fixed to `riscv64-unknown-linux-gnu` with the
 `generic-rv64` CPU.  That CPU has only `+64bit,+i`: no M, Zmmul, Zbb, Zbc,
 Zbkc, P or V.  As a result `G_MUL` and division are libcalls, bit-manipulation
@@ -935,12 +935,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-scalar-capabilities.json
 
 python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv64-scalar-conformance-report.json `
@@ -969,7 +969,7 @@ second target on which the LDSL -> C++ path is proven end to end:
 
 ~~~powershell
 python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv-gen.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv64-gen-conformance-report.json
@@ -987,7 +987,7 @@ RISCVGen` selects the namespace, and the oracle is compiled with
 
 ### RISC-V pointer subset
 
-`rules/riscv64-pointer.ldsl` models the RV64 pointer rulesets
+`rules/riscv64-pointer.lspec` models the RV64 pointer rulesets
 (`G_PTR_ADD`, `G_PTRMASK`, `G_PTRTOINT`, `G_INTTOPTR`, `G_BRINDIRECT`,
 `G_BRJT`, `G_FRAME_INDEX`, `G_GLOBAL_VALUE`, `G_JUMP_TABLE`,
 `G_CONSTANT_POOL`, plus the pointer branches of `G_CONSTANT`, `G_PHI`,
@@ -997,12 +997,12 @@ The experiment is documented in
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-pointer.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-pointer.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-pointer-capabilities.json
 
 python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-pointer.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-pointer.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv64-pointer-conformance-report.json `
@@ -1020,7 +1020,7 @@ input sha256=020ac70e10682b2010b9b59fbae735465fe6c2cc66d044d3708c2e1d82b4794a
 
 ### RISC-V +M+Zmmul+Zbb feature variant
 
-`rules/riscv64-mzb-scalar.ldsl` is a **feature flip**, not a different
+`rules/riscv64-mzb-scalar.lspec` is a **feature flip**, not a different
 configuration shape: same triple, same `generic-rv64` CPU, same XLen, same
 domain, same pointer rules.  Only the oracle's baked-in feature string
 (`+m,+zmmul,+zbb`) differs.  The point is to show that the DSL models a
@@ -1038,12 +1038,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
   -WithRiscv
 
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-mzb-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-mzb-scalar.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-mzb-scalar-capabilities.json
 
 python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-mzb-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-mzb-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv-mzb.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv64-mzb-scalar-conformance-report.json `
@@ -1086,7 +1086,7 @@ are two honest ways to transcribe it:
 - one frozen file per configuration, where an inactive call contributes no
   rule (what the RV64/RV32 files above do), or
 - one source with a **parse-time guard**, `legal_for {s32} when not is64bit;`
-  (what `rules/riscv-scalar-conditional.ldsl` does).
+  (what `rules/riscv-scalar-conditional.lspec` does).
 
 The distinction matters.  LLVM's `legalFor(bool Pred, ...)` is
 
@@ -1135,7 +1135,7 @@ The experiment is documented in
 
 ### RISC-V RV32 (XLen axis)
 
-`rules/riscv32-scalar.ldsl` is the **XLen flip** of the RV64 scalar file:
+`rules/riscv32-scalar.lspec` is the **XLen flip** of the RV64 scalar file:
 same C++ constructor, same domain, but `riscv32-unknown-linux-gnu` /
 `generic-rv32`, so `XLen = 32`, `sXLen = s32` and `sDoubleXLen = s64`.
 Feature-dependent branches stay off, so the two axes are orthogonal:
@@ -1161,12 +1161,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File `
   -WithRiscv
 
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-scalar.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-scalar-capabilities.json
 
 python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv32-scalar-conformance-report.json `
@@ -1197,20 +1197,20 @@ The experiment is documented in `experiments/riscv32-gisel-experiment.md`.
 
 ### RISC-V scalar, one source for both XLen values
 
-`rules/riscv-scalar-conditional.ldsl` is the same scalar subset written once
+`rules/riscv-scalar-conditional.lspec` is the same scalar subset written once
 with `is64bit`, `sXLen` and `sDoubleXLen` as configuration values.  It is the
 end-to-end test of the guard contract: the same bytes must reproduce both
 frozen files' decision functions.
 
 ~~~powershell
 python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv-scalar-conditional.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv-scalar-conditional.lspec `
   --define is64bit=true --define sXLen=s64 --define sDoubleXLen=s128 `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-scalar-capabilities.json
 
 python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv-scalar-conditional.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv-scalar-conditional.lspec `
   --define is64bit=false --define sXLen=s32 --define sDoubleXLen=s64 `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-scalar-capabilities.json `
@@ -1257,7 +1257,7 @@ The design note is `config-guard.md`.
 
 ### RISC-V RV32 × +M+Zmmul+Zbb (product point)
 
-`rules/riscv32-mzb-scalar.ldsl` combines the two axes.  The product is not the
+`rules/riscv32-mzb-scalar.lspec` combines the two axes.  The product is not the
 sum of the diffs: 967 queries differ for the feature axis at RV32, 3,291 for
 the XLen axis at RV64+mzb, but only 3,968 for the combined endpoint, and 269
 queries belong to both single-axis diffs.
@@ -1277,12 +1277,12 @@ coverage is 111/115 and the static checker reports them as unreachable.
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-mzb-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-mzb-scalar.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-mzb-scalar-capabilities.json
 
 python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-mzb-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-mzb-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32-mzb.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv32-mzb-scalar-conformance-report.json `
@@ -1300,19 +1300,19 @@ Documented in `experiments/riscv32-mzb-experiment.md`.
 
 ### RISC-V RV32 pointer subset
 
-`rules/riscv32-pointer.ldsl` is the XLen flip of the RV64 pointer model:
+`rules/riscv32-pointer.lspec` is the XLen flip of the RV64 pointer model:
 `p0:32`, `sXLen = s32`.  `G_CONSTANT` is Legal for both `p0` and `s32` (there
 is no s64 Custom), `G_ICMP` uses `(s32,p0)`, and `G_SELECT` uses
 `(p0,s32)`.  317 of the 770 answers differ from the RV64 pointer model.
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-pointer.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-pointer.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-pointer-capabilities.json
 
 python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-pointer.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-pointer.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv32-pointer-conformance-report.json `
@@ -1357,41 +1357,41 @@ python -m unittest discover -s F:\llvm-study\toycpu\tools\legalizer_dsl\tests -v
 | `interp.py` | fixpoint interpreter, cycle/stuck/budget detection |
 | `conformance.py` | JSONL query generation, C++ oracle runner, pointwise diff report |
 | `checker/` | wellformedness, mutation, coverage, reachability, conflict, termination |
-| `rules/toycpu.ldsl` | ToyCPU rules transcribed from C++ |
-| `rules/x86-scalar.ldsl` | X86-64 scalar subset transcribed from C++ |
+| `rules/toycpu.lspec` | ToyCPU rules transcribed from C++ |
+| `rules/x86-scalar.lspec` | X86-64 scalar subset transcribed from C++ |
 | `x86-scalar-capabilities.json` | X86 experiment capability manifest |
 | `diff_oracles.py` | Compare two oracle configurations over one query corpus |
-| `rules/aarch64-scalar.ldsl` | AArch64 scalar subset transcribed from C++ |
+| `rules/aarch64-scalar.lspec` | AArch64 scalar subset transcribed from C++ |
 | `aarch64-scalar-capabilities.json` | AArch64 scalar experiment capability manifest |
-| `rules/aarch64-cssc-scalar.ldsl` | AArch64 scalar subset with `+cssc` |
+| `rules/aarch64-cssc-scalar.lspec` | AArch64 scalar subset with `+cssc` |
 | `aarch64-cssc-scalar-capabilities.json` | AArch64 `+cssc` capability manifest |
-| `rules/aarch64-pointer.ldsl` | AArch64 scalar pointer subset transcribed from C++ |
+| `rules/aarch64-pointer.lspec` | AArch64 scalar pointer subset transcribed from C++ |
 | `aarch64-pointer-capabilities.json` | AArch64 pointer experiment capability manifest |
-| `rules/aarch64-atomic.ldsl` | AArch64 atomic subset, generic and +lse |
+| `rules/aarch64-atomic.lspec` | AArch64 atomic subset, generic and +lse |
 | `aarch64-atomic-capabilities.json` | AArch64 generic atomic capability manifest |
-| `rules/aarch64-atomic-outline.ldsl` | AArch64 atomic subset with +outline-atomics |
+| `rules/aarch64-atomic-outline.lspec` | AArch64 atomic subset with +outline-atomics |
 | `aarch64-atomic-outline-capabilities.json` | AArch64 +outline-atomics capability manifest |
-| `rules/aarch64-vector.ldsl` | AArch64 fixed-vector subset (clamp/legal/lower) |
+| `rules/aarch64-vector.lspec` | AArch64 fixed-vector subset (clamp/legal/lower) |
 | `aarch64-vector-capabilities.json` | AArch64 fixed-vector capability manifest |
 | `witness/aarch64-vector-unreachable.witness` | Declared-unreachable v2s32 min clamp |
-| `rules/aarch64-vector-arith.ldsl` | AArch64 G_ADD-family vector-aware policy |
+| `rules/aarch64-vector-arith.lspec` | AArch64 G_ADD-family vector-aware policy |
 | `aarch64-vector-arith-capabilities.json` | AArch64 G_ADD-family capability manifest |
 | `witness/aarch64-vector-arith.witness` | Full rule-index witnesses incl. two v1 clamps |
-| `rules/aarch64-vector-mul.ldsl` | AArch64 G_MUL vector-aware policy |
+| `rules/aarch64-vector-mul.lspec` | AArch64 G_MUL vector-aware policy |
 | `aarch64-vector-mul-capabilities.json` | AArch64 G_MUL capability manifest |
 | `witness/aarch64-vector-mul.witness` | Full rule-index witnesses incl. two v1 clamps |
-| `rules/aarch64-vector-shift.ldsl` | AArch64 three-opcode two-slot shift policy |
+| `rules/aarch64-vector-shift.lspec` | AArch64 three-opcode two-slot shift policy |
 | `aarch64-vector-shift-capabilities.json` | AArch64 shift capability manifest |
 | `witness/aarch64-vector-shift.witness` | Full rule-index witnesses for 21 rules |
-| `rules/aarch64-icmp.ldsl` | AArch64 G_ICMP result/operand policy |
+| `rules/aarch64-icmp.lspec` | AArch64 G_ICMP result/operand policy |
 | `aarch64-icmp-capabilities.json` | AArch64 G_ICMP capability manifest |
 | `witness/aarch64-icmp.witness` | Full rule-index witnesses for 23 rules, incl. one shadowed |
-| `rules/aarch64-fcmp.ldsl` | AArch64 G_FCMP float result/operand policy |
-| `rules/aarch64-concat-vectors.ldsl` | AArch64 G_CONCAT_VECTORS custom/bitcast policy |
+| `rules/aarch64-fcmp.lspec` | AArch64 G_FCMP float result/operand policy |
+| `rules/aarch64-concat-vectors.lspec` | AArch64 G_CONCAT_VECTORS custom/bitcast policy |
 | `aarch64-fcmp-capabilities.json` | AArch64 G_FCMP capability manifest |
 | `aarch64-concat-vectors-capabilities.json` | AArch64 G_CONCAT_VECTORS capability manifest |
 | `witness/aarch64-fcmp.witness` | Full rule-index witnesses for 14 rules, incl. ANY_SCALAR pins |
-| `rules/riscv64-scalar.ldsl` | RISC-V RV64 scalar subset transcribed from C++ |
+| `rules/riscv64-scalar.lspec` | RISC-V RV64 scalar subset transcribed from C++ |
 | `out/codegen-riscv64-scalar/` | C++ generated from the RV64 scalar rules (`RISCVGen`) |
 | `out/codegen-riscv64-mzb-scalar/` | C++ generated from the RV64 +mzb rules (`RISCVGenMzb`) |
 | `out/codegen-riscv32-scalar/` | C++ generated from the RV32 scalar rules (`RISCV32Gen`) |
@@ -1408,15 +1408,15 @@ python -m unittest discover -s F:\llvm-study\toycpu\tools\legalizer_dsl\tests -v
 | `out/codegen-aarch64-concat-vectors/` | C++ generated from the G_CONCAT_VECTORS rules (`AArch64ConcatVectorsGen`) |
 | `out/codegen-x86-scalar/` | C++ generated from the X86-64 scalar rules (`X86Gen`) |
 | `riscv64-scalar-capabilities.json` | RISC-V experiment capability manifest |
-| `rules/riscv64-pointer.ldsl` | RISC-V RV64 pointer subset transcribed from C++ |
+| `rules/riscv64-pointer.lspec` | RISC-V RV64 pointer subset transcribed from C++ |
 | `riscv64-pointer-capabilities.json` | RISC-V pointer experiment capability manifest |
-| `rules/riscv64-mzb-scalar.ldsl` | RISC-V RV64 scalar subset with +m,+zmmul,+zbb |
+| `rules/riscv64-mzb-scalar.lspec` | RISC-V RV64 scalar subset with +m,+zmmul,+zbb |
 | `riscv64-mzb-scalar-capabilities.json` | RISC-V feature-variant capability manifest |
-| `rules/riscv32-scalar.ldsl` | RISC-V RV32 scalar subset (XLen axis) |
+| `rules/riscv32-scalar.lspec` | RISC-V RV32 scalar subset (XLen axis) |
 | `riscv32-scalar-capabilities.json` | RISC-V RV32 capability manifest |
-| `rules/riscv32-mzb-scalar.ldsl` | RISC-V RV32 scalar with +m,+zmmul,+zbb (product point) |
+| `rules/riscv32-mzb-scalar.lspec` | RISC-V RV32 scalar with +m,+zmmul,+zbb (product point) |
 | `riscv32-mzb-scalar-capabilities.json` | RISC-V RV32 product capability manifest |
-| `rules/riscv32-pointer.ldsl` | RISC-V RV32 pointer subset (XLen axis) |
+| `rules/riscv32-pointer.lspec` | RISC-V RV32 pointer subset (XLen axis) |
 | `riscv32-pointer-capabilities.json` | RISC-V RV32 pointer capability manifest |
 | `tests/test_legalizer_dsl.py` | 51 parser/model/LLT/witness equivalence tests |
 | `tests/test_diagnostics.py` | 6 diagnostic contract tests |

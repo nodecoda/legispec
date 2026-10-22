@@ -9,7 +9,7 @@
 
 """Deterministic codegen contract for every committed rule file.
 
-For each ``rules/*.ldsl`` this gate:
+For each ``rules/*.lspec`` this gate:
 
 1. generates the header, source, manifest and wiring twice in separate
    directories and requires byte-for-byte equality;
@@ -39,6 +39,7 @@ if str(ROOT / "src") not in sys.path:
     sys.path.insert(0, str(ROOT / "src"))
 
 from legalizer_dsl import __version__, codegen  # noqa: E402
+from legalizer_dsl import paths  # noqa: E402
 from legalizer_dsl.codegen import DSL_SPEC_VERSION  # noqa: E402
 
 OUT = ROOT / "out" / "codegen-contract"
@@ -51,11 +52,11 @@ _TIMESTAMP_RE = re.compile(r"\b20\d{2}-\d{2}-\d{2}[T ]\d{2}:\d{2}")
 # Config guards are resolved at generation time, so a rule file with guards
 # has one artifact per config.  Cover both RISC-V widths explicitly.
 CONFIG_VARIANTS: dict[str, tuple[tuple[tuple[str, str], ...], ...]] = {
-    "riscv-conditional-gconstant.ldsl": (
+    "riscv-conditional-gconstant.lspec": (
         (("is64bit", "false"), ("sXLen", "s32"), ("sDoubleXLen", "s64")),
         (("is64bit", "true"), ("sXLen", "s64"), ("sDoubleXLen", "s128")),
     ),
-    "riscv-scalar-conditional.ldsl": (
+    "riscv-scalar-conditional.lspec": (
         (("is64bit", "false"), ("sXLen", "s32"), ("sDoubleXLen", "s64")),
         (("is64bit", "true"), ("sXLen", "s64"), ("sDoubleXLen", "s128")),
     ),
@@ -63,7 +64,7 @@ CONFIG_VARIANTS: dict[str, tuple[tuple[tuple[str, str], ...], ...]] = {
 
 
 def _rules() -> list[Path]:
-    return sorted(path for path in RULES.glob("*.ldsl") if path.is_file())
+    return paths.iter_rule_files(RULES)
 
 
 def _variants(rule: Path) -> tuple[tuple[tuple[str, str], ...], ...]:
@@ -224,7 +225,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         return 2
     if not selected:
         print(
-            f"error: no rules/*.ldsl files found under {RULES}; refusing to "
+            f"error: no rules/*.lspec files found under {RULES}; refusing to "
             "report an empty contract as PASS",
             file=sys.stderr,
         )

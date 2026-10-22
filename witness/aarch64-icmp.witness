@@ -1,4 +1,4 @@
-# Executable witnesses for rules/aarch64-icmp.ldsl.
+# Executable witnesses for rules/aarch64-icmp.lspec.
 #
 # Every rule index is covered once, either by a positive step or by an
 # explicit unreachable declaration.  Four rules are declared unreachable for

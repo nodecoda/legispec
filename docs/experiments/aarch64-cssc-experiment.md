@@ -318,8 +318,8 @@ synonym for "all bit-count operations".
 Rules and manifests:
 
 ```text
-toycpu/tools/legalizer_dsl/rules/aarch64-scalar.ldsl
-toycpu/tools/legalizer_dsl/rules/aarch64-cssc-scalar.ldsl
+toycpu/tools/legalizer_dsl/rules/aarch64-scalar.lspec
+toycpu/tools/legalizer_dsl/rules/aarch64-cssc-scalar.lspec
 toycpu/tools/legalizer_dsl/aarch64-scalar-capabilities.json
 toycpu/tools/legalizer_dsl/aarch64-cssc-scalar-capabilities.json
 ```
@@ -352,12 +352,12 @@ Static checks:
 ```powershell
 cd F:\llvm-study\toycpu\tools
 python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\aarch64-scalar-capabilities.json
 
 python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-cssc-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-cssc-scalar.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\aarch64-cssc-scalar-capabilities.json
 ```
@@ -366,14 +366,14 @@ Differential conformance:
 
 ```powershell
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\aarch64-scalar-conformance-report.json `
   --llvm-build F:/llvm/build
 
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-cssc-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-cssc-scalar.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-cssc.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\aarch64-cssc-scalar-conformance-report.json `
@@ -384,7 +384,7 @@ Feature diff:
 
 ```powershell
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\diff_oracles.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
   --oracle-left F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
   --oracle-right F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-cssc.exe `
   --label-left generic --label-right cssc `

@@ -230,7 +230,7 @@ def _same_location(
     Evidence may be produced anywhere (a build tree, a collector's out/ dir),
     so an absolute path is not an identity.  Paths match when they normalize
     identically.  Rules and oracle provenance may also match on a relative
-    tail such as ``rules/toycpu.ldsl`` or ``oracle/legalizer-oracle.exe``,
+    tail such as ``rules/toycpu.lspec`` or ``oracle/legalizer-oracle.exe``,
     which keeps evidence produced in an older monorepo checkout valid.  Build
     paths have no tail fallback: they must normalize identically.  Content
     identity is carried by the sha256 pins checked separately; this check only

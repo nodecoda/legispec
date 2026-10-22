@@ -54,7 +54,7 @@ notation means a **32-bit** pointer, which is not an RV64 pointer.
 Added:
 
 ```text
-toycpu/tools/legalizer_dsl/rules/riscv64-pointer.ldsl
+toycpu/tools/legalizer_dsl/rules/riscv64-pointer.lspec
 toycpu/tools/legalizer_dsl/riscv64-pointer-capabilities.json
 toycpu/out/riscv64-pointer-conformance-report.json
 toycpu/out/riscv64-pointer-check.txt
@@ -127,12 +127,12 @@ out in both file headers.
 ```powershell
 cd F:\llvm-study\toycpu\tools
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-pointer.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-pointer.lspec `
   check --strict `
   --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-pointer-capabilities.json
 
 python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-pointer.ldsl `
+  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-pointer.lspec `
   --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv.exe `
   --domain D --closure R `
   --out F:\llvm-study\toycpu\out\riscv64-pointer-conformance-report.json `

@@ -103,7 +103,7 @@ class ConformanceTests(unittest.TestCase):
 class ReportDeterminismTests(unittest.TestCase):
     def test_report_bytes_do_not_depend_on_temp_directory_or_jsonl_path(self):
         here = pathlib.Path(__file__).resolve().parents[1]
-        rules = here / "rules" / "toycpu.ldsl"
+        rules = here / "rules" / "toycpu.lspec"
         oracle = here / "out" / "oracle" / "legalizer-oracle.exe"
         if not oracle.is_file():
             self.skipTest("toycpu oracle not collected; see docs/EVIDENCE.md")
