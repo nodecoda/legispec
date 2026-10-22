@@ -88,8 +88,8 @@ BOUNDARY = (
 )
 
 
-LLVM_BUILD_FULL = os.environ.get("LEGISPEC_LLVM_BUILD", "F:/llvm/build")
-_TOYCPU_BUILD = os.environ.get("LEGISPEC_TOYCPU_BUILD", "F:/llvm/build-toycpu")
+LLVM_BUILD_FULL = os.environ.get("LEGISPEC_LLVM_BUILD", "")
+_TOYCPU_BUILD = os.environ.get("LEGISPEC_TOYCPU_BUILD", LLVM_BUILD_FULL)
 
 
 @dataclass(frozen=True)
@@ -236,6 +236,8 @@ def _same_location(
     identity is carried by the sha256 pins checked separately; this check only
     catches "the report is about some other file".
     """
+    if str(expected) in ("", "."):
+        return str(reported) in ("", ".")
     if not reported:
         return False
     if _norm(pathlib.Path(str(reported))) == _norm(expected):

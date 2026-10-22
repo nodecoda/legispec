@@ -49,7 +49,7 @@ import sys
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 LEDGER = REPO / "claims" / "claims.json"
-DEFAULT_LLVM_BUILD = "F:/llvm/build"
+DEFAULT_LLVM_BUILD = ""
 
 
 def define_args(config: dict) -> list[str]:
@@ -71,7 +71,7 @@ def _resolve_build(claim: dict, override: str | None) -> str:
     """
     if override is not None:
         return override
-    return claim.get("llvm_build") or DEFAULT_LLVM_BUILD
+    return claim.get("llvm_build") or os.environ.get("LEGISPEC_LLVM_BUILD") or DEFAULT_LLVM_BUILD
 
 
 def limit_overwrite_error(
@@ -163,6 +163,12 @@ def main(argv: list[str] | None = None) -> int:
     failed = 0
     for claim in selected:
         build = _resolve_build(claim, args.llvm_build)
+        if not build:
+            print(
+                "error: LLVM build not configured; set LEGISPEC_LLVM_BUILD or pass --llvm-build",
+                file=sys.stderr,
+            )
+            return 2
         print(f"== {claim['id']} ({claim['rules']}, {claim['queries']} queries)")
         print(f"   llvm_build={build}")
         rc = run_claim(claim, out_dir, oracle_dir, build, args.limit)

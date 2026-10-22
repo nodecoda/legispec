@@ -211,7 +211,7 @@ claims:     33 proven, 0 failed
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study	oycpu\scripts\check-aarch64-vector-arith.ps1
+  <workspace>	oycpu\scripts\check-aarch64-vector-arith.ps1
 ```
 
 generated 路径新增 oracle：

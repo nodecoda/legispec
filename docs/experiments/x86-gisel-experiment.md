@@ -98,7 +98,7 @@ re-run and still passes.
 All line references point at:
 
 ```text
-F:\llvm\llvm-project\llvm\lib\Target\X86\GISel\X86LegalizerInfo.cpp
+<llvm-src>\llvm\lib\Target\X86\GISel\X86LegalizerInfo.cpp
 ```
 
 ### 3.1 Integer add/sub
@@ -424,26 +424,26 @@ Build the three oracles:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1
+  <legacy-checkout>\tools\oracle\build.ps1
 ```
 
 Static check:
 
 ```powershell
-cd F:\llvm-study\toycpu\tools
+cd <legacy-checkout>\tools
 python -m legispec `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\x86-scalar.lspec `
+  --rules <legacy-checkout>\tools\legispec\rules\x86-scalar.lspec `
   check --strict
 ```
 
 Differential conformance:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\x86-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle\legispec-oracle-x86.exe `
+python -X utf8 <legacy-checkout>\tools\legispec\conformance.py `
+  --rules <legacy-checkout>\tools\legispec\rules\x86-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle\legispec-oracle-x86.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\x86-scalar-conformance-report.json
+  --out <legacy-checkout>\out\x86-scalar-conformance-report.json
 ```
 
 Expected tail:
@@ -456,7 +456,7 @@ ToyCPU regression gate:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-legispec.ps1
+  <legacy-checkout>\scripts\check-legispec.ps1
 ```
 
 Last run: `RESULT: PASS elapsed=40.3s`, 101 tests, 243,714 queries,

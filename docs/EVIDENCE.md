@@ -23,7 +23,7 @@ out/<oracle>.exe           内容哈希（oracle_sha256）—— 不入库
 证据目录默认是仓库根下的 `out/`，可用环境变量改：
 
 ```powershell
-$env:LEGISPEC_OUT = 'D:\evidence\legispec'
+$env:LEGISPEC_OUT = '<evidence-dir>'
 ```
 
 同一套变量作用于 `claims` / `conformance` / `closure` / `codegen`：
@@ -32,9 +32,13 @@ $env:LEGISPEC_OUT = 'D:\evidence\legispec'
 |---|---|
 | `LEGISPEC_OUT` | 报告与 oracle 所在目录 |
 | `LEGISPEC_LLVM_SRC` | LLVM 源码树（`constructs check` 读 `LegalizerInfo.h`） |
-| `LEGISPEC_LLVM_BUILD` | LLVM 构建目录（写进报告元数据、claims 期望值） |
+| `LEGISPEC_LLVM_BUILD` | LLVM 构建来源标签（写进报告元数据；重跑时可指向本机构建目录） |
 | `LEGISPEC_TOYCPU_BUILD` | ToyCPU 构建目录（toycpu 断言的期望值） |
 | `LEGISPEC_LLC` | `llc` 路径（MIR 形状审计） |
+| `LEGISPEC_LLVM_DIR` / `LLVM_DIR` | LLVM CMake 目录（integration smoke） |
+| `LEGISPEC_CMAKE` / `LEGISPEC_CXX` / `LEGISPEC_NINJA` / `LEGISPEC_LINKER` | integration smoke 工具覆盖 |
+| `LEGISPEC_VCVARS` | Windows `vcvars64.bat` |
+| `CXX` / `CMAKE` / `NINJA` | 标准工具链 env 回退 |
 
 ## 2. 三种拿到证据的方式
 
@@ -65,10 +69,10 @@ python -m legispec.claims verify                    # 断言仍然成立
 1. 构建 LLVM（需要 `llc` 与 GlobalISel）：
 
    ```powershell
-   cmake -S F:/llvm/llvm-project/llvm -B F:/llvm/build -G Ninja `
+   cmake -S <llvm-src>/llvm -B <llvm-build> -G Ninja `
      -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON `
      -DLLVM_TARGETS_TO_BUILD="AArch64;RISCV;X86"
-   ninja -C F:/llvm/build llc
+   ninja -C <llvm-build> llc
    ```
 
 2. 构建 oracle：oracle 是“把 rules 交给真实的 `LegalizerInfo`”的最小观察适配器，
@@ -116,7 +120,7 @@ claims=43 proven=0 failed=43
 
 ## 4. 证据的可移植性
 
-报告里的路径是产出时的绝对路径（`F:\llvm-study\toycpu\out\...`）。
+报告里的路径是产出时的绝对路径（`<legacy-checkout>\out\...`）。
 `claims.py` 因此**不用路径做身份**：路径只用来判断“指向的是不是同名文件”，
 身份由 `rules_sha256` / `oracle_sha256` 决定。这就是同一份证据可以换机器复核的原因。
 
@@ -156,9 +160,9 @@ python -m legispec.claims verify --write --allow-evaluator-change
 ```
 
 The canonical report hash excludes checkout-dependent metadata (`rules`,
-`oracle`, `llvm_src`, `llvm_build` paths and the temporary JSONL name). Two
-identical runs in different temporary directories therefore produce the same
-canonical hash, and `reproduce_claims.py` can finish with a plain
+`oracle`, `llvm_src`, `llvm_build` provenance labels and the temporary JSONL
+name). Two identical runs in different temporary directories therefore produce
+the same canonical hash, and `reproduce_claims.py` can finish with a plain
 `claims verify` (no `--write`). `report_file_sha256` is still recorded for
 copy verification by `collect_evidence.py`, but it is informational for
 staleness.
@@ -166,8 +170,9 @@ staleness.
 The ledger now requires evaluator, rules, report, corpus and oracle pins.
 Missing pins fail closed; use `--allow-missing-pins` only for a one-time
 migration. Removing a claim or dropping a witness pin is also a FAIL. The
-`llvm_build` path is a real pin: on a new machine pass the same override to
-both commands, or refresh it with `--write`.
+`llvm_build` field is a provenance label (for example `toycpu` or `full`), not
+a filesystem path. On a new machine pass `--llvm-build` to both commands when
+you need a different label, or refresh it with `--write`.
 
 ## 7. Reachability declarations
 

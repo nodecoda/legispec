@@ -1,152 +1,235 @@
 # LegiSpec
 
+[简体中文](README.zh-CN.md) | **English**
+
 > **Legality, specified. Equivalence, proven.**
-> 把 legalizer 规则表变成可检查、可回生成、可对拍的规范。
 
-LegiSpec 把 LLVM GlobalISel 的 **`LegalizerInfo` 规则表**从 C++ 里抽出来，用一种外部声明式语言
-**LegiSpec DSL（LegiSpec，文件后缀 `.lspec`）** 重写；提供严格检查器、C++ 回生成器，以及对着真实
-target oracle 做差分的证明工具链。
+LegiSpec extracts LLVM GlobalISel **`LegalizerInfo` rule tables** from C++ into an
+external declarative language, **LegiSpec DSL** (`.lspec` files). It provides a
+strict checker, a C++ generator, and a differential-evidence toolchain that
+compares the specification against the real target oracle.
 
-一句话：**它是规则表的规范与证伪工具，不是另一个 legalizer。**
+In one sentence: it is a specification and falsification toolchain for rule
+tables, not another legalizer.
 
-## 1. 唯一命题
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE.TXT)
+[![Python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12-blue.svg)](pyproject.toml)
+[![CI](https://github.com/<org>/legispec/actions/workflows/ci.yml/badge.svg)](https://github.com/<org>/legispec/actions/workflows/ci.yml)
+
+> **Status: 1.0.0, scope frozen.** The rules and claims in this release are a
+> finite-domain proof, not a claim of full LLVM semantic equivalence. See
+> [`docs/CLOSURE.md`](docs/CLOSURE.md) and [`docs/CORRECTNESS.md`](docs/CORRECTNESS.md)
+> before relying on the evidence.
+
+## 1. The single claim
 
 ```text
 DSL.getAction(q) == LegalizerInfo::getAction(q)
-q ∈ D ∪ R
-D = 规则文件声明的有限域（经 domain/filter 过滤）
-R = closure(Q0) 在 D 内的一步合法化后继
+q in D union R
+D = finite domain declared by the rule file (filtered by domain/filter)
+R = one-step legalization successors of Q0 inside D
 ```
 
-边界（完整版本见 [`docs/CLOSURE.md`](docs/CLOSURE.md)）：
+Boundary (full version in [`docs/CLOSURE.md`](docs/CLOSURE.md)):
 
-- 只比较 `LegalizerInfo::getAction(LegalityQuery)` 的**一步决策**；
-- 不含 `LegalizerHelper::legalizeInstrStep` 的 MIR 改写，不含迭代 Legalizer pass、ISel、寄存器分配；
-- 域外后继记为 boundary，不算证据；
-- `custom` / `libcall` / `lower` 只证明“策略层把活交给谁”，不证明 handler 生成的 MIR。
+- Only the **one-step decision** of `LegalizerInfo::getAction(LegalityQuery)` is compared.
+- It does not model `LegalizerHelper::legalizeInstrStep` MIR rewrites, the iterative
+  Legalizer pass, instruction selection, or register allocation.
+- Successors outside `D` are recorded as boundaries, not evidence.
+- `custom` / `libcall` / `lower` prove only which provider the policy layer selects;
+  they do not prove the MIR emitted by that handler.
 
-**因此：LegiSpec 是决策函数的完整规格，是改写函数的接口契约，不是完整语义规范。**
+**LegiSpec is a complete specification of the decision function and an interface
+contract for the rewrite function. It is not a complete semantic specification.**
 
-## 2. 不是什么
+## 2. What this is not
 
-| 不是 | 原因 |
+| Not | Reason |
 |---|---|
-| 通用编译器前端 | 语法原语只覆盖 `LegalizerInfo` builder 能表达的东西 |
-| TableGen 替代品 | 输入是规则语义，不是 record；产出是 C++ builder 调用 |
-| LLVM 官方项目 | 下游工具，与 LLVM 项目无隶属关系（见 [`GOVERNANCE.md`](GOVERNANCE.md)） |
-| 免证据的正确性声明 | 无报告 + oracle 哈希，`claims verify` 不会给你 PROVEN |
+| A general compiler front end | The primitives cover only what `LegalizerInfo` builders can express |
+| A TableGen replacement | The input is rule semantics, not records; the output is C++ builder calls |
+| An official LLVM project | It is a downstream tool with no affiliation (see [`NOTICE`](NOTICE)) |
+| A correctness claim without evidence | Without reports and oracle hashes, `claims verify` will not say PROVEN |
 
-## 3. 快速开始
+## 3. Status and support matrix
 
-```powershell
-python -m pip install -e .
+| Surface | Status |
+|---|---|
+| Rule language and CLI | `1.0.x` maintenance: bug fixes, evidence refreshes, documentation |
+| Evidence domain | Finite `D union R`; 43 claims over 22 rule files |
+| Evidence platform | Windows x64 (oracle binaries); reports are pinned by hashes |
+| CI platform | Ubuntu and Windows; structural checks are cross-platform |
+| Python | 3.10, 3.11, 3.12 |
+
+Evidence has three distinct states; do not collapse them:
+
+- `STRUCTURAL_ONLY`: `legispec-closure check --skip-evidence` checks structure,
+  contracts, and pinned numbers, but not report/oracle bytes.
+- `EVIDENCE_VERIFIED`: `legispec-claims verify --verify-corpus` plus the full
+  `legispec-closure check` audits all 43 claims.
+- `INTEGRATION_VERIFIED`: `integration_smoke.py` reports `PASS`; generated C++
+  was compiled, linked, executed, and compared with available oracles.
+
+`UNKNOWN` and boundary cases are never counted as passes.
+
+## 4. Install and quick start
+
+From PyPI (after the first public release):
+
+```bash
+python -m pip install legispec
+```
+
+From a source checkout:
+
+```bash
+python -m pip install -e ".[dev]"
 legispec --rules rules/toycpu.lspec check --strict
 python -m unittest discover -s tests
 ```
 
-`check --strict` 会做语法、语义、capability 契约、可达性/遮蔽全套检查；
-`--strict` 缺 `capabilities/<rules>-capabilities.json` 即失败，不允许“静默放行 custom”。
+`check --strict` runs syntax, semantics, capability contracts, reachability, and
+shadowing checks. It fails when `capabilities/<rules>-capabilities.json` is
+missing, so `custom` providers cannot pass silently.
 
-> 1.0 起，包名、import、命令行、数据目录、环境变量与证据 schema 全部使用
-> LegiSpec 标识；旧标识不再保留为别名。
+Generate C++:
 
-生成 C++：
-
-```powershell
+```bash
 legispec --rules rules/aarch64-vector.lspec codegen --out-dir out/codegen
 ```
 
-生成器契约检查（22 份规则、所有 config 变体、双次生成确定性、manifest provenance）：
+Generator contract check (22 rule files, every config variant, deterministic
+double generation, manifest provenance):
 
-```powershell
+```bash
 python scripts/check_codegen_contract.py
 ```
 
-集成与覆盖率检查：
+Integration and coverage checks:
 
-```powershell
+```bash
 python scripts/integration_smoke.py --target toycpu --limit 0
 python scripts/integration_smoke.py --target aarch64-vector --limit 2000 --out out/integration-aarch64-report.json
 python scripts/check_integration_status.py --require-pass out/integration-report.json out/integration-aarch64-report.json
 python scripts/coverage_report.py --corpus examples --out out/coverage-report.json
 ```
 
-## 4. 仓库结构
+The integration smoke needs `LEGISPEC_LLVM_DIR` or `LLVM_DIR` with
+`LLVMConfig.cmake`, CMake, a C++ compiler, and (on Windows) Ninja plus
+`vcvars64.bat` or `LEGISPEC_VCVARS`. A missing toolchain is reported as
+`SKIP: environment`, never as a pass.
+
+## 5. Repository layout
 
 ```text
-src/legispec/        实现：parser / checker / interp / codegen / conformance / claims
-  checker/                规则级静态检查（wellformed / conflict / reachability / termination）
-rules/                    22 份 .lspec 规则转写（ToyCPU、X86-64、AArch64、RISC-V）
-witness/                  9 份 witness：固定顺序依赖与边界
-capabilities/             22 份 provider 契约（custom / libcall / lower 谁能接）
-claims/                   claims.json（43 条断言与哈希钉）、generated-evidence.json（generated/hand-only 分类）、claim-ledger.md、构造覆盖
-docs/                     命题、语法、模式、配置、决策记录；兼容性见 COMPATIBILITY.md
-examples/                 真实 MIR / LLVM IR 语料
-tests/                    400 个单元测试
-scripts/                  证据收集与批处理
-out/                      本地证据缓存（不入库，见第 6 节）
+src/legispec/         implementation: parser / checker / interp / codegen / conformance / claims
+  checker/                 rule-level static checks (wellformed / conflict / reachability / termination)
+rules/                    22 .lspec rule files (ToyCPU, X86-64, AArch64, RISC-V)
+witness/                  9 witness files: fixed-order dependencies and boundaries
+capabilities/             22 provider contracts (custom / libcall / lower)
+claims/                   claims.json (43 claims and hash pins), generated-evidence.json, claim-ledger.md, construct coverage
+docs/                     claim, grammar, patterns, configuration, decisions; see COMPATIBILITY.md
+examples/                 real MIR / LLVM IR corpora
+tests/                    400 unit tests
+scripts/                  evidence collection and release gates
+out/                      local evidence cache (not committed; see section 7)
 ```
 
-## 5. 已证数据（pinned）
+## 6. Proven numbers (pinned)
 
 ```text
-claims=43            # 每条都钉住 rules 内容哈希 + report 哈希 + oracle 哈希
+claims=43            # each pins rules content hash + report hash + oracle hash
 hand-claims=27
 generated-claims=16
 generated-covered=16
 hand-only=6
 rules-files=22
 hand-queries=321627
-constructs=63/63     # LLVM builder 方法 → DSL 原语，全部归类
+constructs=63/63     # LLVM builder methods classified into DSL primitives
 tests=400
 ```
 
-这些数字由 `python -m legispec.closure check` 从产物重新计算并比对；
-`generated-covered=16` 表示 GeneratedCpp 等价只对 16 条 generated claim 成立；
-其余 6 条规则在 `claims/generated-evidence.json` 中显式登记为 hand-only，
-只证明 hand-evaluator 等价。closure 会拒绝既无 generated 证据、又无 hand-only 登记的新规则。
-文档数字漂移会让门禁直接失败，避免“文档比代码乐观”。
+These numbers are recomputed from the artifacts by
+`python -m legispec.closure check`. `generated-covered=16` means GeneratedCpp
+equivalence holds only for 16 generated claims; the other 6 rules are explicitly
+registered as hand-only in `claims/generated-evidence.json`. Closure rejects a
+new rule that has neither generated evidence nor a hand-only declaration.
 
-证据状态必须分清：
+## 7. Evidence is external
 
-- `STRUCTURAL_ONLY`：`legispec-closure check --skip-evidence`，只检查结构、契约和 pinned 数字，不证明报告/oracle 字节；
-- `EVIDENCE_VERIFIED`：`legispec-claims verify --verify-corpus` 加完整 `legispec-closure check`，43/43 claim 逐份审计；
-- `INTEGRATION_VERIFIED`：`integration_smoke.py` 状态为 `PASS`，生成 C++ 真实编译、链接、运行并与可用 oracle 对齐；
-- `UNKNOWN` / boundary 永远不算通过。
+Reports and oracle executables are build outputs (Windows x64, embedding a local
+LLVM build path) and are **not committed**:
 
-版本矩阵、产物失效规则和 LLVM 升级 playbook 见
-[`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md)。
-
-## 6. 证据是外置的
-
-报告与 oracle 可执行文件是构建产物（Windows x64、内嵌本机 LLVM 构建路径），**不入库**：
-
-```powershell
-python scripts/collect_evidence.py --from <evidence-dir>   # 按 claims.json 的钉取回并校验 sha256
-legispec-claims verify --verify-corpus      # 43/43 PROVEN，并重新枚举 D∪R
-python scripts/refresh_evidence.py --all --require-all     # 规则/评估器变化后重跑全部报告
-python scripts/refresh_evidence.py --all --write-ledger    # 接受刚重跑出的新钉号
-legispec-closure check                                      # 完整收口
+```bash
+python scripts/collect_evidence.py --from <evidence-dir>   # fetch and verify sha256 pins
+legispec-claims verify --verify-corpus                     # 43/43 PROVEN, re-enumerates D union R
+python scripts/refresh_evidence.py --all --require-all     # re-run every report after rules/evaluator changes
+python scripts/refresh_evidence.py --all --write-ledger    # accept the new pins
+legispec-closure check                                     # full closure
 ```
 
-没有证据目录时，`claims verify` 会明确报 `report missing` / `oracle missing`，
-相关单元测试标记为 skip —— **不会伪装成通过**。
+Without an evidence directory, `claims verify` reports `report missing` or
+`oracle missing`, and the corresponding unit tests are skipped. It never
+pretends to pass. See [`docs/EVIDENCE.md`](docs/EVIDENCE.md) for rebuilding
+LLVM, the oracle, and the reports from scratch.
 
-从零重建证据（编译 LLVM、生成 oracle、重跑差分）见 [`docs/EVIDENCE.md`](docs/EVIDENCE.md)。
-
-## 7. 许可证
-
-[Apache License v2.0](LICENSE.TXT)。
-每个源文件带 SPDX 头：
+## 8. Architecture and module map
 
 ```text
-SPDX-License-Identifier: Apache-2.0
+.lspec rules
+    |
+    v
+parser --> diagnostics/model --> checker --> interp (reference evaluator)
+    |                                              |
+    |                                              v
+    +--> codegen (C++ builder calls) --> target oracle / consumer
+                                                   |
+                                                   v
+                              conformance --> reports --> claims --> closure
 ```
 
-## 8. 治理
+| Module | Responsibility |
+|---|---|
+| `parser.py`, `diagnostics.py`, `model.py` | Parse `.lspec`, produce spans and stable diagnostic codes |
+| `checker/` | Well-formedness, conflicts, reachability, termination, capability contracts |
+| `interp.py` | Reference interpreter for the one-step decision |
+| `codegen.py`, `checker/capability.py` | Emit C++ builder calls and a wiring contract |
+| `conformance.py` | Enumerate `D union R`, diff the interpreter against the oracle |
+| `claims.py` | Pin reports, oracles, rules, corpus, evaluator, and codegen hashes |
+| `closure.py` | Recompute pinned numbers and enforce the closed scope |
+| `constructs.py` | Classify every `LegalizerInfo` builder method against the DSL |
+| `paths.py` | Resolve repository vs installed data roots through environment overrides |
+| `cli.py` | User-facing `legispec` command |
 
-- [`docs/BRAND.md`](docs/BRAND.md) —— 命名事实源：canonical 名称、旧名 allowlist、1.0 硬切清单
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) —— 提交规则、证据规则、review 规则
-- [`GOVERNANCE.md`](GOVERNANCE.md) —— 维护者模型、RFC 流程、版本与兼容策略
-- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) —— 行为准则
-- [`SECURITY.md`](SECURITY.md) —— 漏洞与证据篡改的报告路径
+## 9. Platform support
+
+- **Evidence verified:** Windows x64. The pinned oracle binaries and reports were
+  produced on that platform.
+- **Structural CI:** Ubuntu and Windows, Python 3.10 and 3.12. Hosted CI has no
+  LLVM build, so the integration smoke is `SKIP: environment` there.
+- **Other platforms:** the Python implementation is portable, but no evidence
+  claim is made until the oracle and reports are rebuilt and re-pinned.
+
+## 10. Documentation
+
+- [`docs/CLOSURE.md`](docs/CLOSURE.md) - frozen scope, boundaries, and final numbers
+- [`docs/CORRECTNESS.md`](docs/CORRECTNESS.md) - what the correctness claim means
+- [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md) - artifact invalidation and LLVM upgrade playbook
+- [`docs/EVIDENCE.md`](docs/EVIDENCE.md) - evidence storage and reproduction
+- [`docs/INTEGRATION.md`](docs/INTEGRATION.md) - generated-C++ integration contract
+- [`docs/RELEASE.md`](docs/RELEASE.md) - release checklist and gate matrix
+- [`CHANGELOG.md`](CHANGELOG.md) - release history
+
+## 11. License and governance
+
+[Apache License v2.0](LICENSE.TXT). Every source file carries an
+`SPDX-License-Identifier: Apache-2.0` header.
+
+LegiSpec is an independent downstream project. LLVM is a trademark of the LLVM
+Foundation; this project is not affiliated with or endorsed by the LLVM Project
+or the LLVM Foundation. See [`NOTICE`](NOTICE).
+
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) - contribution, evidence, and review rules
+- [`GOVERNANCE.md`](GOVERNANCE.md) - maintainer model, RFC process, version policy
+- [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) - community conduct
+- [`SECURITY.md`](SECURITY.md) - vulnerability and evidence-tampering reports

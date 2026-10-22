@@ -166,21 +166,21 @@ strict check 报 14 条 `K001/K002`：`legalFor` 与 `lower`、clamp 与 `lower`
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study	oycpu\scripts\check-aarch64-vector.ps1
+  <workspace>	oycpu\scripts\check-aarch64-vector.ps1
 
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study	oycpu\scripts\check-aarch64-vector.ps1 -BuildOracles
+  <workspace>	oycpu\scripts\check-aarch64-vector.ps1 -BuildOracles
 ```
 
 单独对拍：
 
 ```powershell
-python -X utf8 F:\llvm-study	oycpu	ools\legispec\conformance.py `
-  --rules F:\llvm-study	oycpu	ools\legispec
+python -X utf8 <workspace>	oycpu	ools\legispec\conformance.py `
+  --rules <workspace>	oycpu	ools\legispec
 ulesarch64-vector.lspec `
-  --oracle F:\llvm-study	oycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe `
-  --out F:\llvm-study	oycpu\outarch64-vector-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --oracle <workspace>	oycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe `
+  --out <workspace>	oycpu\outarch64-vector-conformance-report.json `
+  --llvm-build <llvm-build>
 ```
 
 ## 9. 边界

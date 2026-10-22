@@ -121,12 +121,12 @@ DSL 实现零改动。这本身是一个结果：`G_MUL` 没有暴露新的构�
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-vector-mul.ps1
+  <legacy-checkout>\scripts\check-aarch64-vector-mul.ps1
 ```
 
 或先重建 oracle：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-vector-mul.ps1 -BuildOracles
+  <legacy-checkout>\scripts\check-aarch64-vector-mul.ps1 -BuildOracles
 ```

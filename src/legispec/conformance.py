@@ -396,7 +396,9 @@ def _file_sha256(path: Path) -> str:
             digest.update(block)
     return digest.hexdigest()
 
-def _git_commit(path: Path) -> Optional[str]:
+def _git_commit(path: Optional[Path]) -> Optional[str]:
+    if path is None:
+        return None
     try:
         result = subprocess.run(
             ["git", "-C", str(path), "rev-parse", "HEAD"],
@@ -460,19 +462,21 @@ def build_report(
     closure_outside: list[Query],
     closure_boundary: list[Query],
     comparison: ComparisonReport,
-    llvm_build: str = os.environ.get("LEGISPEC_LLVM_BUILD", "F:/llvm/build-toycpu"),
+    llvm_build: str = os.environ.get("LEGISPEC_LLVM_BUILD", ""),
+    llvm_src: Optional[str] = None,
     config: Optional[dict[str, object]] = None,
 ) -> dict:
     matched_count, missing_rules = _rule_coverage(info, comparison.rules_matched)
     total_rules = sum(len(ruleset.rules) for ruleset in info.rulesets)
-    llvm_src = os.environ.get("LEGISPEC_LLVM_SRC", "F:/llvm/llvm-project")
+    if llvm_src is None:
+        llvm_src = os.environ.get("LEGISPEC_LLVM_SRC", "")
     return {
         "schema": SCHEMA,
         "evaluator_sha256": hand_evaluator_sha256(),
         "codegen_sha256": codegen_sha256(),
         "reference": {
             "llvm_src": llvm_src,
-            "llvm_commit": _git_commit(Path(llvm_src)),
+            "llvm_commit": _git_commit(Path(llvm_src)) if llvm_src else None,
             "llvm_build": llvm_build,
             "oracle": _stable_path(oracle_path, report_dir),
             "oracle_sha256": _file_sha256(oracle_path),
@@ -552,8 +556,13 @@ def main(argv: Optional[list[str]] = None) -> int:
     parser.add_argument("--limit", type=int, default=0, help="limit queries for smoke runs")
     parser.add_argument(
         "--llvm-build",
-        default=os.environ.get("LEGISPEC_LLVM_BUILD", "F:/llvm/build-toycpu"),
-        help="LLVM build directory recorded in the report metadata",
+        default=os.environ.get("LEGISPEC_LLVM_BUILD", ""),
+        help="LLVM build provenance label recorded in the report (env: LEGISPEC_LLVM_BUILD)",
+    )
+    parser.add_argument(
+        "--llvm-src",
+        default=os.environ.get("LEGISPEC_LLVM_SRC", ""),
+        help="LLVM source tree used to record the commit (env: LEGISPEC_LLVM_SRC)",
     )
     args = parser.parse_args(argv)
 
@@ -610,6 +619,7 @@ def main(argv: Optional[list[str]] = None) -> int:
             comparison,
             config=config,
             llvm_build=args.llvm_build,
+            llvm_src=args.llvm_src,
         )
 
     out_path.parent.mkdir(parents=True, exist_ok=True)

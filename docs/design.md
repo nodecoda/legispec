@@ -683,7 +683,7 @@ cli.main
 
 ~~~powershell
 python -m legispec `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\toycpu.lspec `
+  --rules <legacy-checkout>\tools\legispec\rules\toycpu.lspec `
   check --verbose
 ~~~
 
@@ -732,7 +732,7 @@ python -m legispec --rules ...\toycpu.lspec opcodes
 ### 8.5 运行测试
 
 ~~~powershell
-python -m unittest discover -s F:\llvm-study\toycpu\tools\legispec\tests -v
+python -m unittest discover -s <legacy-checkout>\tools\legispec\tests -v
 ~~~
 
 ---

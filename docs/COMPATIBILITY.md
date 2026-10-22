@@ -94,9 +94,9 @@ resolved at generation time; there is no runtime subtarget dispatch.
 Unmatched rules are declared unreachable, not silent passes. The ledger's
 `unmatched` field records each one; coverage reports summarize them.
 
-The X86 claims were produced with `F:/llvm/build-toycpu`, which contains the
-X86 backend. The identity that matters is the recorded LLVM commit and the
-oracle hash, not the build-directory name.
+The X86 claims were produced with the ToyCPU-enabled LLVM build (ledger label
+`toycpu`), which also contains the X86 backend. The identity that matters is the
+recorded LLVM commit and the oracle hash, not the build-directory name.
 
 ## 3. What invalidates an artifact
 
@@ -206,11 +206,16 @@ defaults:
 | `CXX` | C++ compiler used by the integration fixture |
 | `LEGISPEC_VCVARS` | Windows `vcvars64.bat` used to obtain the MSVC environment |
 | `LEGISPEC_OUT` | report/oracle directory (default `out/`) |
-| `LEGISPEC_LLVM_BUILD` | LLVM build directory recorded in reports |
-| `LEGISPEC_LLVM_SRC` | LLVM source tree for construct coverage |
+| `LEGISPEC_LLVM_BUILD` | LLVM build provenance label recorded in reports |
+| `LEGISPEC_TOYCPU_BUILD` | ToyCPU-enabled LLVM build for the `toycpu` target |
+| `LEGISPEC_LLVM_SRC` | LLVM source tree for construct coverage and commit provenance |
+| `LEGISPEC_LLVM_DIR` / `LLVM_DIR` | LLVM cmake directory containing `LLVMConfig.cmake` |
+| `LEGISPEC_CMAKE` / `LEGISPEC_CXX` / `LEGISPEC_NINJA` | Tool overrides for the integration smoke |
+| `LEGISPEC_LINKER` / `LEGISPEC_LLC` | Linker and `llc` overrides |
 
-The integration smoke's built-in `F:/llvm/...` candidates are developer
-conveniences only. CI must not depend on them.
+The integration smoke resolves LLVM, CMake, the C++ compiler, Ninja and
+`vcvars64.bat` from environment variables and `PATH`; there are no built-in
+machine-specific candidates. CI must set these variables explicitly.
 
 `scripts/check_skips.py` makes host-specific skips explicit: every skipped
 test id must be registered with a reason in `tests/expected-skips.json`, and a

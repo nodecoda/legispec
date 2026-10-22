@@ -390,14 +390,14 @@ C++ 会算出零 lane 的 LLT，DSL 拒绝为这个非查询形状提供语义�
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-concat-vectors.ps1
+  <legacy-checkout>\scripts\check-aarch64-concat-vectors.ps1
 ```
 
 或先重建 oracle（会重新生成 `out/codegen-aarch64-concat-vectors/`）：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-concat-vectors.ps1 -BuildOracles
+  <legacy-checkout>\scripts\check-aarch64-concat-vectors.ps1 -BuildOracles
 ```
 
 输出应为：
@@ -426,5 +426,5 @@ real MIR shapes  events=11 unique=11 k=2:9 k=4:1 k=8:1
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-legalizer-suite.ps1
+  <legacy-checkout>\scripts\check-legalizer-suite.ps1
 ```

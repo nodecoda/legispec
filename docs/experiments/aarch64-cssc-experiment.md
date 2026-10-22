@@ -341,54 +341,54 @@ executables):
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1 `
-  -BuildDir F:\llvm-study\toycpu\out\oracle-aarch64 `
-  -LLVMDir F:\llvm\build\lib\cmake\llvm `
+  <legacy-checkout>\tools\oracle\build.ps1 `
+  -BuildDir <legacy-checkout>\out\oracle-aarch64 `
+  -LLVMDir <llvm-build>\lib\cmake\llvm `
   -WithAArch64
 ```
 
 Static checks:
 
 ```powershell
-cd F:\llvm-study\toycpu\tools
+cd <legacy-checkout>\tools
 python -X utf8 -m legispec `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-scalar.lspec `
+  --rules <legacy-checkout>\tools\legispec\rules\aarch64-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legispec\aarch64-scalar-capabilities.json
+  --capabilities <legacy-checkout>\tools\legispec\aarch64-scalar-capabilities.json
 
 python -X utf8 -m legispec `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-cssc-scalar.lspec `
+  --rules <legacy-checkout>\tools\legispec\rules\aarch64-cssc-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legispec\aarch64-cssc-scalar-capabilities.json
+  --capabilities <legacy-checkout>\tools\legispec\aarch64-cssc-scalar-capabilities.json
 ```
 
 Differential conformance:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe `
+python -X utf8 <legacy-checkout>\tools\legispec\conformance.py `
+  --rules <legacy-checkout>\tools\legispec\rules\aarch64-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle-aarch64\legispec-oracle-aarch64.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\aarch64-scalar-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\aarch64-scalar-conformance-report.json `
+  --llvm-build <llvm-build>
 
-python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-cssc-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64-cssc.exe `
+python -X utf8 <legacy-checkout>\tools\legispec\conformance.py `
+  --rules <legacy-checkout>\tools\legispec\rules\aarch64-cssc-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle-aarch64\legispec-oracle-aarch64-cssc.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\aarch64-cssc-scalar-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\aarch64-cssc-scalar-conformance-report.json `
+  --llvm-build <llvm-build>
 ```
 
 Feature diff:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legispec\diff_oracles.py `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-scalar.lspec `
-  --oracle-left F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe `
-  --oracle-right F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64-cssc.exe `
+python -X utf8 <legacy-checkout>\tools\legispec\diff_oracles.py `
+  --rules <legacy-checkout>\tools\legispec\rules\aarch64-scalar.lspec `
+  --oracle-left <legacy-checkout>\out\oracle-aarch64\legispec-oracle-aarch64.exe `
+  --oracle-right <legacy-checkout>\out\oracle-aarch64\legispec-oracle-aarch64-cssc.exe `
   --label-left generic --label-right cssc `
-  --out F:\llvm-study\toycpu\out\aarch64-cssc-flips.json
+  --out <legacy-checkout>\out\aarch64-cssc-flips.json
 ```
 
 Expected tails:

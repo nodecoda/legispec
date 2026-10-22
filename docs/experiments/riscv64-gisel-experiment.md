@@ -21,7 +21,7 @@ subset, not a model of all of RISC-V.
 | Oracle errors | 0 |
 | Rule coverage | **103 / 103** |
 | Static check | 0 errors / 168 warnings / 0 unknown |
-| Oracle build | `F:\llvm\build` (LLVM 24.0.0git, assertions ON) |
+| Oracle build | `<llvm-build>` (LLVM 24.0.0git, assertions ON) |
 
 The claim proven here is narrow and concrete:
 
@@ -236,31 +236,31 @@ Build the RISC-V oracle against the full LLVM build:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1 `
-  -BuildDir F:\llvm-study\toycpu\out\oracle-riscv `
-  -LLVMDir F:\llvm\build\lib\cmake\llvm `
+  <legacy-checkout>\tools\oracle\build.ps1 `
+  -BuildDir <legacy-checkout>\out\oracle-riscv `
+  -LLVMDir <llvm-build>\lib\cmake\llvm `
   -WithRiscv
 ```
 
 Static check:
 
 ```powershell
-cd F:\llvm-study\toycpu\tools
+cd <legacy-checkout>\tools
 python -m legispec `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv64-scalar.lspec `
+  --rules <legacy-checkout>\tools\legispec\rules\riscv64-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legispec\riscv64-scalar-capabilities.json
+  --capabilities <legacy-checkout>\tools\legispec\riscv64-scalar-capabilities.json
 ```
 
 Differential conformance:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv64-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legispec-oracle-riscv.exe `
+python -X utf8 <legacy-checkout>\tools\legispec\conformance.py `
+  --rules <legacy-checkout>\tools\legispec\rules\riscv64-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle-riscv\legispec-oracle-riscv.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\riscv64-scalar-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\riscv64-scalar-conformance-report.json `
+  --llvm-build <llvm-build>
 ```
 
 Evidence:

@@ -8,7 +8,7 @@
 > - `llvm/lib/CodeGen/GlobalISel/Legalizer.cpp`
 > - `llvm/lib/Target/ToyCPU/GISel/ToyCPULegalizerInfo.cpp`
 >
-> 行号以当前 `F:\llvm\llvm-project` 工作区为准。
+> 行号以当前 `<llvm-src>` 工作区为准。
 >
 > 相关文档（本仓库）：
 > - [LegiSpec 与复杂规则走读](walkthrough.md)
@@ -472,7 +472,7 @@ unsigned LegalizerInfo::getActionDefinitionsIdx(unsigned Opcode) const {
 ToyCPU 的规则表在：
 
 ```text
-F:\llvm\llvm-project\llvm\lib\Target\ToyCPU\GISel\ToyCPULegalizerInfo.cpp
+<llvm-src>\llvm\lib\Target\ToyCPU\GISel\ToyCPULegalizerInfo.cpp
 ```
 
 构造函数大约在 `:45-344`。
@@ -773,7 +773,7 @@ getActionDefinitionsBuilder(G_UNMERGE_VALUES)
 源码：
 
 ```text
-F:\llvm\llvm-project\llvm\lib\CodeGen\GlobalISel\LegalizerHelper.cpp:122-160
+<llvm-src>\llvm\lib\CodeGen\GlobalISel\LegalizerHelper.cpp:122-160
 ```
 
 ### 5.1 主流程
@@ -1336,7 +1336,7 @@ setGlobalISelAbort(GlobalISelAbortMode::DisableWithDiag);
 源码：
 
 ```text
-F:\llvm\llvm-project\llvm\lib\CodeGen\GlobalISel\Legalizer.cpp
+<llvm-src>\llvm\lib\CodeGen\GlobalISel\Legalizer.cpp
 ```
 
 ### 7.1 建立工作队列
@@ -1506,16 +1506,16 @@ if (EnableCSE) {
 测试：
 
 ```text
-F:\llvm-study\toycpu\tests\m24_vector_cmp_select.ll
+<legacy-checkout>\tests\m24_vector_cmp_select.ll
 ```
 
 命令：
 
 ```powershell
-& F:\llvm\build-toycpu\bin\llc.exe `
+& <llvm-build-toycpu>\bin\llc.exe `
   -march=toycpu -mtriple=toycpu-unknown-elf `
   -global-isel -stop-after=legalizer -simplify-mir `
-  -o - F:\llvm-study\toycpu\tests\m24_vector_cmp_select.ll
+  -o - <legacy-checkout>\tests\m24_vector_cmp_select.ll
 ```
 
 关键 debug 输出：
@@ -1552,7 +1552,7 @@ Legalizing: %54:_(<4 x s32>) = G_ICMP intpred(slt), %0:_(<4 x s32>), %2:_
 测试：
 
 ```text
-F:\llvm-study\toycpu\tests\m12_i64_libcall.ll
+<legacy-checkout>\tests\m12_i64_libcall.ll
 ```
 
 debug 输出：
@@ -1668,19 +1668,19 @@ getActionDefinitionsBuilder(Opcode)
 ### 9.5 验证
 
 ```powershell
-. F:\llvm-study\vsenv.ps1
+. <workspace>\vsenv.ps1
 
-cmake --build F:\llvm\build-toycpu --target LLVMToyCPUCodeGen --parallel 8
-cmake --build F:\llvm\build-toycpu --target llc --parallel 8
+cmake --build <llvm-build-toycpu> --target LLVMToyCPUCodeGen --parallel 8
+cmake --build <llvm-build-toycpu> --target llc --parallel 8
 
 # 查看 legalizer 后的 MIR
-& F:\llvm\build-toycpu\bin\llc.exe `
+& <llvm-build-toycpu>\bin\llc.exe `
   -march=toycpu -mtriple=toycpu-unknown-elf `
   -global-isel -stop-after=legalizer -simplify-mir `
   -o - your-test.ll
 
 # 查看规则匹配过程
-& F:\llvm\build-toycpu\bin\llc.exe `
+& <llvm-build-toycpu>\bin\llc.exe `
   -march=toycpu -mtriple=toycpu-unknown-elf `
   -global-isel -debug-only=legalizer `
   -stop-after=legalizer -simplify-mir `

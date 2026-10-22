@@ -4,8 +4,14 @@
 
 ## 1. 报告渠道
 
-**不要开公开 issue。** 走私密渠道联系维护者（见 `GOVERNANCE.md`），
-或在 GitHub 上用 *Report a vulnerability*。首次响应目标 7 天内。
+**不要开公开 issue。** 使用 GitHub 的私密漏洞报告入口：
+
+```text
+https://github.com/<org>/legispec/security/advisories/new
+```
+
+仓库设置中的 *Private vulnerability reporting* 必须开启。若该入口暂不可用，请开一个
+不含漏洞细节的 issue，请维护者提供私密渠道。首次响应目标 7 天内。
 
 ## 2. 关注的两类问题
 

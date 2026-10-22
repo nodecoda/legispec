@@ -1,0 +1,13 @@
+include LICENSE.TXT
+include NOTICE
+include CHANGELOG.md
+include README.md
+include README.zh-CN.md
+recursive-include docs *.md
+recursive-include rules *.lspec
+recursive-include witness *.witness
+recursive-include capabilities *.json
+recursive-include claims *.json *.md *.txt
+recursive-include examples *.ll *.mir
+recursive-include scripts *.py
+recursive-include tests *.py *.json

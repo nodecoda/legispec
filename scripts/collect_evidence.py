@@ -19,7 +19,7 @@ not committed.  This script copies exactly the files the ledger names from an
 evidence directory produced elsewhere, and verifies the copy against the
 pinned sha256 values.
 
-    python scripts/collect_evidence.py --from F:/llvm-study/toycpu/out
+    python scripts/collect_evidence.py --from <evidence-dir>
     python -m legispec.claims verify
 
 Exit codes: 0 = every pinned file present and matching, 1 = mismatch/missing.

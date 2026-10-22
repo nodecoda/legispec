@@ -21,7 +21,7 @@ domain contains the legal 64-bit pointer shape `p0:64`.
 | Oracle errors | 0 |
 | Rule coverage | **32 / 32** |
 | Static check | 0 errors / 33 warnings / 0 unknown |
-| Oracle build | `F:\llvm\build` (LLVM 24.0.0git, assertions ON) |
+| Oracle build | `<llvm-build>` (LLVM 24.0.0git, assertions ON) |
 
 The claim proven here:
 
@@ -125,18 +125,18 @@ out in both file headers.
 ## 6. Reproduction
 
 ```powershell
-cd F:\llvm-study\toycpu\tools
+cd <legacy-checkout>\tools
 python -m legispec `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv64-pointer.lspec `
+  --rules <legacy-checkout>\tools\legispec\rules\riscv64-pointer.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legispec\riscv64-pointer-capabilities.json
+  --capabilities <legacy-checkout>\tools\legispec\riscv64-pointer-capabilities.json
 
-python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv64-pointer.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legispec-oracle-riscv.exe `
+python -X utf8 <legacy-checkout>\tools\legispec\conformance.py `
+  --rules <legacy-checkout>\tools\legispec\rules\riscv64-pointer.lspec `
+  --oracle <legacy-checkout>\out\oracle-riscv\legispec-oracle-riscv.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\riscv64-pointer-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\riscv64-pointer-conformance-report.json `
+  --llvm-build <llvm-build>
 ```
 
 Evidence:

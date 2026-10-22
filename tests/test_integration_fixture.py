@@ -70,7 +70,7 @@ class IntegrationFixtureTests(unittest.TestCase):
             with self.subTest(target=name):
                 self.assertTrue((ROOT / target["rules"]).is_file())
                 self.assertIn("oracle", target)
-                self.assertIn("llvm_dirs", target)
+                self.assertIn("llvm_build_env", target)
         self.assertFalse(smoke.TARGETS["toycpu"]["extended_llt"])
         self.assertTrue(smoke.TARGETS["aarch64-vector"]["extended_llt"])
 

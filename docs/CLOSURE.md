@@ -2,8 +2,8 @@
 
 Date: 2026-10-21
 Status: **CLOSED**（范围冻结；新增能力必须走 §8 playbook，不得修改既有证明）
-LLVM: `F:\llvm\llvm-project` @ `d855d9e48067026317998cbff734004f328f833d`
-Build: `F:\llvm\build`（AArch64 / RISC-V / X86），`F:\llvm\build-toycpu`（ToyCPU）
+LLVM: `<llvm-src>` @ `d855d9e48067026317998cbff734004f328f833d`
+Build: `<llvm-build>`（AArch64 / RISC-V / X86），`<llvm-build-toycpu>`（ToyCPU）
 
 ## 0. 一句话
 

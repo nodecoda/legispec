@@ -28,6 +28,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -311,7 +312,9 @@ def measure(rules: str, inputs: list[tuple[str, Path]], llc: str) -> dict:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--llc", default=os.environ.get("LEGISPEC_LLC", r"F:\llvm\build\bin\llc.exe")
+        "--llc",
+        default=os.environ.get("LEGISPEC_LLC") or shutil.which("llc") or "",
+        help="llc executable (env: LEGISPEC_LLC)",
     )
     parser.add_argument("--rules", default=str(REPO / "rules" / "aarch64-concat-vectors.lspec"))
     parser.add_argument(
@@ -322,6 +325,12 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--out", default=str(REPO / "out" / "concat-shapes-measurement.json"))
     args = parser.parse_args(argv)
+    if not args.llc:
+        print(
+            "error: llc not found; set LEGISPEC_LLC or pass --llc",
+            file=sys.stderr,
+        )
+        return 2
 
     inputs: list[tuple[str, Path]] = []
     for text in args.ir:

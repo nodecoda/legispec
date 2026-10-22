@@ -1,0 +1,39 @@
+name: Bug report
+description: Report a parser, checker, codegen, or evidence-tooling defect.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not report security vulnerabilities here. Use the private channel in
+        SECURITY.md. Do not attach oracle binaries or full evidence trees.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Include the exact command and the smallest reproducer.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: LegiSpec version / commit
+    validations:
+      required: true
+  - type: input
+    id: llvm
+    attributes:
+      label: LLVM commit and platform
+      description: Required when the report involves conformance or integration evidence.
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      render: text

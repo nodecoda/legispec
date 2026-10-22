@@ -8,16 +8,31 @@ version = "1.0.0"
 description = "LegiSpec: executable legality specification, checker and C++ generator for LLVM GlobalISel rule tables"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE.TXT"]
 authors = [{ name = "LegiSpec contributors" }]
 keywords = ["llvm", "globalisel", "legalizer", "legalization", "legispec", "specification", "tablegen", "compiler"]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
     "Topic :: Software Development :: Compilers",
 ]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/<org>/legispec"
+Repository = "https://github.com/<org>/legispec"
+Issues = "https://github.com/<org>/legispec/issues"
+Changelog = "https://github.com/<org>/legispec/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/<org>/legispec/tree/main/docs"
+
+[project.optional-dependencies]
+dev = ["build>=1.2", "twine>=5", "ruff>=0.6"]
 
 [project.scripts]
 legispec = "legispec.cli:main"
@@ -38,6 +53,7 @@ where = ["src"]
 "share/legispec/capabilities" = ["capabilities/*.json"]
 "share/legispec/claims" = ["claims/*.json", "claims/*.md", "claims/*.txt"]
 "share/legispec/docs" = ["docs/CLOSURE.md", "docs/COMPATIBILITY.md", "docs/CORRECTNESS.md", "docs/COVERAGE.md", "docs/EVIDENCE.md", "docs/INTEGRATION.md"]
+"share/legispec" = ["NOTICE", "CHANGELOG.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

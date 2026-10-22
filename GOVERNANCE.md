@@ -22,6 +22,9 @@
 出现第二位长期贡献者后，改为 **两人 lazy consensus**：非争议改动 72 小时内
 一个 maintainer 的 approve 即可合并；争议改动需要两人一致。
 
+当前维护者与代码所有者见 [`.github/CODEOWNERS`](.github/CODEOWNERS)；安全报告渠道见
+[`SECURITY.md`](SECURITY.md)。
+
 ## 3. 变更分级
 
 | 级别 | 例子 | 要求 |
@@ -50,7 +53,10 @@ LLVM commit:
 ## 5. 版本与兼容
 
 - 包版本（`pyproject.toml`）与 LegiSpec 语言版本（`docs/legispec-v1.0.md`）**分开**；
-- `0.x` 期间语言不承诺向后兼容，但每次破坏性改动必须在 `docs/decisions.md` 记录迁移方式；
+- `1.0.x` 是维护分支：只接受 bug fix、证据重跑、文档与 CI 修复；不新增规则、claim 或 DSL 原语；
+- `1.x` 内保持 `.lspec` 语法、诊断码、CLI 与证据 schema 的向后兼容；
+- 破坏性 DSL 变化进入 `2.0`，必须在 `docs/decisions.md` 记录迁移方式并新增 claim，不得改写 1.0 证明；
+- release cadence：patch 按需发布；minor 必须先走 RFC 并完成全量证据刷新；
 - 规则文件的兼容性由 `rules/` 内的语法版本声明保证，不靠“记得改”。
 
 ## 6. 停止规则（范围冻结）

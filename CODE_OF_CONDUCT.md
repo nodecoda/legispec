@@ -10,7 +10,8 @@
 ## 报告
 
 - 一般冲突：直接在 issue/PR 里提出，或联系当前维护者（见 `GOVERNANCE.md`）；
-- 骚扰、歧视、隐私泄露等敏感问题：走私密渠道联系维护者，不走公开 issue；
+- 骚扰、歧视、隐私泄露等敏感问题：使用 [`SECURITY.md`](SECURITY.md) 中的 GitHub
+  private vulnerability reporting 入口，不走公开 issue；
 - 涉及 LLVM 社区成员或 LLVM 活动：请按 LLVM CoC 页面上的渠道直接联系
   LLVM Code of Conduct Committee。
 

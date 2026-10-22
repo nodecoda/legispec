@@ -1,0 +1,36 @@
+name: Evidence claim
+description: Propose a new claim or report a stale/incorrect claim.
+title: "evidence: "
+labels: ["evidence"]
+body:
+  - type: input
+    id: claim
+    attributes:
+      label: Claim id
+      description: The id in claims/claims.json, or the proposed id.
+    validations:
+      required: true
+  - type: textarea
+    id: provenance
+    attributes:
+      label: Provenance
+      description: LLVM commit, rules file, oracle, config, and query corpus.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Reproduced result
+      description: Paste the claims/closure output, not a screenshot.
+      render: text
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Boundary
+      options:
+        - label: This proposal does not widen the existing proof boundary.
+          required: true
+        - label: Oracle and report hashes are pinned, not inferred.
+          required: true

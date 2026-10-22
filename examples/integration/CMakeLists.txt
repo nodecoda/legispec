@@ -10,7 +10,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # as their own static library through legalizer-rules.cmake.
 if(NOT DEFINED LLVM_DIR AND NOT DEFINED ENV{LLVM_DIR})
   message(FATAL_ERROR
-    "LLVM_DIR is required, for example F:/llvm/build-toycpu/lib/cmake/llvm")
+    "LLVM_DIR is required, for example <llvm-build-toycpu>/lib/cmake/llvm")
 endif()
 find_package(LLVM CONFIG REQUIRED)
 

@@ -172,23 +172,23 @@ pointer rulesets.  See `riscv32-pointer-experiment.md`.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1 `
-  -BuildDir F:\llvm-study\toycpu\out\oracle-riscv `
-  -LLVMDir F:\llvm\build\lib\cmake\llvm `
+  <legacy-checkout>\tools\oracle\build.ps1 `
+  -BuildDir <legacy-checkout>\out\oracle-riscv `
+  -LLVMDir <llvm-build>\lib\cmake\llvm `
   -WithRiscv
 
-cd F:\llvm-study\toycpu\tools
+cd <legacy-checkout>\tools
 python -X utf8 -m legispec `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv32-mzb-scalar.lspec `
+  --rules <legacy-checkout>\tools\legispec\rules\riscv32-mzb-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legispec\riscv32-mzb-scalar-capabilities.json
+  --capabilities <legacy-checkout>\tools\legispec\riscv32-mzb-scalar-capabilities.json
 
-python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv32-mzb-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legispec-oracle-riscv32-mzb.exe `
+python -X utf8 <legacy-checkout>\tools\legispec\conformance.py `
+  --rules <legacy-checkout>\tools\legispec\rules\riscv32-mzb-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle-riscv\legispec-oracle-riscv32-mzb.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\riscv32-mzb-scalar-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\riscv32-mzb-scalar-conformance-report.json `
+  --llvm-build <llvm-build>
 ```
 
 Evidence:

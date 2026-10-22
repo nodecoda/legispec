@@ -1,0 +1,42 @@
+name: RFC
+description: Propose a language, rule, evidence-model, or governance change.
+title: "RFC: "
+labels: ["rfc"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What problem does this solve, and what does it explicitly not solve?
+    validations:
+      required: true
+  - type: textarea
+    id: claims
+    attributes:
+      label: Affected claims and scope
+      description: List affected claims, rules, and whether the proof boundary changes.
+    validations:
+      required: true
+  - type: textarea
+    id: falsification
+    attributes:
+      label: How can this be falsified?
+      description: Describe the oracle, witness, or negative control that would catch a wrong result.
+    validations:
+      required: true
+  - type: dropdown
+    id: level
+    attributes:
+      label: Change level
+      options:
+        - P0 documentation/test
+        - P1 implementation
+        - P2 rules
+        - P3 language semantics
+        - P4 evidence model
+    validations:
+      required: true
+  - type: textarea
+    id: migration
+    attributes:
+      label: Migration and compatibility

@@ -62,7 +62,7 @@ python -m legispec.closure check
 ## 3. 提交前自检
 
 ```powershell
-python -m unittest discover -s tests          # 219 tests
+python -m unittest discover -s tests          # 400 tests
 python -m legispec.claims verify          # 需要 out/ 证据
 python -m legispec.constructs check       # 需要 LEGISPEC_LLVM_SRC
 python -m legispec.closure check          # 文档 pinned 数字 vs 产物
@@ -70,6 +70,16 @@ python -m legispec.closure check          # 文档 pinned 数字 vs 产物
 
 四条全绿才算可提交。缺证据时 `claims verify` 会明确失败，这是设计而非故障，
 见 [`docs/EVIDENCE.md`](docs/EVIDENCE.md)。
+
+证据命令的环境要求：
+
+- `claims verify` 需要 `LEGISPEC_OUT`（默认 `out/`）下的报告与 oracle；
+- `constructs check` 需要 `LEGISPEC_LLVM_SRC`，否则只能使用已提交的快照；
+- `integration_smoke.py` 需要 `LEGISPEC_LLVM_DIR` 或 `LLVM_DIR`、CMake、C++ 编译器；
+  缺少工具链时报告 `SKIP: environment`，不会伪装成通过。
+
+所有提交必须带 `Signed-off-by`（DCO）。GitHub 上的 `DCO` required check 或维护者
+会在合并前验证；PR 模板中也有对应勾选项。
 
 ## 4. 代码风格
 

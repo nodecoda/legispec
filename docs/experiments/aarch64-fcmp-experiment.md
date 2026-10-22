@@ -424,14 +424,14 @@ G_FCMP 恰好 `custom = {}`，所以它在这条边界上是完整可证的：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-fcmp.ps1
+  <legacy-checkout>\scripts\check-aarch64-fcmp.ps1
 ```
 
 或先重建 oracle（会重新生成 `out/codegen-aarch64-fcmp/`）：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-fcmp.ps1 -BuildOracles
+  <legacy-checkout>\scripts\check-aarch64-fcmp.ps1 -BuildOracles
 ```
 
 输出应为：
@@ -447,5 +447,5 @@ claim ledger    claims=41 proven=41
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-legalizer-suite.ps1
+  <legacy-checkout>\scripts\check-legalizer-suite.ps1
 ```

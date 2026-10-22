@@ -823,7 +823,7 @@ helper 里每一条 `MIRBuilder.build...` 都会经过 observer：
 ## 11. 调试命令
 
 ~~~powershell
-$llc = 'F:\llvm\build-toycpu\bin\llc.exe'
+$llc = '<llvm-build-toycpu>\bin\llc.exe'
 
 & $llc -march=toycpu -mtriple=toycpu-unknown-elf `
     -global-isel -global-isel-abort=1 -verify-machineinstrs `

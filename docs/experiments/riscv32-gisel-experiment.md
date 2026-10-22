@@ -181,31 +181,31 @@ Build the RV32 oracle (the same command builds rx64, mzb and rv32):
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1 `
-  -BuildDir F:\llvm-study\toycpu\out\oracle-riscv `
-  -LLVMDir F:\llvm\build\lib\cmake\llvm `
+  <legacy-checkout>\tools\oracle\build.ps1 `
+  -BuildDir <legacy-checkout>\out\oracle-riscv `
+  -LLVMDir <llvm-build>\lib\cmake\llvm `
   -WithRiscv
 ```
 
 Static check:
 
 ```powershell
-cd F:\llvm-study\toycpu\tools
+cd <legacy-checkout>\tools
 python -X utf8 -m legispec `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv32-scalar.lspec `
+  --rules <legacy-checkout>\tools\legispec\rules\riscv32-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legispec\riscv32-scalar-capabilities.json
+  --capabilities <legacy-checkout>\tools\legispec\riscv32-scalar-capabilities.json
 ```
 
 Differential conformance:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\riscv32-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legispec-oracle-riscv32.exe `
+python -X utf8 <legacy-checkout>\tools\legispec\conformance.py `
+  --rules <legacy-checkout>\tools\legispec\rules\riscv32-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle-riscv\legispec-oracle-riscv32.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\riscv32-scalar-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\riscv32-scalar-conformance-report.json `
+  --llvm-build <llvm-build>
 ```
 
 Evidence:

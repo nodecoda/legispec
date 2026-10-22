@@ -25,6 +25,7 @@ import argparse
 import importlib.util
 import os
 import pathlib
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -54,6 +55,12 @@ def run(
 
 def build_wheel(dist_dir: pathlib.Path) -> pathlib.Path:
     dist_dir.mkdir(parents=True, exist_ok=True)
+    # A stale build/lib tree can make bdist_wheel copy packages that no longer
+    # exist in src/.  Start from a clean tree so the smoke proves the current
+    # source, not a previous checkout.
+    build_dir = REPO / "build"
+    if build_dir.exists():
+        shutil.rmtree(build_dir)
     if importlib.util.find_spec("build") is not None:
         command = [
             sys.executable,

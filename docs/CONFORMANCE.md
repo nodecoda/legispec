@@ -35,16 +35,16 @@
 ## 1. 参考实现
 
 ```text
-repository  = F:\llvm\llvm-project
+repository  = <llvm-src>
 commit      = d855d9e48067026317998cbff734004f328f833d
 subject     = toycpu: v1.1 M1 encode ecall/mret and CSR instructions
-build       = F:\llvm\build-toycpu
+build       = <llvm-build-toycpu>
 assertions  = ON
 libs        = LLVMToyCPUCodeGen.lib (+ LLVMExports.cmake imported targets)
 
-compiler    = F:\llvm\install\bin\clang++.exe (clang 24.0.0git)
-linker      = F:\llvm\install\bin\lld-link.exe
-visual st.  = D:\VStudio\2022\Enterprise
+compiler    = <llvm-install>\bin\clang++.exe (clang 24.0.0git)
+linker      = <llvm-install>\bin\lld-link.exe
+visual st.  = <visual-studio>
 windows sdk = 10.0.22621.0 (x64 import libraries)
 ```
 
@@ -152,30 +152,30 @@ Conformant(spec, cxx) ≡
 
 ```powershell
 # 1. 回归（101 tests）
-python -m unittest discover -s F:\llvm-study\toycpu\tools\legispec\tests -v
+python -m unittest discover -s <legacy-checkout>\tools\legispec\tests -v
 
 # 2. 静态检查与 witness
 python -m legispec `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\toycpu.lspec check --strict
+  --rules <legacy-checkout>\tools\legispec\rules\toycpu.lspec check --strict
 python -m legispec `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\toycpu.lspec witness `
-  F:\llvm-study\toycpu\tools\legispec\witness\toycpu.witness
+  --rules <legacy-checkout>\tools\legispec\rules\toycpu.lspec witness `
+  <legacy-checkout>\tools\legispec\witness\toycpu.witness
 
 # 3. 构建 C++ oracle（自动选择 VS2022 / 可用 Windows SDK）
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1
+  <legacy-checkout>\tools\oracle\build.ps1
 
 # 4. 全量差分：手写规则 oracle
-python F:\llvm-study\toycpu\tools\legispec\conformance.py `
-  --oracle F:\llvm-study\toycpu\out\oracle\legispec-oracle.exe `
+python <legacy-checkout>\tools\legispec\conformance.py `
+  --oracle <legacy-checkout>\out\oracle\legispec-oracle.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\conformance-report.json
+  --out <legacy-checkout>\out\conformance-report.json
 
 # 5. 全量差分：由 LegiSpec codegen 生成的规则 oracle
-python F:\llvm-study\toycpu\tools\legispec\conformance.py `
-  --oracle F:\llvm-study\toycpu\out\oracle\legispec-oracle-gen.exe `
+python <legacy-checkout>\tools\legispec\conformance.py `
+  --oracle <legacy-checkout>\out\oracle\legispec-oracle-gen.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\conformance-gen-report.json
+  --out <legacy-checkout>\out\conformance-gen-report.json
 ```
 
 本次结果：

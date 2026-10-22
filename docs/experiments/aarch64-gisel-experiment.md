@@ -21,7 +21,7 @@ of AArch64.
 | Oracle errors | 0 |
 | Rule coverage | **91 / 91** |
 | Static check | 0 errors / 187 warnings |
-| Oracle build | `F:\llvm\build` (LLVM 24.0.0git, assertions ON) |
+| Oracle build | `<llvm-build>` (LLVM 24.0.0git, assertions ON) |
 
 The claim proven here is narrow and concrete:
 
@@ -36,7 +36,7 @@ covered separately in `aarch64-pointer-experiment.md`.
 
 ## 1. Why AArch64
 
-The full LLVM build at `F:\llvm\build` registers:
+The full LLVM build at `<llvm-build>` registers:
 
 ```text
 aarch64, arm, loongarch, toycpu, x86
@@ -115,8 +115,8 @@ toycpu/tools/legispec/conformance.py
 ```
 
 The `conformance.py` change is small but matters for evidence: the report used
-to hard-code `"llvm_build": "F:/llvm/build-toycpu"`.  AArch64 is linked
-against `F:\llvm\build`, so the report now takes `--llvm-build` and records the
+to hard-code `"llvm_build": "<llvm-build-toycpu>"`.  AArch64 is linked
+against `<llvm-build>`, so the report now takes `--llvm-build` and records the
 actual build directory.
 
 ## 3. Modeled rules
@@ -124,7 +124,7 @@ actual build directory.
 All line references point at:
 
 ```text
-F:\llvm\llvm-project\llvm\lib\Target\AArch64\GISel\AArch64LegalizerInfo.cpp
+<llvm-src>\llvm\lib\Target\AArch64\GISel\AArch64LegalizerInfo.cpp
 ```
 
 ### 3.1 Shape of the scalar policy
@@ -603,16 +603,16 @@ Build command:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1 `
-  -BuildDir F:\llvm-study\toycpu\out\oracle-aarch64 `
-  -LLVMDir F:\llvm\build\lib\cmake\llvm `
+  <legacy-checkout>\tools\oracle\build.ps1 `
+  -BuildDir <legacy-checkout>\out\oracle-aarch64 `
+  -LLVMDir <llvm-build>\lib\cmake\llvm `
   -WithAArch64
 ```
 
 Expected artifact:
 
 ```text
-F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe
+<legacy-checkout>\out\oracle-aarch64\legispec-oracle-aarch64.exe
 ```
 
 ## 6. What the experiment found
@@ -766,10 +766,10 @@ ok=true
 Report:
 
 ```text
-F:\llvm-study\toycpu\out\aarch64-scalar-conformance-report.json
+<legacy-checkout>\out\aarch64-scalar-conformance-report.json
 ```
 
-The report's `reference.llvm_build` is now `F:/llvm/build`, not the ToyCPU
+The report's `reference.llvm_build` is now `<llvm-build>`, not the ToyCPU
 build.  The oracle executable and the LLVM source commit are recorded in the
 same report.
 
@@ -825,30 +825,30 @@ Build the AArch64 oracle:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1 `
-  -BuildDir F:\llvm-study\toycpu\out\oracle-aarch64 `
-  -LLVMDir F:\llvm\build\lib\cmake\llvm `
+  <legacy-checkout>\tools\oracle\build.ps1 `
+  -BuildDir <legacy-checkout>\out\oracle-aarch64 `
+  -LLVMDir <llvm-build>\lib\cmake\llvm `
   -WithAArch64
 ```
 
 Static check:
 
 ```powershell
-cd F:\llvm-study\toycpu\tools
+cd <legacy-checkout>\tools
 python -m legispec `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-scalar.lspec `
+  --rules <legacy-checkout>\tools\legispec\rules\aarch64-scalar.lspec `
   check --strict
 ```
 
 Differential conformance:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe `
+python -X utf8 <legacy-checkout>\tools\legispec\conformance.py `
+  --rules <legacy-checkout>\tools\legispec\rules\aarch64-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle-aarch64\legispec-oracle-aarch64.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\aarch64-scalar-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\aarch64-scalar-conformance-report.json `
+  --llvm-build <llvm-build>
 ```
 
 Expected tail:
@@ -861,7 +861,7 @@ ToyCPU regression gate:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-legispec.ps1
+  <legacy-checkout>\scripts\check-legispec.ps1
 ```
 
 ## 9. Limits and next steps

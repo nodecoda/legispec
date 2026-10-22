@@ -387,5 +387,5 @@
     }
   ],
   "schema": "legispec-construct-coverage-v1",
-  "source": "F:/llvm/llvm-project/llvm/include/llvm/CodeGen/GlobalISel/LegalizerInfo.h"
+  "source": "llvm/include/llvm/CodeGen/GlobalISel/LegalizerInfo.h"
 }

@@ -40,18 +40,23 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: test (${{ matrix.os }}, py${{ matrix.python }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
         python: ["3.10", "3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: ${{ matrix.python }}
       - name: Install
@@ -69,12 +74,25 @@ jobs:
       - name: Closure (structure and pinned numbers only)
         run: legispec-closure check --skip-evidence
 
+  release-hygiene:
+    name: release hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: Check tracked files, paths, and SPDX headers
+        run: python scripts/check_release_hygiene.py
+
   codegen-contract:
     name: codegen contract (determinism + provenance)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
       - name: Install
@@ -85,9 +103,10 @@ jobs:
   mutation-controls:
     name: mutation controls
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
       - name: Install
@@ -98,9 +117,10 @@ jobs:
   coverage-report:
     name: corpus coverage ratchet
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
       - name: Install
@@ -111,13 +131,14 @@ jobs:
   integration-smoke:
     name: integration smoke (LLVM build)
     runs-on: ${{ inputs.integration_runner || 'ubuntu-latest' }}
+    timeout-minutes: 30
     env:
       LLVM_DIR: ${{ inputs.llvm_dir }}
       CXX: ${{ inputs.cxx }}
       LEGISPEC_VCVARS: ${{ inputs.vcvars }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
       - name: Install
@@ -131,7 +152,7 @@ jobs:
         run: python scripts/check_integration_status.py --require-pass-if-env LLVM_DIR out/integration-report.json out/integration-aarch64-report.json
       - name: Upload integration reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: integration-reports
           path: |
@@ -143,8 +164,9 @@ jobs:
     name: stage evidence artifact (self-hosted runner with evidence_dir)
     if: github.event_name == 'workflow_dispatch' && inputs.evidence_dir != ''
     runs-on: ${{ inputs.evidence_runner }}
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
       - name: Validate evidence directory
         shell: bash
         env:
@@ -160,7 +182,7 @@ jobs:
             echo "::error file=docs/EVIDENCE.md::evidence_dir '$EVIDENCE_DIR' is empty."
             exit 1
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: legispec-evidence
           path: ${{ inputs.evidence_dir }}
@@ -171,14 +193,15 @@ jobs:
     needs: stage-evidence
     if: github.event_name == 'workflow_dispatch' && inputs.evidence_dir != ''
     runs-on: windows-latest
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.12"
       - name: Install
         run: python -m pip install -e .
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
         with:
           name: legispec-evidence
           path: evidence

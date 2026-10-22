@@ -64,11 +64,11 @@ with:
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-legalizer-suite.ps1
+  <legacy-checkout>\scripts\check-legalizer-suite.ps1
 
 # rebuild every oracle first
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-legalizer-suite.ps1 -BuildOracles
+  <legacy-checkout>\scripts\check-legalizer-suite.ps1 -BuildOracles
 ~~~
 
 `claims.py verify` is read-only and fails on either kind of drift
@@ -104,9 +104,9 @@ edge of the model, not a to-do list that can be ignored.
 From any directory:
 
 ~~~powershell
-$dsl = 'F:\llvm-study\toycpu\tools\legalizer-dsl.py'
-$rules = 'F:\llvm-study\toycpu\tools\legalizer_dsl\rules\toycpu.lspec'
-$witness = 'F:\llvm-study\toycpu\tools\legalizer_dsl\witness\toycpu.witness'
+$dsl = '<legacy-checkout>\tools\legalizer-dsl.py'
+$rules = '<legacy-checkout>\tools\legalizer_dsl\rules\toycpu.lspec'
+$witness = '<legacy-checkout>\tools\legalizer_dsl\witness\toycpu.witness'
 
 python $dsl --rules $rules check --verbose
 python $dsl --rules $rules check --strict
@@ -131,51 +131,51 @@ Build it with the toolchain helper (VS2022 + a Windows SDK that contains
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1
+  <legacy-checkout>\tools\oracle\build.ps1
 ~~~
 
 The executables are written to:
 
 ~~~text
-F:\llvm-study\toycpu\out\oracle\legalizer-oracle.exe       # ToyCPU, hand-written rules
-F:\llvm-study\toycpu\out\oracle\legalizer-oracle-gen.exe   # ToyCPU, LDSL-generated rules
-F:\llvm-study\toycpu\out\oracle\legalizer-oracle-x86.exe   # X86-64, real target oracle
-F:\llvm-study\toycpu\out\oracle\legalizer-oracle-x86-gen.exe  # X86-64, LDSL-generated rules
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe       # AArch64 generic
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-cssc.exe  # AArch64 +cssc
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-gen.exe       # AArch64, LDSL-generated
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-cssc-gen.exe  # AArch64 +cssc, LDSL-generated
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-atomic-gen.exe # AArch64 atomics, LDSL-generated
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-outline.exe # AArch64 +outline-atomics
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-lse.exe     # AArch64 +lse
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-atomic-outline-gen.exe # +outline-atomics, LDSL-generated
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-vector-arith-gen.exe # G_ADD family, LDSL-generated
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-vector-mul-gen.exe # G_MUL, LDSL-generated
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-vector-shift-gen.exe # G_SHL family, LDSL-generated
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-icmp-gen.exe # G_ICMP, LDSL-generated
-F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-concat-gen.exe # G_CONCAT_VECTORS, LDSL-generated
-F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv.exe      # RISC-V RV64, real target oracle
-F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv-mzb.exe  # RISC-V RV64 +m,+zmmul,+zbb
-F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv-mzb-gen.exe  # RISC-V RV64 +m,+zmmul,+zbb, LDSL-generated
-F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32.exe    # RISC-V RV32, real target oracle
-F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32-gen.exe  # RISC-V RV32, LDSL-generated
-F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32-mzb.exe  # RISC-V RV32 +m,+zmmul,+zbb
-F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv-gen.exe    # RISC-V RV64, LDSL-generated rules
+<legacy-checkout>\out\oracle\legalizer-oracle.exe       # ToyCPU, hand-written rules
+<legacy-checkout>\out\oracle\legalizer-oracle-gen.exe   # ToyCPU, LDSL-generated rules
+<legacy-checkout>\out\oracle\legalizer-oracle-x86.exe   # X86-64, real target oracle
+<legacy-checkout>\out\oracle\legalizer-oracle-x86-gen.exe  # X86-64, LDSL-generated rules
+<legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64.exe       # AArch64 generic
+<legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-cssc.exe  # AArch64 +cssc
+<legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-gen.exe       # AArch64, LDSL-generated
+<legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-cssc-gen.exe  # AArch64 +cssc, LDSL-generated
+<legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-atomic-gen.exe # AArch64 atomics, LDSL-generated
+<legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-outline.exe # AArch64 +outline-atomics
+<legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-lse.exe     # AArch64 +lse
+<legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-atomic-outline-gen.exe # +outline-atomics, LDSL-generated
+<legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-vector-arith-gen.exe # G_ADD family, LDSL-generated
+<legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-vector-mul-gen.exe # G_MUL, LDSL-generated
+<legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-vector-shift-gen.exe # G_SHL family, LDSL-generated
+<legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-icmp-gen.exe # G_ICMP, LDSL-generated
+<legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-concat-gen.exe # G_CONCAT_VECTORS, LDSL-generated
+<legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv.exe      # RISC-V RV64, real target oracle
+<legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv-mzb.exe  # RISC-V RV64 +m,+zmmul,+zbb
+<legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv-mzb-gen.exe  # RISC-V RV64 +m,+zmmul,+zbb, LDSL-generated
+<legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv32.exe    # RISC-V RV32, real target oracle
+<legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv32-gen.exe  # RISC-V RV32, LDSL-generated
+<legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv32-mzb.exe  # RISC-V RV32 +m,+zmmul,+zbb
+<legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv-gen.exe    # RISC-V RV64, LDSL-generated rules
 ~~~
 
 Run the full D union R comparison against the hand-written oracle, then
 against the generated-rules oracle:
 
 ~~~powershell
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --oracle F:\llvm-study\toycpu\out\oracle\legalizer-oracle.exe `
+python <legacy-checkout>\tools\legalizer_dsl\conformance.py `
+  --oracle <legacy-checkout>\out\oracle\legalizer-oracle.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\conformance-report.json
+  --out <legacy-checkout>\out\conformance-report.json
 
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --oracle F:\llvm-study\toycpu\out\oracle\legalizer-oracle-gen.exe `
+python <legacy-checkout>\tools\legalizer_dsl\conformance.py `
+  --oracle <legacy-checkout>\out\oracle\legalizer-oracle-gen.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\conformance-gen-report.json
+  --out <legacy-checkout>\out\conformance-gen-report.json
 ~~~
 
 Current evidence (2026-10-19):
@@ -208,14 +208,14 @@ out of scope.  The experiment is documented in
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\x86-scalar.lspec `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\x86-scalar.lspec `
   check --strict
 
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\x86-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle\legalizer-oracle-x86.exe `
+python <legacy-checkout>\tools\legalizer_dsl\conformance.py `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\x86-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle\legalizer-oracle-x86.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\x86-scalar-conformance-report.json
+  --out <legacy-checkout>\out\x86-scalar-conformance-report.json
 ~~~
 
 Current evidence (2026-10-19):
@@ -246,28 +246,28 @@ feature variants are out of scope.  CSSC is a separate frozen configuration
 subsets (`aarch64-pointer.lspec`, `aarch64-atomic.lspec`).  The scalar experiment
 is documented in `experiments/aarch64-gisel-experiment.md`.
 
-The oracle links against the full LLVM build at `F:\llvm\build` and is built
+The oracle links against the full LLVM build at `<llvm-build>` and is built
 with the AArch64 option:
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1 `
-  -BuildDir F:\llvm-study\toycpu\out\oracle-aarch64 `
-  -LLVMDir F:\llvm\build\lib\cmake\llvm `
+  <legacy-checkout>\tools\oracle\build.ps1 `
+  -BuildDir <legacy-checkout>\out\oracle-aarch64 `
+  -LLVMDir <llvm-build>\lib\cmake\llvm `
   -WithAArch64
 ~~~
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
   check --strict
 
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
+python <legacy-checkout>\tools\legalizer_dsl\conformance.py `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\aarch64-scalar-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\aarch64-scalar-conformance-report.json `
+  --llvm-build <llvm-build>
 ~~~
 
 Current evidence (2026-10-20):
@@ -295,23 +295,23 @@ configuration is exact.  The experiment is documented in
 
 ~~~powershell
 python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-cssc-scalar.lspec `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\aarch64-cssc-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\aarch64-cssc-scalar-capabilities.json
+  --capabilities <legacy-checkout>\tools\legalizer_dsl\aarch64-cssc-scalar-capabilities.json
 
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-cssc-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-cssc.exe `
+python -X utf8 <legacy-checkout>\tools\legalizer_dsl\conformance.py `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\aarch64-cssc-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-cssc.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\aarch64-cssc-scalar-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\aarch64-cssc-scalar-conformance-report.json `
+  --llvm-build <llvm-build>
 
-python -X utf8 F:\llvm-study\toycpu\tools\legalizer_dsl\diff_oracles.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
-  --oracle-left F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
-  --oracle-right F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64-cssc.exe `
+python -X utf8 <legacy-checkout>\tools\legalizer_dsl\diff_oracles.py `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\aarch64-scalar.lspec `
+  --oracle-left <legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
+  --oracle-right <legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64-cssc.exe `
   --label-left generic --label-right cssc `
-  --out F:\llvm-study\toycpu\out\aarch64-cssc-flips.json
+  --out <legacy-checkout>\out\aarch64-cssc-flips.json
 ~~~
 
 Current evidence (2026-10-20):
@@ -337,11 +337,11 @@ JSONL adapter:
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-generated.ps1
+  <legacy-checkout>\scripts\check-aarch64-generated.ps1
 
 # include a full rebuild of the AArch64 oracles
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-generated.ps1 -BuildOracles
+  <legacy-checkout>\scripts\check-aarch64-generated.ps1 -BuildOracles
 ~~~
 
 ~~~text
@@ -368,16 +368,16 @@ is documented in `experiments/aarch64-pointer-experiment.md`.
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-pointer.lspec `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\aarch64-pointer.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\aarch64-pointer-capabilities.json
+  --capabilities <legacy-checkout>\tools\legalizer_dsl\aarch64-pointer-capabilities.json
 
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\aarch64-pointer.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
+python <legacy-checkout>\tools\legalizer_dsl\conformance.py `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\aarch64-pointer.lspec `
+  --oracle <legacy-checkout>\out\oracle-aarch64\legalizer-oracle-aarch64.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\aarch64-pointer-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\aarch64-pointer-conformance-report.json `
+  --llvm-build <llvm-build>
 ~~~
 
 Current evidence (2026-10-20):
@@ -439,11 +439,11 @@ The full experiment and known warnings are documented in
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-atomic.ps1
+  <legacy-checkout>\scripts\check-aarch64-atomic.ps1
 
 # rebuild the AArch64 oracles first
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-atomic.ps1 -BuildOracles
+  <legacy-checkout>\scripts\check-aarch64-atomic.ps1 -BuildOracles
 ~~~
 
 The claims are:
@@ -521,11 +521,11 @@ The gate is:
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-vector.ps1
+  <legacy-checkout>\scripts\check-aarch64-vector.ps1
 
 # rebuild the AArch64 oracles first
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-vector.ps1 -BuildOracles
+  <legacy-checkout>\scripts\check-aarch64-vector.ps1 -BuildOracles
 ~~~
 
 The claims are:
@@ -597,7 +597,7 @@ The gate is:
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-vector-arith.ps1
+  <legacy-checkout>\scripts\check-aarch64-vector-arith.ps1
 ~~~
 
 The claims are:
@@ -640,7 +640,7 @@ The gate is:
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-vector-mul.ps1
+  <legacy-checkout>\scripts\check-aarch64-vector-mul.ps1
 ~~~
 
 The claims are:
@@ -709,7 +709,7 @@ The gate is:
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-vector-shift.ps1
+  <legacy-checkout>\scripts\check-aarch64-vector-shift.ps1
 ~~~
 
 The claims are:
@@ -771,7 +771,7 @@ The gate is:
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-icmp.ps1
+  <legacy-checkout>\scripts\check-aarch64-icmp.ps1
 ~~~
 
 The claims are:
@@ -830,7 +830,7 @@ The gate is:
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-fcmp.ps1
+  <legacy-checkout>\scripts\check-aarch64-fcmp.ps1
 ~~~
 
 The claims are:
@@ -901,7 +901,7 @@ The gate is:
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-concat-vectors.ps1
+  <legacy-checkout>\scripts\check-aarch64-concat-vectors.ps1
 ~~~
 
 The claims are:
@@ -927,24 +927,24 @@ built with the RISC-V option:
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1 `
-  -BuildDir F:\llvm-study\toycpu\out\oracle-riscv `
-  -LLVMDir F:\llvm\build\lib\cmake\llvm `
+  <legacy-checkout>\tools\oracle\build.ps1 `
+  -BuildDir <legacy-checkout>\out\oracle-riscv `
+  -LLVMDir <llvm-build>\lib\cmake\llvm `
   -WithRiscv
 ~~~
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.lspec `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv64-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-scalar-capabilities.json
+  --capabilities <legacy-checkout>\tools\legalizer_dsl\riscv64-scalar-capabilities.json
 
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv.exe `
+python <legacy-checkout>\tools\legalizer_dsl\conformance.py `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv64-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\riscv64-scalar-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\riscv64-scalar-conformance-report.json `
+  --llvm-build <llvm-build>
 ~~~
 
 Current evidence (2026-10-20):
@@ -968,11 +968,11 @@ oracle.  This is the RISC-V counterpart of `legalizer-oracle-gen` and the
 second target on which the LDSL -> C++ path is proven end to end:
 
 ~~~powershell
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv-gen.exe `
+python <legacy-checkout>\tools\legalizer_dsl\conformance.py `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv64-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv-gen.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\riscv64-gen-conformance-report.json
+  --out <legacy-checkout>\out\riscv64-gen-conformance-report.json
 ~~~
 
 ~~~text
@@ -997,16 +997,16 @@ The experiment is documented in
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-pointer.lspec `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv64-pointer.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-pointer-capabilities.json
+  --capabilities <legacy-checkout>\tools\legalizer_dsl\riscv64-pointer-capabilities.json
 
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-pointer.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv.exe `
+python <legacy-checkout>\tools\legalizer_dsl\conformance.py `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv64-pointer.lspec `
+  --oracle <legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\riscv64-pointer-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\riscv64-pointer-conformance-report.json `
+  --llvm-build <llvm-build>
 ~~~
 
 Current evidence (2026-10-20):
@@ -1032,22 +1032,22 @@ attributed to the wrong binary:
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1 `
-  -BuildDir F:\llvm-study\toycpu\out\oracle-riscv `
-  -LLVMDir F:\llvm\build\lib\cmake\llvm `
+  <legacy-checkout>\tools\oracle\build.ps1 `
+  -BuildDir <legacy-checkout>\out\oracle-riscv `
+  -LLVMDir <llvm-build>\lib\cmake\llvm `
   -WithRiscv
 
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-mzb-scalar.lspec `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv64-mzb-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-mzb-scalar-capabilities.json
+  --capabilities <legacy-checkout>\tools\legalizer_dsl\riscv64-mzb-scalar-capabilities.json
 
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv64-mzb-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv-mzb.exe `
+python <legacy-checkout>\tools\legalizer_dsl\conformance.py `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv64-mzb-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv-mzb.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\riscv64-mzb-scalar-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\riscv64-mzb-scalar-conformance-report.json `
+  --llvm-build <llvm-build>
 ~~~
 
 Current evidence (2026-10-20):
@@ -1155,22 +1155,22 @@ first-class configuration axis.
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1 `
-  -BuildDir F:\llvm-study\toycpu\out\oracle-riscv `
-  -LLVMDir F:\llvm\build\lib\cmake\llvm `
+  <legacy-checkout>\tools\oracle\build.ps1 `
+  -BuildDir <legacy-checkout>\out\oracle-riscv `
+  -LLVMDir <llvm-build>\lib\cmake\llvm `
   -WithRiscv
 
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-scalar.lspec `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv32-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-scalar-capabilities.json
+  --capabilities <legacy-checkout>\tools\legalizer_dsl\riscv32-scalar-capabilities.json
 
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32.exe `
+python <legacy-checkout>\tools\legalizer_dsl\conformance.py `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv32-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv32.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\riscv32-scalar-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\riscv32-scalar-conformance-report.json `
+  --llvm-build <llvm-build>
 ~~~
 
 Current evidence (2026-10-20):
@@ -1204,17 +1204,17 @@ frozen files' decision functions.
 
 ~~~powershell
 python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv-scalar-conditional.lspec `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv-scalar-conditional.lspec `
   --define is64bit=true --define sXLen=s64 --define sDoubleXLen=s128 `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv64-scalar-capabilities.json
+  --capabilities <legacy-checkout>\tools\legalizer_dsl\riscv64-scalar-capabilities.json
 
 python -X utf8 -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv-scalar-conditional.lspec `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv-scalar-conditional.lspec `
   --define is64bit=false --define sXLen=s32 --define sDoubleXLen=s64 `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-scalar-capabilities.json `
-  --witness F:\llvm-study\toycpu\tools\legalizer_dsl\witness\riscv-scalar-conditional-rv32.witness
+  --capabilities <legacy-checkout>\tools\legalizer_dsl\riscv32-scalar-capabilities.json `
+  --witness <legacy-checkout>\tools\legalizer_dsl\witness\riscv-scalar-conditional-rv32.witness
 ~~~
 
 `--define` is a global option: it must come **before** the `check`
@@ -1246,7 +1246,7 @@ oracle runs, the cross-configuration diff and both codegen runs):
 
 ~~~powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-riscv-conditional.ps1
+  <legacy-checkout>\scripts\check-riscv-conditional.ps1
 ~~~
 
 The design note is `config-guard.md`.
@@ -1277,16 +1277,16 @@ coverage is 111/115 and the static checker reports them as unreachable.
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-mzb-scalar.lspec `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv32-mzb-scalar.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-mzb-scalar-capabilities.json
+  --capabilities <legacy-checkout>\tools\legalizer_dsl\riscv32-mzb-scalar-capabilities.json
 
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-mzb-scalar.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32-mzb.exe `
+python <legacy-checkout>\tools\legalizer_dsl\conformance.py `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv32-mzb-scalar.lspec `
+  --oracle <legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv32-mzb.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\riscv32-mzb-scalar-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\riscv32-mzb-scalar-conformance-report.json `
+  --llvm-build <llvm-build>
 ~~~
 
 ~~~text
@@ -1307,16 +1307,16 @@ is no s64 Custom), `G_ICMP` uses `(s32,p0)`, and `G_SELECT` uses
 
 ~~~powershell
 python -m legalizer_dsl `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-pointer.lspec `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv32-pointer.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legalizer_dsl\riscv32-pointer-capabilities.json
+  --capabilities <legacy-checkout>\tools\legalizer_dsl\riscv32-pointer-capabilities.json
 
-python F:\llvm-study\toycpu\tools\legalizer_dsl\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legalizer_dsl\rules\riscv32-pointer.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-riscv\legalizer-oracle-riscv32.exe `
+python <legacy-checkout>\tools\legalizer_dsl\conformance.py `
+  --rules <legacy-checkout>\tools\legalizer_dsl\rules\riscv32-pointer.lspec `
+  --oracle <legacy-checkout>\out\oracle-riscv\legalizer-oracle-riscv32.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\riscv32-pointer-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\riscv32-pointer-conformance-report.json `
+  --llvm-build <llvm-build>
 ~~~
 
 ~~~text
@@ -1342,7 +1342,7 @@ function-scope ordering.
 ## Tests
 
 ~~~powershell
-python -m unittest discover -s F:\llvm-study\toycpu\tools\legalizer_dsl\tests -v
+python -m unittest discover -s <legacy-checkout>\tools\legalizer_dsl\tests -v
 ~~~
 
 ## Layout

@@ -61,10 +61,7 @@ TARGETS = {
         "oracle": "out/oracle/legispec-oracle",
         "generated_oracle": "out/oracle/legispec-oracle-gen",
         "extended_llt": False,
-        "llvm_dirs": (
-            "F:/llvm/build-toycpu/lib/cmake/llvm",
-            "F:/llvm/build/lib/cmake/llvm",
-        ),
+        "llvm_build_env": ("LEGISPEC_TOYCPU_BUILD", "LEGISPEC_LLVM_BUILD"),
     },
     "aarch64-vector": {
         "rules": "rules/aarch64-vector.lspec",
@@ -74,10 +71,7 @@ TARGETS = {
             "out/oracle-aarch64/legispec-oracle-aarch64-vector-gen"
         ),
         "extended_llt": True,
-        "llvm_dirs": (
-            "F:/llvm/build/lib/cmake/llvm",
-            "F:/llvm/build-toycpu/lib/cmake/llvm",
-        ),
+        "llvm_build_env": ("LEGISPEC_LLVM_BUILD", "LEGISPEC_TOYCPU_BUILD"),
     },
 }
 
@@ -92,26 +86,49 @@ def _first_existing(*paths: Iterable[Optional[str]]) -> Optional[Path]:
     return None
 
 
+def _llvm_config_dir(value: Optional[str]) -> Optional[Path]:
+    """Resolve an LLVM build or cmake directory to the LLVMConfig.cmake dir."""
+    if not value:
+        return None
+    root = Path(value).expanduser()
+    for candidate in (root, root / "lib" / "cmake" / "llvm"):
+        if (candidate / "LLVMConfig.cmake").is_file():
+            return candidate
+    return None
+
+
 def _find_cmake() -> Optional[Path]:
     return _first_existing(
         os.environ.get("LEGISPEC_CMAKE"),
         shutil.which("cmake"),
-        "C:/Program Files/CMake/bin/cmake.exe",
     )
 
 
 def _find_llvm_dir(target: dict) -> Optional[Path]:
-    explicit = os.environ.get("LEGISPEC_LLVM_DIR")
-    if explicit:
-        path = Path(explicit)
-        return path if path.is_dir() else None
-    for candidate in target["llvm_dirs"]:
-        path = Path(candidate)
-        if (path / "LLVMConfig.cmake").is_file():
-            return path
-    env = os.environ.get("LLVM_DIR")
-    if env and (Path(env) / "LLVMConfig.cmake").is_file():
-        return Path(env)
+    for name in ("LEGISPEC_LLVM_DIR", "LLVM_DIR"):
+        found = _llvm_config_dir(os.environ.get(name))
+        if found is not None:
+            return found
+    for name in target["llvm_build_env"]:
+        found = _llvm_config_dir(os.environ.get(name))
+        if found is not None:
+            return found
+    llvm_config = shutil.which("llvm-config")
+    if llvm_config:
+        try:
+            result = subprocess.run(
+                [llvm_config, "--cmakedir"],
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+        except OSError:
+            return None
+        if result.returncode == 0:
+            return _llvm_config_dir(result.stdout.strip())
     return None
 
 
@@ -120,7 +137,6 @@ def _find_cxx() -> Optional[Path]:
         os.environ.get("LEGISPEC_CXX"),
         os.environ.get("CXX"),
         shutil.which("clang++"),
-        "F:/llvm/install/bin/clang++.exe",
         shutil.which("cl"),
         shutil.which("g++"),
     )
@@ -133,7 +149,6 @@ def _find_linker(cxx: Optional[Path]) -> Optional[Path]:
         return None
     return _first_existing(
         os.environ.get("LEGISPEC_LINKER"),
-        "F:/llvm/install/bin/lld-link.exe",
         shutil.which("lld-link"),
     )
 
@@ -142,20 +157,45 @@ def _find_ninja() -> Optional[Path]:
     return _first_existing(
         os.environ.get("LEGISPEC_NINJA"),
         shutil.which("ninja"),
-        "D:/VStudio/2022/Enterprise/Common7/IDE/CommonExtensions/Microsoft/CMake/Ninja/ninja.exe",
-        "F:/llvm/tools/ninja.exe",
     )
 
 
 def _find_vcvars() -> Optional[Path]:
-    return _first_existing(
-        os.environ.get("LEGISPEC_VCVARS"),
-        "D:/VStudio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
-        "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Auxiliary/Build/vcvars64.bat",
-        "C:/Program Files/Microsoft Visual Studio/2022/Professional/VC/Auxiliary/Build/vcvars64.bat",
-        "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Auxiliary/Build/vcvars64.bat",
-        "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Auxiliary/Build/vcvars64.bat",
+    explicit = os.environ.get("LEGISPEC_VCVARS")
+    if explicit:
+        path = Path(explicit)
+        return path if path.is_file() else None
+    vcinstall = os.environ.get("VCINSTALLDIR")
+    if vcinstall:
+        candidate = Path(vcinstall) / "Auxiliary" / "Build" / "vcvars64.bat"
+        if candidate.is_file():
+            return candidate
+    if os.name != "nt":
+        return None
+    program_files = os.environ.get("ProgramFiles(x86)") or os.environ.get("ProgramFiles")
+    if not program_files:
+        return None
+    vswhere = Path(program_files) / "Microsoft Visual Studio" / "Installer" / "vswhere.exe"
+    if not vswhere.is_file():
+        return None
+    result = _run(
+        [
+            str(vswhere),
+            "-latest",
+            "-products",
+            "*",
+            "-requires",
+            "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+            "-property",
+            "installationPath",
+        ],
+        cwd=ROOT,
     )
+    if result.returncode != 0:
+        return None
+    root = Path(result.stdout.strip())
+    candidate = root / "VC" / "Auxiliary" / "Build" / "vcvars64.bat"
+    return candidate if candidate.is_file() else None
 
 
 def _msvc_lib_dir(vcvars: Path) -> Optional[Path]:
@@ -169,10 +209,14 @@ def _msvc_lib_dir(vcvars: Path) -> Optional[Path]:
 
 
 def _windows_sdk_libs() -> Optional[tuple[Path, Path]]:
-    for root in (
-        Path("C:/Program Files (x86)/Windows Kits/10/lib"),
-        Path("C:/Program Files/Windows Kits/10/lib"),
+    roots = []
+    for base in (
+        os.environ.get("ProgramFiles(x86)"),
+        os.environ.get("ProgramFiles"),
     ):
+        if base:
+            roots.append(Path(base) / "Windows Kits" / "10" / "lib")
+    for root in roots:
         if not root.is_dir():
             continue
         versions = [

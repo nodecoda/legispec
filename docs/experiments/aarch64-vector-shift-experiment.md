@@ -219,14 +219,14 @@ capabilities：`custom = {G_SHL, G_ASHR, G_LSHR}`，无 libcall、无 lower。
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-vector-shift.ps1
+  <legacy-checkout>\scripts\check-aarch64-vector-shift.ps1
 ```
 
 或先重建 oracle：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-aarch64-vector-shift.ps1 -BuildOracles
+  <legacy-checkout>\scripts\check-aarch64-vector-shift.ps1 -BuildOracles
 ```
 
 输出应为：

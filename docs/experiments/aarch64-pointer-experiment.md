@@ -21,7 +21,7 @@ AArch64 pointer shape `p0:64`.
 | Oracle errors | 0 |
 | Rule coverage | **17 / 17** |
 | Static check | 0 errors / 5 warnings |
-| Oracle build | `F:\llvm\build` (LLVM 24.0.0git, assertions ON) |
+| Oracle build | `<llvm-build>` (LLVM 24.0.0git, assertions ON) |
 
 The claim is narrow:
 
@@ -78,7 +78,7 @@ experiment already exposes the pointer rules through the same
 All line references point at:
 
 ```text
-F:\llvm\llvm-project\llvm\lib\Target\AArch64\GISel\AArch64LegalizerInfo.cpp
+<llvm-src>\llvm\lib\Target\AArch64\GISel\AArch64LegalizerInfo.cpp
 ```
 
 ### 3.1 `G_PTR_ADD`
@@ -312,7 +312,7 @@ with the scalar `G_ADD`/`G_MUL` predicates.
 The oracle is the same AArch64 oracle built for the scalar experiment:
 
 ```text
-F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe
+<legacy-checkout>\out\oracle-aarch64\legispec-oracle-aarch64.exe
 ```
 
 It configures:
@@ -422,7 +422,7 @@ ok=true
 Report:
 
 ```text
-F:\llvm-study\toycpu\out\aarch64-pointer-conformance-report.json
+<legacy-checkout>\out\aarch64-pointer-conformance-report.json
 ```
 
 Selected probes:
@@ -461,31 +461,31 @@ The AArch64 oracle is the one from the scalar experiment:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\tools\oracle\build.ps1 `
-  -BuildDir F:\llvm-study\toycpu\out\oracle-aarch64 `
-  -LLVMDir F:\llvm\build\lib\cmake\llvm `
+  <legacy-checkout>\tools\oracle\build.ps1 `
+  -BuildDir <legacy-checkout>\out\oracle-aarch64 `
+  -LLVMDir <llvm-build>\lib\cmake\llvm `
   -WithAArch64
 ```
 
 Static check:
 
 ```powershell
-cd F:\llvm-study\toycpu\tools
+cd <legacy-checkout>\tools
 python -m legispec `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-pointer.lspec `
+  --rules <legacy-checkout>\tools\legispec\rules\aarch64-pointer.lspec `
   check --strict `
-  --capabilities F:\llvm-study\toycpu\tools\legispec\aarch64-pointer-capabilities.json
+  --capabilities <legacy-checkout>\tools\legispec\aarch64-pointer-capabilities.json
 ```
 
 Differential conformance:
 
 ```powershell
-python -X utf8 F:\llvm-study\toycpu\tools\legispec\conformance.py `
-  --rules F:\llvm-study\toycpu\tools\legispec\rules\aarch64-pointer.lspec `
-  --oracle F:\llvm-study\toycpu\out\oracle-aarch64\legispec-oracle-aarch64.exe `
+python -X utf8 <legacy-checkout>\tools\legispec\conformance.py `
+  --rules <legacy-checkout>\tools\legispec\rules\aarch64-pointer.lspec `
+  --oracle <legacy-checkout>\out\oracle-aarch64\legispec-oracle-aarch64.exe `
   --domain D --closure R `
-  --out F:\llvm-study\toycpu\out\aarch64-pointer-conformance-report.json `
-  --llvm-build F:/llvm/build
+  --out <legacy-checkout>\out\aarch64-pointer-conformance-report.json `
+  --llvm-build <llvm-build>
 ```
 
 Expected tail:
@@ -498,7 +498,7 @@ ToyCPU regression gate:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  F:\llvm-study\toycpu\scripts\check-legispec.ps1
+  <legacy-checkout>\scripts\check-legispec.ps1
 ```
 
 ## 9. Limits and next steps

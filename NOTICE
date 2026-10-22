@@ -1,0 +1,14 @@
+LegiSpec
+Copyright 2026 LegiSpec contributors
+
+This product is an independent downstream tool for LLVM GlobalISel. It is not
+affiliated with, sponsored by, or endorsed by the LLVM Project or the LLVM
+Foundation.
+
+LLVM is a trademark of the LLVM Foundation. Use of the name refers only to the
+upstream project and its interfaces.
+
+The Apache License 2.0 applies to the LegiSpec source tree as described in
+LICENSE.TXT. LLVM source code and LLVM binaries are not distributed with this
+repository; any LLVM checkout or build used to produce evidence remains subject
+to the LLVM Project's own license.
